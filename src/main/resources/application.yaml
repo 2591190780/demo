@@ -3,3 +3,11 @@ spring:
     jwt:
       key: abcdefghijk
       expire: 2
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: 123
+    lettuce:  # 显式配置Lettuce连接工厂
+      pool:
+        enabled: true
+    timeout: 5000ms  # 增加超时时间

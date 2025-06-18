@@ -24,6 +24,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.context.annotation.RequestScope;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 
 @Configuration
 public class SecurityConfiguration {
@@ -31,6 +32,7 @@ public class SecurityConfiguration {
     JwtUtils utils;
     @Resource
     JwtAuthorizeFilter jwtAuthorizeFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -72,7 +74,7 @@ public class SecurityConfiguration {
         String token  = utils.createJwt(user,1,"xx");  //封装用户token信息
         AuthorizeVO vo = new AuthorizeVO();
         vo.setExpire(utils.expireTime());
-       // System.out.println(utils.expireTime());
+        System.out.println(utils.expireTime());
         vo.setRole("");
         vo.setToken(token);
         vo.setUsername("xx");
@@ -83,7 +85,15 @@ public class SecurityConfiguration {
     public void onLogoutSuccess(HttpServletRequest request,  //登出返回的json消息
                                 HttpServletResponse response,
                                 Authentication authentication) throws IOException, ServletException {
-        response.getWriter().write("Success Logout");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        PrintWriter writer = response.getWriter();
+        String authenticationHeader = request.getHeader("Authorization");
+        if(utils.invaliddateJWT(authenticationHeader)){
+            writer.write(RestBean.success().asJsonString());
+        }else {
+            writer.write(RestBean.failure(400,"退出登录失败").asJsonString());
+        }
     }
 
     public void onAccessDeny(HttpServletRequest request //权限验证的消息提示
