@@ -26,8 +26,8 @@ public class JwtAuthorizeFilter extends OncePerRequestFilter {
             , HttpServletResponse response
             ,FilterChain filterChain) throws ServletException, IOException {
 
-        String authorization = request.getHeader("Authorization");
-        DecodedJWT jwt = utils.resolveJWT(authorization);
+        String authorization = request.getHeader("Authorization");  // 存储前端发送的消息至Authorization
+        DecodedJWT jwt = utils.resolveJWT(authorization);   //验证token
 
         if (jwt != null ) {
             UserDetails user= utils.toUser(jwt);
@@ -37,7 +37,7 @@ public class JwtAuthorizeFilter extends OncePerRequestFilter {
 
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            request.setAttribute("id",utils.toId(jwt));
+            request.setAttribute("id",utils.toId(jwt));   //返回验证消息
         }
         filterChain.doFilter(request, response);
     }

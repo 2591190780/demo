@@ -25,7 +25,7 @@ public class JwtUtils {
     @Value("${spring.security.jwt.expire}")
     int expire;
 
-    public DecodedJWT resolveJWT(String headertoken) {
+    public DecodedJWT resolveJWT(String headertoken) {  //token解析并验证token的有效性
         String token = this.converToken(headertoken);
         if(token==null) return null;
         Algorithm algorithm = Algorithm.HMAC256(key);
@@ -39,7 +39,7 @@ public class JwtUtils {
         }
 
     }
-    public String createJwt(UserDetails details,int id,String Username){
+    public String createJwt(UserDetails details,int id,String Username){  //创建jwt令牌，封装用户信息id username 有效日期 颁发日期
         Algorithm algorithm = Algorithm.HMAC256(key);
         Date expire = this.expireTime();
     return JWT.create()
@@ -47,16 +47,17 @@ public class JwtUtils {
             .withClaim("name",Username)
             .withClaim("authorities",details.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
             .withExpiresAt(expire)
+            .withIssuedAt(new Date())
 //            .withExpiresAt(new Date())
             .sign(algorithm);
     }
-    public Date expireTime(){
+    public Date expireTime(){   //有效期天数计算
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.HOUR, expire * 24);
         return calendar.getTime();
     }
 
-    public UserDetails toUser(DecodedJWT decodedJWT) {
+    public UserDetails toUser(DecodedJWT decodedJWT) { //解析token并封装给user类
         Map<String , Claim>claims = decodedJWT.getClaims();
         return User
                 .withUsername(claims.get("name").asString())
@@ -64,11 +65,11 @@ public class JwtUtils {
                 .authorities(claims.get("authorities").asArray(String.class))
                 .build();
     }
-    public Integer toId(DecodedJWT decodedJWT) {
+    public Integer toId(DecodedJWT decodedJWT) {  //解析token提取id
         Map<String , Claim>claims = decodedJWT.getClaims();
         return claims.get("id").asInt();
     }
-    private String converToken(String headertoken){
+    private String converToken(String headertoken){  //验证前端发送的token，并返回
         if (headertoken ==null || !headertoken.startsWith("Bearer")){
             return null;
         }

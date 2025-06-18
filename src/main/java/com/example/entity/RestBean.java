@@ -16,6 +16,9 @@ public record RestBean<T>(int code, T data , String message) {
     public static <T> RestBean<T> failure(int code, String message) {
         return  new RestBean<T>(code,null,message);
     }
+    public static <T> RestBean<T> forbidden(String message) {
+        return  new RestBean<T>(403,null,message);
+    }
     public String asJsonString (){
         return JSONObject.toJSONString(this, JSONWriter.Feature.WriteNulls);
     }
