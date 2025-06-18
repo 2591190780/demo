@@ -85,7 +85,7 @@ public class JwtUtils {
     return JWT.create()
             .withJWTId(UUID.randomUUID().toString())
             .withClaim("id",id)
-            .withClaim("name",Username)
+            .withClaim("username",Username)
             .withClaim("authorities",details.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
             .withExpiresAt(expire)
             .withIssuedAt(new Date())
@@ -101,7 +101,7 @@ public class JwtUtils {
     public UserDetails toUser(DecodedJWT decodedJWT) { //解析token并封装给user类
         Map<String , Claim>claims = decodedJWT.getClaims();
         return User
-                .withUsername(claims.get("name").asString())
+                .withUsername(claims.get("username").asString())
                 .password("***")
                 .authorities(claims.get("authorities").asArray(String.class))
                 .build();

@@ -96,6 +96,8 @@ public class SecurityConfiguration {
         }
     }
 
+
+
     public void onAccessDeny(HttpServletRequest request //权限验证的消息提示
             , HttpServletResponse response
             , AccessDeniedException exception) throws IOException {
