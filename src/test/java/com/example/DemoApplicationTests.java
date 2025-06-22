@@ -26,6 +26,10 @@ class ConnectionTest {
 
 	@Autowired
 	private DataSource dataSource;
+	@Test
+	void passwordEncoder() throws SQLException {
+		System.out.println(new BCryptPasswordEncoder().encode("user"));
+	}
 
 	@Test
 	void testConnection() throws SQLException {
