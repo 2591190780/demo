@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import jakarta.validation.ValidationException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

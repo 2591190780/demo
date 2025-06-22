@@ -3,7 +3,7 @@ package com.example.config;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.vo.response.AuthorizeVO;
-import com.example.filter.CrossFilter;
+//import com.example.filter.CrossFilter;
 import com.example.filter.JwtAuthorizeFilter;
 import com.example.service.AccountService;
 import com.example.utils.Const;
@@ -29,6 +29,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.context.annotation.RequestScope;
+import org.springframework.web.servlet.View;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -44,11 +45,17 @@ public class SecurityConfiguration {
     AccountService accountService;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, View error) throws Exception {
         return http
                 .authorizeHttpRequests(conf -> conf
-                        .requestMatchers("api/auth/**").permitAll()
-                        .requestMatchers("/api/login/**").permitAll()
+                        .requestMatchers(
+                                "/doc.html",
+                                "/webjars/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**"
+                        ).permitAll() //knife4j相关接口
+
+                        .requestMatchers("api/auth/**","/error").permitAll()
                         .anyRequest().authenticated()
                 )  //login请求放行
                 .formLogin(conf -> conf
@@ -91,7 +98,6 @@ public class SecurityConfiguration {
         System.out.println(utils.expireTime());
         vo.setToken(token);
         vo.setUsername(account.getUsername());
-
         String role = account.getRole();
         switch (role) {
             case "1":
@@ -107,7 +113,6 @@ public class SecurityConfiguration {
                 vo.setRole("WARRING:NO_ROLE");
                 break;
         }
-
         response.getWriter().write(RestBean.success(vo).asJsonString()); //返回前端json消息
 
     }

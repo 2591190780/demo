@@ -21,12 +21,14 @@ public class CrossFilter extends HttpFilter {
             , FilterChain chain) throws IOException, ServletException {
 
             this.addCorsHeader(request,response);  //添加跨域网址许可
+
+        chain.doFilter(request, response);
         // 处理 OPTIONS 预检请求
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
-            response.setStatus(HttpServletResponse.SC_OK);
-        } else {
-            chain.doFilter(request, response);
-        }
+//        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+//            response.setStatus(HttpServletResponse.SC_OK);
+//        } else {
+//            chain.doFilter(request, response);
+//        }
     }
     public void addCorsHeader(HttpServletRequest request,HttpServletResponse response) {
         //response.addHeader("Access-Control-Allow-Origin", "http://localhost:5173");
