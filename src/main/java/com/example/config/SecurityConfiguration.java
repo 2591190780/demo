@@ -33,6 +33,7 @@ import org.springframework.web.servlet.View;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Date;
 
 @Configuration
 public class SecurityConfiguration {
@@ -54,7 +55,6 @@ public class SecurityConfiguration {
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
                         ).permitAll() //knife4j相关接口
-
                         .requestMatchers("api/auth/**","/error").permitAll()
                         .anyRequest().authenticated()
                 )  //login请求放行
@@ -91,13 +91,14 @@ public class SecurityConfiguration {
         User user = (User) authentication.getPrincipal();
         Account account =accountService.findAccountByNameOrEmail(user.getUsername());
         String token  = utils.createJwt(user,account.getId(),account.getUsername());  //封装用户token信息
-
         AuthorizeVO vo = new AuthorizeVO();
         //BeanUtils.copyProperties();
         vo.setExpire(utils.expireTime());
         System.out.println(utils.expireTime());
         vo.setToken(token);
         vo.setUsername(account.getUsername());
+        vo.setEmail(account.getEmail());
+        vo.setDate(String.valueOf(new Date(System.currentTimeMillis())));
         String role = account.getRole();
         switch (role) {
             case "1":

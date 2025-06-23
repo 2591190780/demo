@@ -24,7 +24,9 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 public class JwtUtils {
+
     private final StringHttpMessageConverter stringHttpMessageConverter;
+
     @Value("${spring.security.jwt.key}")
     String key;
 
@@ -53,6 +55,7 @@ public class JwtUtils {
             return false;
         }
     }
+
     private boolean deleteToken(String uuid,Date time) {
         if(this.isInvalidToken(uuid))return false;
         Date now = new Date();
@@ -60,6 +63,7 @@ public class JwtUtils {
         template.opsForValue().set(Const.JWT_BLACK_LIST+uuid,"",expire, TimeUnit.MILLISECONDS);
         return true;
     }
+
     private  boolean isInvalidToken(String uuid) {
             return Boolean.TRUE.equals(template.hasKey(Const.JWT_BLACK_LIST+uuid));
     }

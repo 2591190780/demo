@@ -27,15 +27,13 @@ public class MailQueueListener {
 
         SimpleMailMessage message = switch (type){
             case "register" ->
-                createSimpleMailMessage("欢迎注册","您的注册邮箱验证码为："+code+"验证码有效期：3分钟",email);
-            case "resetEmail"->
-                createSimpleMailMessage("重置邮箱","您的重置邮箱验证码为:"+code+"验证码有效期：3分钟",email);
+                createSimpleMailMessage("欢迎注册","您的注册账号验证码为："+code+" 验证码有效期：3分钟",email);
+            case "reset"->
+                createSimpleMailMessage("重置密码","您的重置密码验证码为:"+code+" 验证码有效期：3分钟",email);
             default -> null;
         };
         if(message==null)return;
         mailSender.send(message);
-
-
     }
     private SimpleMailMessage createSimpleMailMessage(String title, String content,String email) {
         SimpleMailMessage message = new SimpleMailMessage();

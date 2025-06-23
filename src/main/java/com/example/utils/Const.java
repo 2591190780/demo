@@ -6,7 +6,11 @@ public class Const {
     //经常使用的属性
     public static  final  String JWT_BLACK_LIST="jwt_blacklist:";
 
-    public static  final  int ORDER_CORS= -102 ;
+    public static  final  int ORDER_CORS= -110 ;
+    public static  final  int ORDER_LIMIT= -101 ;
+
+    public static  final  String FLOW_LIMIT_COUNT="flow_limit_count:";
+    public static  final  String FLOW_LIMIT_BLOCK="flow_limit_block:";
 
     public static final String VERIFY_EMAIL_LIMIT="verify:email:limit:";
     public static final String VERIFY_EMAIL_DATA="verify:email:data";
