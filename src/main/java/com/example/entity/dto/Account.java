@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.sql.Date;
+import java.sql.Timestamp;
 
 @Data
 @TableName("user_info")
@@ -18,5 +19,5 @@ public class Account {
     String password;
     String email;
     String role;
-    Date register_date;
+    Timestamp register_date;
 }

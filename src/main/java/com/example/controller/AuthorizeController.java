@@ -21,14 +21,14 @@ import java.util.function.Supplier;
 @Validated
 @RestController
 @RequestMapping("/api/auth")
-@Tag(name="验证码请求",description = "相关操作")
+@Tag(name="请求",description = "相关操作")
 public class AuthorizeController {
 
     @Resource
     AccountService accountService;
 
 
-    @GetMapping("/ask-code")
+    @GetMapping("/ask-code") //请求发送验证码
     public RestBean<Void> askVerifyCode(@RequestParam  @Email  String email ,
                                         @RequestParam @Pattern(regexp = "(register|reset)") String type,
                                         HttpServletRequest request
@@ -38,17 +38,17 @@ public class AuthorizeController {
         return RestBean.success();
 
     }
-    @PostMapping("/register")
+    @PostMapping("/register")  //注册
     public RestBean<Void> registerUser(@RequestBody @Valid EmailRegisterVO vo) {
         return this.messageHandle(vo,accountService::registerEmailAccount);
     }
 
-    @PostMapping("/reset-confirm")
+    @PostMapping("/reset-confirm") //验证码确认
     public RestBean<Void> resetConfirm(@RequestBody @Valid ConfirmResetVO vo){
         return this.messageHandle(vo, accountService::resetConfirm);
     }
 
-    @PostMapping("/reset-password")
+    @PostMapping("/reset-password") //验证码修改密码
     public RestBean<Void> resetPasswordConfirm(@RequestBody @Valid EmailResetVO vo){
         return this.messageHandle(vo,accountService::resetEmailAccountPassword);
     }

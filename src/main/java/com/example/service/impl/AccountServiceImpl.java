@@ -58,7 +58,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .password(account.getPassword())
                 .roles(account.getRole())
                 .build();
-    }
+    } //使用security的接口，校验传入的密码是否正确
 
     @Override
     public void registerEmailVerifyCode(String type, String email, String ip) {
@@ -95,7 +95,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if(this.existAccountByUsername(username)) return "用户名已存在";
         String encodePassword =  Encoder.encode(password);
         java.util.Date utilDate = new java.util.Date();
-        java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
+        java.sql.Timestamp sqlDate = new java.sql.Timestamp(utilDate.getTime());
         Account account = new Account(null,
                 username,
                 encodePassword,
@@ -182,8 +182,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private boolean existAccountByUsername(String username){
         return this.baseMapper.exists(Wrappers.<Account>query().eq("username",username));
     }
-
-
 
     public Account findAccountByNameOrEmail(String text){
         return this.query()

@@ -39,4 +39,9 @@ class ConnectionTest {
 			System.out.println("🚀 驱动版本: " + conn.getMetaData().getDriverVersion());
 		}
 	}
+
+	@Test
+	void testHelloWorld() throws SQLException {
+		System.out.println("Hello World");
+	}
 }
