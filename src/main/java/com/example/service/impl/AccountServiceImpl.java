@@ -3,7 +3,6 @@ package com.example.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.controller.exception.CustomerException;
-import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.vo.request.ConfirmResetVO;
 import com.example.entity.vo.request.EmailRegisterVO;
@@ -26,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import java.io.PrintWriter;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
@@ -94,6 +92,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if(this.existAccountByEmail(email) )  return "邮箱已注册";
         if(this.existAccountByUsername(username)) return "用户名已存在";
         String encodePassword =  Encoder.encode(password);
+
         java.util.Date utilDate = new java.util.Date();
         java.sql.Timestamp sqlDate = new java.sql.Timestamp(utilDate.getTime());
         Account account = new Account(null,
@@ -163,7 +162,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                     .eq("password", account.getPassword()) // 确保密码未变化
                     .set("password", Encoder.encode(newPassword))
                     .update();
-            jwtUtils.invaliddateJWT(authorization);
+            jwtUtils.invalidDateJWT(authorization);
             return updated ? null : "密码更新失败，请重试";
         }
         return "内部错误，请联系管理员" ;

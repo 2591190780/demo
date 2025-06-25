@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.annotation.*;
 import com.example.handler.JsonTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 import java.sql.Timestamp;
+import java.time.LocalTime;
 
 @Data
 @TableName("log_info")
@@ -27,9 +29,10 @@ public class LogInfoDto {
     @TableField(typeHandler = JsonTypeHandler.class)
     private Object afterSnapshot;
     //区块链交易hash(66字符)
+    @Length(min=66,max = 66)
     String blockchainTxHash;
     // 时间
-    private Timestamp createTime;
+    private LocalTime createTime;
     /**
      * 错误信息（操作失败时记录）
      */

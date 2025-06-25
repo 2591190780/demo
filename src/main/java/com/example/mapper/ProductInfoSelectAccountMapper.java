@@ -5,5 +5,5 @@ import com.example.entity.dto.ProductInfoAccount;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface ProductInfoAccountMapper extends BaseMapper<ProductInfoAccount> {
+public interface ProductInfoSelectAccountMapper extends BaseMapper<ProductInfoAccount> {
 }

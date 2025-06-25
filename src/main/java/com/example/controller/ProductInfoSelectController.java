@@ -3,7 +3,7 @@ package com.example.controller;
 
 import com.example.entity.RestBean;
 import com.example.entity.vo.response.ProductVO;
-import com.example.service.ProductInfoAccountService;
+import com.example.service.ProductInfoSelectAccountService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,14 +13,21 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/products")
-@Tag(name="产品信息请求",description = "相关操作")
+@RequestMapping("/api/selectProducts")
+@Tag(name="产品信息搜索请求",description = "相关操作")
 public class ProductInfoSelectController {
 
     @Resource
-    ProductInfoAccountService paService;
+    ProductInfoSelectAccountService paService;
 
-    @GetMapping("/search/id") //单个查询
+    /**
+     *
+     * @param id productid select
+     * @param response
+     * @return
+     * @throws IOException
+     */
+    @GetMapping("/search/id")
     public RestBean<Void> getProductInfoByID(@RequestParam int id,
                                              HttpServletResponse response) throws IOException {
         ProductVO productVO = paService.getProductInfoAccountByProductId(id);
@@ -32,9 +39,16 @@ public class ProductInfoSelectController {
         return RestBean.failure(404, "该农户暂无产品");
     }
 
+    /**
+     *
+     * @param id farmerid select
+     * @param response
+     * @return
+     * @throws IOException
+     */
         @GetMapping("/search/farmerId")
-        public RestBean<Void> getProductInfoByFamerID(@RequestParam int id,
-                                             HttpServletResponse response) throws IOException {
+        public RestBean<Void> getProductInfoByFarmerID(@RequestParam int id,
+                                                       HttpServletResponse response) throws IOException {
 
             List<ProductVO> productVO = paService.getProductInfoAccountByFarmerID(id);
             if (productVO.isEmpty()) {
@@ -45,11 +59,18 @@ public class ProductInfoSelectController {
             return null;
     }
 
+    /**
+     *
+     * @param text select
+     * @param response
+     * @return
+     * @throws IOException
+     */
     @GetMapping("/search/text")
     public RestBean<Void> getProductInfoByName(@RequestParam String text,
                                                   HttpServletResponse response) throws IOException {
 
-        List<ProductVO> productVO = paService.getProducteInfoAccountByName(text);
+        List<ProductVO> productVO = paService.getProductInfoAccountByName(text);
         if (productVO.isEmpty()) {
             return RestBean.failure(404, "该农户暂无产品");
         }
@@ -57,6 +78,18 @@ public class ProductInfoSelectController {
         response.getWriter().write(RestBean.success(productVO).asJsonString());
         return null;
     }
+
+    /**
+     *  select
+     * @param id
+     * @param fid
+     * @param name
+     * @param category
+     * @param location
+     * @param response
+     * @return
+     * @throws IOException
+     */
 
     @GetMapping("/search/all")
     public RestBean<Void> getProductInfoAll(@RequestParam Integer id,@RequestParam Integer fid,

@@ -8,15 +8,12 @@ import com.example.filter.JwtAuthorizeFilter;
 import com.example.service.AccountService;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
-import com.fasterxml.jackson.databind.util.BeanUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -24,11 +21,8 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.User;
-import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.context.annotation.RequestScope;
 import org.springframework.web.servlet.View;
 
 import java.io.IOException;
@@ -54,6 +48,7 @@ public class SecurityConfiguration {
                                 "/webjars/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
+                                ,"/api/selectProducts/**"
                         ).permitAll() //knife4j相关接口
                         .requestMatchers("api/auth/**","/error").permitAll()
                         .anyRequest().authenticated()
@@ -90,7 +85,7 @@ public class SecurityConfiguration {
 
         User user = (User) authentication.getPrincipal();
         Account account =accountService.findAccountByNameOrEmail(user.getUsername());
-        String token  = utils.createJwt(user,account.getId(),account.getUsername());  //封装用户token信息
+        String token  = utils.createJwt(user,account.getId(),account.getRole(),account.getUsername());  //封装用户token信息
         AuthorizeVO vo = new AuthorizeVO();
         //BeanUtils.copyProperties();
         vo.setExpire(utils.expireTime());
@@ -100,6 +95,7 @@ public class SecurityConfiguration {
         vo.setEmail(account.getEmail());
         vo.setDate(String.valueOf(new Date(System.currentTimeMillis())));
         String role = account.getRole();
+        //数据库传入"1","2","3"，后端判断
         switch (role) {
             case "1":
                 vo.setRole(Const.ROLE_OF_USER_MERCHANT);
@@ -127,7 +123,7 @@ public class SecurityConfiguration {
         PrintWriter writer = response.getWriter();
         String authenticationHeader = request.getHeader("Authorization");
 
-        if(utils.invaliddateJWT(authenticationHeader)){
+        if(utils.invalidDateJWT(authenticationHeader)){
             writer.write(RestBean.success().asJsonString());
         }else {
             writer.write(RestBean.failure(400,"退出登录失败").asJsonString());

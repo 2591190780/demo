@@ -31,6 +31,7 @@ public class JwtAuthorizeFilter extends OncePerRequestFilter {
 
         if (jwt != null ) {
             UserDetails user= utils.toUser(jwt);
+
             UsernamePasswordAuthenticationToken authentication
                     = new UsernamePasswordAuthenticationToken(user,null
                     ,user.getAuthorities());

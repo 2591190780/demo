@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.ProductInfoAccount;
 import com.example.entity.vo.response.ProductVO;
-import com.example.mapper.ProductInfoAccountMapper;
-import com.example.service.ProductInfoAccountService;
-import org.apache.commons.lang3.StringUtils;
+import com.example.mapper.ProductInfoSelectAccountMapper;
+import com.example.service.ProductInfoSelectAccountService;
+
 import org.springframework.stereotype.Service;
+
+import java.sql.Date;
 import java.util.Objects;
 
 import java.util.Collections;
@@ -16,8 +18,8 @@ import java.util.stream.Collectors;
 
 
 @Service
-public class ProductInfoAccountImpl extends ServiceImpl<ProductInfoAccountMapper, ProductInfoAccount>
-        implements ProductInfoAccountService {
+public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectAccountMapper, ProductInfoAccount>
+        implements ProductInfoSelectAccountService {
     /**
      *     根据产品id,farmeid,name/category/location查询，并返回前端的vo类进行数据显示
      */
@@ -35,7 +37,7 @@ public class ProductInfoAccountImpl extends ServiceImpl<ProductInfoAccountMapper
     }
 
     @Override
-    public List<ProductVO> getProducteInfoAccountByName(String text){  //字符模糊查询
+    public List<ProductVO> getProductInfoAccountByName(String text){  //字符模糊查询
         List<ProductInfoAccount> productInfoAccount = this.findProductInfoAccountByName(text);
         return this.convertToProductVOList(productInfoAccount);
     }
@@ -136,6 +138,8 @@ public class ProductInfoAccountImpl extends ServiceImpl<ProductInfoAccountMapper
         vo.setStock(account.getStock());
         vo.setOriginLocation(account.getOriginLocation());
         vo.setCertificationHash(account.getCertificationHash());
+        vo.setCreateTime(account.getCreateTime() );
+        vo.setUpdateTime(account.getUpdateTime());
         return vo;
     }
 }

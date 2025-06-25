@@ -7,7 +7,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.annotation.Resource;
-import org.apache.catalina.UserDatabase;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -40,8 +39,8 @@ public class JwtUtils {
         this.stringHttpMessageConverter = stringHttpMessageConverter;
     }
 
-    public boolean invaliddateJWT(String headtoken) {
-        String token = this.converToken(headtoken);
+    public boolean invalidDateJWT(String headerToken) {
+        String token = this.converToken(headerToken);
         if (token == null) {
             return false;
         }
@@ -68,8 +67,8 @@ public class JwtUtils {
             return Boolean.TRUE.equals(template.hasKey(Const.JWT_BLACK_LIST+uuid));
     }
 
-    public DecodedJWT resolveJWT(String headertoken) {  //token解析并验证token的有效性
-        String token = this.converToken(headertoken);
+    public DecodedJWT resolveJWT(String headerToken) {  //token解析并验证token的有效性
+        String token = this.converToken(headerToken);
         if(token==null) return null;
         Algorithm algorithm = Algorithm.HMAC256(key);
         JWTVerifier jwtVerifier = JWT.require(algorithm).build();
@@ -83,13 +82,14 @@ public class JwtUtils {
         }
 
     }
-    public String createJwt(UserDetails details,int id,String Username){  //创建jwt令牌，封装用户信息id username 有效日期 颁发日期
+    public String createJwt(UserDetails details,int id,String role,String Username){  //创建jwt令牌，封装用户信息id username 有效日期 颁发日期
         Algorithm algorithm = Algorithm.HMAC256(key);
         Date expire = this.expireTime();
     return JWT.create()
             .withJWTId(UUID.randomUUID().toString())
             .withClaim("id",id)
             .withClaim("username",Username)
+            .withClaim("role",role)
             .withClaim("authorities",details.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList())
             .withExpiresAt(expire)
             .withIssuedAt(new Date())
@@ -114,6 +114,12 @@ public class JwtUtils {
         Map<String , Claim>claims = decodedJWT.getClaims();
         return claims.get("id").asInt();
     }
+
+    public String toRole(DecodedJWT decodedJWT) {
+        Map<String , Claim>claims = decodedJWT.getClaims();
+        return claims.get("role").asString();
+    }
+
     private String converToken(String headertoken){  //验证前端发送的token，并返回
         if (headertoken ==null || !headertoken.startsWith("Bearer")){
             return null;
