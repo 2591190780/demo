@@ -12,5 +12,7 @@ import java.util.List;
 public interface ProductInfoAddAccountService extends IService<ProductInfoAccountDto> {
 
     <T>RestBean<T> addUserProductSingle(HttpServletRequest request, ProductAddVO vo);
-    <T>RestBean<T> addUserProductAll(HttpServletRequest request, List<ProductAddVO> voList);
+    RestBean<Void>  addUserProductAll(HttpServletRequest request, List<ProductAddVO> voList);
+
+
 }

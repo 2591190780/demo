@@ -3,6 +3,17 @@ package com.example.utils;
 import jakarta.servlet.http.PushBuilder;
 
 public class Const {
+
+    /**
+     * 产品  农户的相关操作  存入Redis队列等待管理员处理
+     */
+    public static final  String JWT_PRODUCT_ADD_LIST= "jwtProductAddList:";
+    public static final  String DELETE_JWT_PRODUCT_ADD_LIST= "deleteJwtProductAddList:";
+
+    public static final  String JWT_PRODUCT_UPDATE_LIST= "jwtProductUpdateList:";
+    public static final  String DELETE_JWT_PRODUCT_UPDATE_LIST= "deleteJwtProductUpdateList:";
+
+
     //经常使用的属性
     public static  final  String JWT_BLACK_LIST="jwt_blacklist:";
 

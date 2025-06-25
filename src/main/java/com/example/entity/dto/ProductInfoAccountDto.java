@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.validator.constraints.Length;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -33,6 +34,7 @@ public class ProductInfoAccountDto {
     private String originLocation;
     // 认证哈希值（固定长度66字符）
     @TableField(fill = FieldFill.INSERT)
+    @Length(min = 66,max = 66)
     private String certificationHash;
     // * 更新时间
     private LocalDateTime  updateTime;
