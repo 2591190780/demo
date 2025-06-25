@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -50,7 +51,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
     public <T> RestBean<T> addUserProductSingle(HttpServletRequest request, ProductAddVO vo){
         //验证角色是否正确（农户或者管理员）
         boolean verifyRole = utils.userRoleVerify(request);
-        if(!verifyRole)return RestBean.forbidden("权限不足");
+        if(!verifyRole)return RestBean.forbidden("只有农户可以添加新产品");
         //验证增加的产品 为当前用户下的 产品 （管理员不受限）
         Integer fid = vo.getFarmerId();
         boolean verifyId = this.getUserIdVerify(request,fid);
@@ -58,6 +59,16 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         //农户提交新产品的信息 此时需要等待管理员确认后才激活产品售卖。
         return this.generateProductAccount(vo) ? RestBean.success():
                 RestBean.failure(401,"请检查传入的参数");
+    }
+
+    @Override
+    public <T> RestBean<T> addUserProductAll(HttpServletRequest request, List<ProductAddVO> voList){
+        // 1. 验证角色（农户）
+        if (!utils.userRoleVerify(request)) {
+            return RestBean.forbidden("只有农户可以添加新产品");
+        }
+
+        return null;
     }
 
 
