@@ -2,14 +2,13 @@ package com.example.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.entity.dto.ProductInfoAccount;
+import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.ProductInfoSelectAccountMapper;
 import com.example.service.ProductInfoSelectAccountService;
 
 import org.springframework.stereotype.Service;
 
-import java.sql.Date;
 import java.util.Objects;
 
 import java.util.Collections;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 
 
 @Service
-public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectAccountMapper, ProductInfoAccount>
+public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectAccountMapper, ProductInfoAccountDto>
         implements ProductInfoSelectAccountService {
     /**
      *     根据产品id,farmeid,name/category/location查询，并返回前端的vo类进行数据显示
@@ -26,20 +25,20 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     @Override
     public ProductVO getProductInfoAccountByProductId(Integer Id)  {  //根据产品id的精准查询
         //查询信息
-        ProductInfoAccount productInfoAccount = this.findProductInfoAccountByProductId(Id);
-        return this.convertToProductVO(productInfoAccount);
+        ProductInfoAccountDto productInfoAccountDto = this.findProductInfoAccountByProductId(Id);
+        return this.convertToProductVO(productInfoAccountDto);
     }
 
     @Override
     public List<ProductVO> getProductInfoAccountByFarmerID(Integer Id) {  //根据商家id的精准查询
-        List<ProductInfoAccount> productInfoAccount = this.findProductInfoAccountByFarmerID(Id);
-        return this.convertToProductVOList(productInfoAccount);
+        List<ProductInfoAccountDto> productInfoAccountDto = this.findProductInfoAccountByFarmerID(Id);
+        return this.convertToProductVOList(productInfoAccountDto);
     }
 
     @Override
     public List<ProductVO> getProductInfoAccountByName(String text){  //字符模糊查询
-        List<ProductInfoAccount> productInfoAccount = this.findProductInfoAccountByName(text);
-        return this.convertToProductVOList(productInfoAccount);
+        List<ProductInfoAccountDto> productInfoAccountDto = this.findProductInfoAccountByName(text);
+        return this.convertToProductVOList(productInfoAccountDto);
     }
 
     /**
@@ -59,7 +58,7 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
             return Collections.emptyList();
         }
         // 创建查询条件
-        QueryWrapper<ProductInfoAccount> queryWrapper = new QueryWrapper<>();
+        QueryWrapper<ProductInfoAccountDto> queryWrapper = new QueryWrapper<>();
         // 添加精确查询条件
         if (id != null) {
             queryWrapper.eq("product_id", id); // 假设数据库字段是product_id
@@ -86,14 +85,14 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     /**
      * 根据农民ID查询产品信息账户（可能多个或者单个）
      */
-    private ProductInfoAccount findProductInfoAccountByProductId(Integer Id) {
+    private ProductInfoAccountDto findProductInfoAccountByProductId(Integer Id) {
         if(Id==null)return null;
         return query()
                 .eq("product_id", Id)
                 .one();
     }
 
-    private List<ProductInfoAccount> findProductInfoAccountByFarmerID(Integer farmerID) {
+    private List<ProductInfoAccountDto> findProductInfoAccountByFarmerID(Integer farmerID) {
         if(farmerID==null)return Collections.emptyList();
         return query()
                 .eq("farmer_id", farmerID)
@@ -103,7 +102,7 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     /**
      * 根据字符串查询
      */
-    private List<ProductInfoAccount> findProductInfoAccountByName(String text) {
+    private List<ProductInfoAccountDto> findProductInfoAccountByName(String text) {
         if(text==null)return Collections.emptyList();
         return query()
                 .like("name", text).or()
@@ -115,7 +114,7 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     /**
      * 实体类转换器
      */
-    private List<ProductVO> convertToProductVOList(List<ProductInfoAccount> accounts) {
+    private List<ProductVO> convertToProductVOList(List<ProductInfoAccountDto> accounts) {
         if (accounts == null || accounts.isEmpty()) {
             return Collections.emptyList();
         }
@@ -126,7 +125,7 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
                 .collect(Collectors.toList());
     }
 
-    private ProductVO convertToProductVO(ProductInfoAccount account) {
+    private ProductVO convertToProductVO(ProductInfoAccountDto account) {
         if (account == null) return null;
         ProductVO vo = new ProductVO();
         // 手动设置字段（避免使用反射工具，更安全）

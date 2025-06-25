@@ -4,7 +4,8 @@ package com.example.service.impl;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.RestBean;
-import com.example.entity.dto.ProductUpdateVO;
+import com.example.entity.dto.ProductInfoAccountDto;
+import com.example.entity.vo.request.ProductAddVO;
 import com.example.mapper.ProductInfoUpdateAccountMapper;
 import com.example.service.ProductInfoUpdateAccountService;
 import com.example.utils.JwtUtils;
@@ -13,58 +14,148 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.util.List;
+import java.util.Objects;
+
+import static com.example.service.impl.ProductInfoAddAccountImpl.userIdVerify;
 
 @Service
-public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateAccountMapper, ProductUpdateVO>
+public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateAccountMapper, ProductInfoAccountDto>
         implements ProductInfoUpdateAccountService {
 
     @Resource
     JwtUtils utils;
 
+    /**
+     * 修改单个
+     * @param request
+     * @param account
+     * @return
+     * @param <T>
+     */
     @Override
-    public <T> RestBean<T> updateSingleProductInfo(HttpServletRequest request, ProductUpdateVO account){
-        boolean verify = this.userRoleVerify(request);
-        if(!verify)return RestBean.forbidden("权限不足");
+    public <T> RestBean<T> updateSingleProductInfo(HttpServletRequest request, ProductInfoAccountDto account){
+        //验证角色是否正确（农户或者管理员）
+        boolean verifyRole = utils.userRoleVerify(request);
+        if(!verifyRole)return RestBean.forbidden("只有农户才能修改价格");
+        //验证修改的产品 为当前用户下的 产品 （管理员不受限） -->农户只能修改自己的农产品
+        Integer fid = account.getFarmerId();
+        boolean verifyId = this.getUserIdVerify(request,fid);
+        if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
+
         if(update(account)) return RestBean.success();
-        return  RestBean.failure(500,"内部错误，请联系管理员");
+        return  RestBean.failure(401,"参数有误");
     }
 
     @Override
-    public  <T> RestBean<T> addProductInfo(HttpServletRequest request, ProductUpdateVO account){
-
-        return null;
+    public <T> RestBean<T> updateSingleProductInfoAdmin(HttpServletRequest request, ProductInfoAccountDto account){
+        //验证角色是否正确（农户或者管理员）
+        boolean verifyRole = utils.userRoleVerifyAdmin(request);
+        if(!verifyRole)return RestBean.forbidden("权限不足");
+        if(updateAdmin(account)) return RestBean.success();
+        return  RestBean.failure(500,"参数有误");
     }
 
+    /**
+     * 管理员和农户本人可批量修改产品信息
+     * @param request
+     * @param accountList
+     * @return
+     * @param <T>
+     */
+
+    @Override
+    public <T> RestBean<T> updateAllProductInfo(HttpServletRequest request
+            , List<ProductInfoAccountDto> accountList){
+        // 权限验证
+        if (!utils.userRoleVerify(request)) {
+            return RestBean.forbidden("只有农户才能修改价格");
+        }
+        // 批量更新
+        try {
+            boolean allSuccess = true;
+            for (ProductInfoAccountDto account : accountList) {
+                Integer fid = account.getFarmerId();
+                if(!getUserIdVerify(request,fid))
+                    return  RestBean.failure(500,"无权限的操作，请检查农产品编号");
+                // 对每个产品执行更新
+                if (!update(account)) {
+                    allSuccess = false;
+                    // 记录失败日志（实际生产环境应更详细）
+                    log.error(String.format("更新产品失败，产品ID:%s", account.getProductId()));
+                }
+            }
+            return allSuccess ?
+                    RestBean.success() :
+                    RestBean.failure(400, "部分产品更新失败，请检查数据");
+        } catch (Exception e) {
+            log.error("批量更新产品异常", e);
+            return RestBean.failure(500, "批量更新失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public <T> RestBean<T> updateAllProductInfoAdmin(HttpServletRequest request
+            , List<ProductInfoAccountDto> accountList){
+        // 权限验证
+        if (!utils.userRoleVerifyAdmin(request)) {
+            return RestBean.forbidden("权限不足");
+        }
+        // 批量更新
+        try {
+            boolean allSuccess = true;
+            for (ProductInfoAccountDto account : accountList) {
+                // 对每个产品执行更新
+                if (!updateAdmin(account)) {
+                    allSuccess = false;
+                    // 记录失败日志（实际生产环境应更详细）
+                    log.error(String.format("更新产品失败，产品ID:%s", account.getProductId()));
+                }
+            }
+            return allSuccess ?
+                    RestBean.success() :
+                    RestBean.failure(400, "部分产品更新失败，请检查数据");
+        } catch (Exception e) {
+            log.error("批量更新产品异常", e);
+            return RestBean.failure(500, "批量更新失败: " + e.getMessage());
+        }
+    }
     /**
      * 权限验证
      * @param request
      * @return
      */
-    private boolean userRoleVerify( HttpServletRequest request){
-        // 1.获取前端传入的token信息 解析角色信息
-        String authorization = request.getHeader("Authorization");
-        DecodedJWT jwt = utils.resolveJWT(authorization);
-        String role = utils.toRole(jwt);
-        return !role.equals("2");
-    }
-    private boolean update(ProductUpdateVO account){
 
+
+    private Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
+        return userIdVerify(request, fid, utils);
+    }
+
+
+    //用户需要将update消息提交到redis队列中，等待管理员用户确认后生效
+    private boolean update(ProductInfoAccountDto account){
         Integer productId = account.getProductId();
         Integer farmerId= account.getFarmerId();
-        String name = account.getName();
-        String category = account.getCategory();
         BigDecimal price = account.getPrice();
         BigDecimal stock = account.getStock();
-        String originLocation = account.getOriginLocation();
-
         return  this.update()
                 .eq("product_id",productId)
                 .eq("farmer_id",farmerId)
-                .set("name",name)
-                .set("category",category)
                 .set("price",price)
                 .set("stock",stock)
-                .set("origin_location",originLocation)
+                .set("is_active",0)
+                .update();
+    }
+
+    private boolean updateAdmin(ProductInfoAccountDto account){
+        Integer productId = account.getProductId();
+        Integer farmerId= account.getFarmerId();
+        byte active = account.getIsActive();
+        return  this.update()
+                .eq("product_id",productId)
+                .eq("farmer_id",farmerId)
+                .set("is_active",active)
                 .update();
     }
 

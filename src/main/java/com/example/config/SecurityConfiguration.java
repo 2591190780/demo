@@ -48,7 +48,7 @@ public class SecurityConfiguration {
                                 "/webjars/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
-                                ,"/api/selectProducts/**"
+                            //    ,"/api/selectProducts/**"
                         ).permitAll() //knife4j相关接口
                         .requestMatchers("api/auth/**","/error").permitAll()
                         .anyRequest().authenticated()

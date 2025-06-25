@@ -7,6 +7,7 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.converter.StringHttpMessageConverter;
@@ -118,6 +119,22 @@ public class JwtUtils {
     public String toRole(DecodedJWT decodedJWT) {
         Map<String , Claim>claims = decodedJWT.getClaims();
         return claims.get("role").asString();
+    }
+
+    public boolean userRoleVerify(HttpServletRequest request){
+        // 1.获取前端传入的token信息 解析角色信息
+        String authorization = request.getHeader("Authorization");
+        DecodedJWT jwt = this.resolveJWT(authorization);
+        String role = this.toRole(jwt);
+        return role.equals("1");
+    }
+
+    public boolean userRoleVerifyAdmin(HttpServletRequest request){
+        // 1.获取前端传入的token信息 解析角色信息
+        String authorization = request.getHeader("Authorization");
+        DecodedJWT jwt = this.resolveJWT(authorization);
+        String role = this.toRole(jwt);
+        return role.equals("3");
     }
 
     private String converToken(String headertoken){  //验证前端发送的token，并返回
