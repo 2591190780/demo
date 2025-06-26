@@ -34,16 +34,6 @@ public class ProductInfoUpdateController {
         return service.updateAllProductInfo(request,accountDtos);
     }
 
-    @PutMapping("/updateAll/admin")
-    public RestBean<Void> updateAllProductsAdmin(HttpServletRequest  request
-            ,  @RequestBody List<ProductInfoAccountDto> accountDtos)  {
-        return service.updateAllProductInfoAdmin(request,accountDtos);
-    }
 
-    @PutMapping("/updateSingle/admin")
-    public RestBean<Void> updateProductsAdmin(HttpServletRequest  request
-            ,  @RequestBody ProductInfoAccountDto accountDto)  {
-        return service.updateSingleProductInfoAdmin(request, accountDto);
-    }
 
 }

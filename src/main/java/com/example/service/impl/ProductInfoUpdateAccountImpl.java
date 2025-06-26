@@ -8,6 +8,7 @@ import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.request.ProductAddVO;
 import com.example.mapper.ProductInfoUpdateAccountMapper;
 import com.example.service.ProductInfoUpdateAccountService;
+import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +28,9 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
     @Resource
     JwtUtils utils;
 
+    @Resource
+    InfoToRedisUtils redisUtils;
+
     /**
      * 修改单个
      * @param request
@@ -44,7 +48,11 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         boolean verifyId = this.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
 
-        if(update(account)) return RestBean.success();
+        if(update(account)) {
+            redisUtils.InfoToRedis(account.getProductId(), account.getFarmerId()
+                    , "update","product");
+            return RestBean.success();
+        }
         return  RestBean.failure(401,"参数有误");
     }
 
@@ -85,6 +93,8 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
                     // 记录失败日志（实际生产环境应更详细）
                     log.error(String.format("更新产品失败，产品ID:%s", account.getProductId()));
                 }
+                redisUtils.InfoToRedis(account.getProductId(), account.getFarmerId()
+                        , "update","product");
             }
             return allSuccess ?
                     RestBean.success() :

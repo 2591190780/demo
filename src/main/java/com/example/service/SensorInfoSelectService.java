@@ -1,4 +1,7 @@
 package com.example.service;
 
-public interface SensorInfoSelectService {
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.entity.dto.SensorInfoDto;
+
+public interface SensorInfoSelectService extends IService<SensorInfoDto> {
 }

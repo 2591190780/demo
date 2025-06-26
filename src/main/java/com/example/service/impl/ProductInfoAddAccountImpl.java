@@ -11,6 +11,7 @@ import com.example.mapper.ProductInfoAddAccountMapper;
 import com.example.service.ProductInfoAddAccountService;
 import com.example.utils.BlockchainHashUtil;
 import com.example.utils.Const;
+import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,8 +35,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
     BlockchainHashUtil hashUtil;
 
     @Resource
-    StringRedisTemplate template;
-
+    InfoToRedisUtils redisUtils;
     /**
      * 生成产品存证哈希
      *
@@ -64,9 +64,11 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         boolean verifyId = this.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("权限不足");
 
-        //农户提交新产品的信息 此时需要等待管理员确认后才激活产品售卖。
+        //农户提交新产品的信息    此时需要等待管理员确认后才激活产品售卖(功能注释了)。
         if(this.generateProductAccount(vo)){
-            return infoToRedis(vo);
+            redisUtils.InfoToRedis(vo.getProductId(), vo.getFarmerId()
+                    , "add","product");
+            return RestBean.success();
         }
         return RestBean.failure(401,"请检查传入的参数");
     }
@@ -86,36 +88,27 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
             for (ProductAddVO vo : voList) {
                 if (!vo.getFarmerId().equals(currentUserId)) {
                     // 发现权限问题立即回滚事务
+
                     return RestBean.forbidden("请检查产品所属的农户");
                 }
             }
         // 4. 批量创建产品
         for (ProductAddVO vo : voList) {
-            if (!this.generateProductAccount(vo)) {
-                // 任意产品添加失败时回滚整个事务
-                throw new IllegalArgumentException("添加产品失败，请检查参数");
+            if (!this.generateProductAccount(vo)) {// 任意产品添加失败时回滚整个事务
+                throw new IllegalArgumentException("添加产品失败，请检查参数");}
+            else{
+            redisUtils.InfoToRedis(vo.getProductId(), vo.getFarmerId()
+                    , "add","product");
             }
-            infoToRedis(vo);
         }
-
         // 5. 全部成功时返回
-        return RestBean.success();
-    }
-
-    private <T> RestBean<T> infoToRedis (ProductAddVO vo) {
-        /**
-         * 农户添加了新的商品，需要管理员在一天内进行确认。
-         */
-        if (Boolean.TRUE.equals(template.hasKey(Const.JWT_PRODUCT_ADD_LIST + vo.getProductId())))
-            return  RestBean.failure(401,"请勿重复提交同一个产品");
-        template.opsForValue().set(Const.JWT_PRODUCT_ADD_LIST+vo.getProductId()
-                ,vo.getFarmerId().toString(),1, TimeUnit.DAYS);
         return RestBean.success();
     }
 
     private Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
         return userIdVerify(request, fid, utils);
     }
+
 
     public static Boolean userIdVerify(HttpServletRequest request, Integer fid, JwtUtils utils) {
         String authorization = request.getHeader("Authorization");
@@ -126,8 +119,8 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         return id.equals(fid);
     }
 
-    private boolean generateProductAccount(ProductAddVO vo){
-        if (vo == null) return false;
+    private Boolean generateProductAccount(ProductAddVO vo){
+        if (vo == null) { RestBean.failure(401,"错误的参数类型"); return false;}
         //生成hash凭证
         Integer productId =  vo.getProductId();
         Integer farmerId = vo.getFarmerId();
@@ -153,6 +146,14 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
                 now,
                 active
         );
-        return this.save(dto);
+
+        if(this.save(dto)){
+            RestBean.success();
+            vo.setProductId(dto.getProductId());
+            return true;}
+        RestBean.failure(500,"未知错误请联系管理员");
+        return false ;
     }
+
+
 }

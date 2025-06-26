@@ -8,6 +8,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Component
@@ -35,6 +36,14 @@ public class MailQueueListener {
         if(message==null)return;
         mailSender.send(message);
     }
+
+//    @RabbitHandler
+//    public void sendApplyMessage(Map<String,Object> data) {
+//        String type =(String) data.get("type"); //类型：添加，修改，删除
+//        Integer id =(Integer) data.get("id"); //申请人ID
+//        LocalDateTime time = (LocalDateTime) data.get("time"); //申请时间
+//
+//    }
     private SimpleMailMessage createSimpleMailMessage(String title, String content,String email) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setSubject(title);

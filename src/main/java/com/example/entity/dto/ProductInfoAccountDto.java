@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.validator.constraints.Length;
+import org.springframework.data.annotation.Id;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 @Setter
 public class ProductInfoAccountDto {
     // * 产品ID（主键）
+    @Id
     @TableId(type = IdType.AUTO)  // 自增主键
     private Integer productId;
     // * 农户ID（外键）

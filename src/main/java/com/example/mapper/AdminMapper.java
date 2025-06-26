@@ -1,9 +1,11 @@
 package com.example.mapper;
 
+
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.example.entity.dto.SensorDataInfoDto;
+import com.example.entity.vo.response.PendingApplicationVO;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface SensorDataInfoMapper extends BaseMapper<SensorDataInfoDto> {
+public interface AdminMapper  extends BaseMapper<PendingApplicationVO> {
+
 }

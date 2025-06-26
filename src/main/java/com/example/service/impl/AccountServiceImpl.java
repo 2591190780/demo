@@ -48,6 +48,14 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     JwtUtils jwtUtils;
 
     @Override
+    public Account findAccountById(Integer id){
+        if (id==null)return null;
+        return this.query()
+                .eq("id",id)
+                .one();
+    }
+
+    @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         Account account =this.findAccountByNameOrEmail(username);
         if (account == null) throw new UsernameNotFoundException("用户名或密码错误");
@@ -188,6 +196,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .eq("email",text)
                 .one();
     }
+
+
 
     private boolean verifyLimit(String ip){
         String key=Const.VERIFY_EMAIL_LIMIT+ip;
