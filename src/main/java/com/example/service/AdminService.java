@@ -4,11 +4,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.entity.PendingApplication;
 import com.example.entity.RestBean;
 import com.example.entity.vo.response.PendingApplicationVO;
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
 public interface AdminService extends IService<PendingApplicationVO> {
-    List<PendingApplicationVO> getPendingApplications();
-    boolean handleApplicationSingle(PendingApplicationVO vo);
+    List<PendingApplicationVO> getPendingApplications(HttpServletRequest request);
+    boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList);
 
 }

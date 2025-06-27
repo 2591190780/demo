@@ -14,6 +14,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.apache.ibatis.jdbc.Null;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -36,6 +37,7 @@ public class AdminController {
             , @RequestBody List<ProductInfoAccountDto> accountDtos)  {
         return service.updateAllProductInfoAdmin(request,accountDtos);
     }
+
     @PutMapping("/updateSingle/admin")
     public RestBean<Void> updateProductsAdmin(HttpServletRequest  request
             ,  @RequestBody ProductInfoAccountDto accountDto)  {
@@ -45,11 +47,11 @@ public class AdminController {
      * 获取所有待处理的申请列表
      */
     @GetMapping("/admin/pending-applications")
-    public RestBean<Object>  adminApplySelect(HttpServletResponse response) throws IOException {
+    public <T>RestBean<T>  adminApplySelect(HttpServletRequest request ,HttpServletResponse response) throws IOException {
 
-        List<PendingApplicationVO> pendingApplicationVOS = adminService.getPendingApplications();
+        List<PendingApplicationVO> pendingApplicationVOS = adminService.getPendingApplications(request);
             if (pendingApplicationVOS.isEmpty()) {
-                return RestBean.failure(401,"内部错误，请联系管理员");
+                return RestBean.failure(401,"没有任何申请");
             }
         response.setContentType("application/json;Charset=utf-8");
         response.getWriter().write(RestBean.success(pendingApplicationVOS).asJsonString());
@@ -57,11 +59,12 @@ public class AdminController {
     }
 
     @PutMapping("/admin/handling-applications")
-    public RestBean<Void> adminApplyHandlingSelectSingle(HttpServletResponse response,
-                                                   HttpServletRequest request) throws IOException {
+    public RestBean<Void> adminApplyHandling(
+            HttpServletRequest request
+            , @RequestBody  List<PendingApplicationVO> voList) throws IOException {
+         return this.adminService.handleApplication(request,voList)
+                 ? RestBean.success():RestBean.failure(500,"参数有误");
 
-          //  this.adminService.handleApplicationSingle();
-        return null;
     }
 
 

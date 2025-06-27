@@ -13,4 +13,5 @@ public interface ProductInfoUpdateAccountService extends IService<ProductInfoAcc
      <T> RestBean<T> updateAllProductInfo(HttpServletRequest request, List<ProductInfoAccountDto> accountList);
      <T> RestBean<T> updateSingleProductInfoAdmin(HttpServletRequest request, ProductInfoAccountDto account);
      <T> RestBean<T> updateAllProductInfoAdmin(HttpServletRequest request, List<ProductInfoAccountDto> accountList);
+     boolean productUpdateAdmin(Integer productId,Integer farmerId,byte active);
 }

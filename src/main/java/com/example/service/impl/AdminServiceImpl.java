@@ -1,34 +1,29 @@
 package com.example.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.entity.PendingApplication;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.vo.response.PendingApplicationVO;
-
 import com.example.mapper.AdminMapper;
 import com.example.service.AccountService;
 import com.example.service.AdminService;
 import com.example.service.ProductInfoUpdateAccountService;
+import com.example.service.SensorInfoUpdateService;
 import com.example.utils.Const;
 import com.example.utils.InfoToRedisUtils;
+import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
-
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.time.Duration;
 
 @Service
 public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicationVO> implements AdminService {
-
 
     @Resource
     AccountService accountService;
@@ -39,9 +34,22 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
     @Resource
     InfoToRedisUtils redisUtils;
 
+    @Resource
+    JwtUtils utils;
+
+    @Resource
+    ProductInfoUpdateAccountService productInfoUpdateAccountService;
+
+    @Resource
+    SensorInfoUpdateService sensorInfoUpdateService;
+
     private static final Duration EXPIRE_DURATION = Duration.ofHours(24);
 
-    public List<PendingApplicationVO> getPendingApplications()  {
+    @Override
+    public List<PendingApplicationVO> getPendingApplications(HttpServletRequest request)  {
+        if (!utils.userRoleVerifyAdmin(request)) {
+            return null;
+        }
         // 1. 获取所有操作类型
         String[] operationTypes = {Const.FARMER_ADD_APPLY_LIST, Const.FARMER_UPDATE_APPLY_LIST
                 , Const.FARMER_DELETE_APPLY_LIST};
@@ -80,7 +88,6 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 Account farmer = accountService.findAccountById(Integer.parseInt(farmerId));
                 // 6. 获取目标对象详情（根据类型查询不同表）
                 Object targetInfo = redisUtils.getTargetInfo(targetType, targetId);
-
                 //redis缓存中 过期时间以ttl存储。需要反推。
                 long expireMillis  =  template.opsForValue().getOperations().getExpire(applyListKey);
                 long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;
@@ -102,30 +109,63 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         }
         return  pendingApplicationVOS;
     }
-
-    public boolean handleApplicationSingle(PendingApplicationVO vo) {
+    @Override
+    public boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList) {
         // 1. 验证复合键格式
         // 1. 获取所有操作类型
-        String applyListKey = "apply:"+vo.getOperation();
-        String compositeKey = applyListKey +":"+vo.getTargetType()+":"+vo.getTargetId()+":"+vo.getFarmerId();
-        if (!compositeKey.startsWith("apply:") ) {
+        if (!utils.userRoleVerifyAdmin(request)) {
+            RestBean.forbidden("权限不足");
             return false;
         }
-        // 2. 解析复合键
+        for (PendingApplicationVO vo : voList) {
+            String applyListKey = "apply:" + vo.getOperation();
+
+            String tarType = switch (vo.getTargetType()) {
+                case "product" -> Const.PRODUCT_ID_LIST;
+                case "sensor" -> Const.SENSOR_ID_LIST;
+                case "nft" -> Const.NFT_ID_LIST;
+                default -> null;
+            };
+            String compositeKey = applyListKey + ":" + tarType+ ":" + vo.getTargetId() + ":" + vo.getFarmerId();
+            // 2. 解析复合键
+            String operation = vo.getOperation();
+            String targetId = vo.getTargetId();
+            String farmerId = vo.getFarmerId();
+            // 3. 执行实际业务逻辑
+            this.objectConfirm(vo);
+            // 4. 从Redis中删除记录和索引
+            redisUtils.deleteApplication(compositeKey, operation, tarType, farmerId);
+//        // 5. 发送通知给农户
+//        notifyFarmer(farmerId, operation, targetType, targetId, approved);
+        }
+        return true;
+
+    }
+
+    private Object objectConfirm (PendingApplicationVO vo){
+        if (vo == null) return null;
         String operation = vo.getOperation();
         String targetType = vo.getTargetType();
         String targetId = vo.getTargetId();
         String farmerId = vo.getFarmerId();
-        // 3. 执行实际业务逻辑
-
-
-        // 4. 从Redis中删除记录和索引
-        redisUtils.deleteApplication(compositeKey, operation, targetType, farmerId);
-
-//        // 5. 发送通知给农户
-//        notifyFarmer(farmerId, operation, targetType, targetId, approved);
-
-        return true;
+        Object result = switch (targetType) {
+            case "product" -> productInfoUpdateAccountService.productUpdateAdmin(
+                    this.convertToInteger(targetId),
+                    this.convertToInteger(farmerId), (byte) 1);
+            //case "sensor":
+            default -> throw new IllegalStateException("未知的数据类型" + targetType);
+        };
+        return result;
     }
 
+    private Integer convertToInteger (String value){
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null; // 或者记录日志
+        }
+    }
 }

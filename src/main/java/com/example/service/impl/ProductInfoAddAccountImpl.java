@@ -76,7 +76,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
 
     @Override
     public  RestBean<Void> addUserProductAll(HttpServletRequest request, List<ProductAddVO> voList){
-        // 1. 验证角色（农户或管理员）
+        // 1. 验证角色（农户）
         if (!utils.userRoleVerify(request)) {
             return RestBean.forbidden("只有农户可以增加产品");
         }

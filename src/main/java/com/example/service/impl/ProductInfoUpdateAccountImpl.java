@@ -1,11 +1,9 @@
 package com.example.service.impl;
 
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.RestBean;
 import com.example.entity.dto.ProductInfoAccountDto;
-import com.example.entity.vo.request.ProductAddVO;
 import com.example.mapper.ProductInfoUpdateAccountMapper;
 import com.example.service.ProductInfoUpdateAccountService;
 import com.example.utils.InfoToRedisUtils;
@@ -15,9 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.sql.Date;
 import java.util.List;
-import java.util.Objects;
 
 import static com.example.service.impl.ProductInfoAddAccountImpl.userIdVerify;
 
@@ -61,7 +57,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         //验证角色是否正确（农户或者管理员）
         boolean verifyRole = utils.userRoleVerifyAdmin(request);
         if(!verifyRole)return RestBean.forbidden("权限不足");
-        if(updateAdmin(account)) return RestBean.success();
+        if(productUpdateAdmin(account.getProductId(),account.getFarmerId(), account.getIsActive())) return RestBean.success();
         return  RestBean.failure(500,"参数有误");
     }
 
@@ -117,7 +113,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
             boolean allSuccess = true;
             for (ProductInfoAccountDto account : accountList) {
                 // 对每个产品执行更新
-                if (!updateAdmin(account)) {
+                if (!productUpdateAdmin(account.getProductId(),account.getFarmerId(),account.getIsActive())) {
                     allSuccess = false;
                     // 记录失败日志（实际生产环境应更详细）
                     log.error(String.format("更新产品失败，产品ID:%s", account.getProductId()));
@@ -138,13 +134,13 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
      */
 
 
-    private Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
+    public Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
         return userIdVerify(request, fid, utils);
     }
 
 
     //用户需要将update消息提交到redis队列中，等待管理员用户确认后生效
-    private boolean update(ProductInfoAccountDto account){
+    public boolean update(ProductInfoAccountDto account){
         Integer productId = account.getProductId();
         Integer farmerId= account.getFarmerId();
         BigDecimal price = account.getPrice();
@@ -158,10 +154,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
                 .update();
     }
 
-    private boolean updateAdmin(ProductInfoAccountDto account){
-        Integer productId = account.getProductId();
-        Integer farmerId= account.getFarmerId();
-        byte active = account.getIsActive();
+    public boolean productUpdateAdmin(Integer productId,Integer farmerId,byte active){
         return  this.update()
                 .eq("product_id",productId)
                 .eq("farmer_id",farmerId)

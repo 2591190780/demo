@@ -11,6 +11,7 @@ import org.yaml.snakeyaml.events.Event;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -71,37 +72,23 @@ public class InfoToRedisUtils {
         return RestBean.success();
     }
 
-    public  <T> RestBean<T> InfoConfirm () {
+    /**
+     * 从Redis中删除申请记录
+     */
 
-        return null;
+    public void deleteApplication(String compositeKey, String operation,
+                                  String targetType, String farmerId) {
+        // 删除主记录
+        template.delete(compositeKey);
+
+        // 从操作类型索引中删除
+        String applyListKey = "apply:" + operation;
+        template.opsForSet().remove(applyListKey,compositeKey);
+        // 从农户索引中删除
+        String farmerIndexKey = Const.FARMER_INDEX + this.convertToInteger(farmerId);
+        template.opsForSet().remove(farmerIndexKey, compositeKey);
     }
 
-    public Set<String> getKeysByFarmerId(Integer farmerId) {
-        // 1. 获取农户索引键
-        String farmerIndexKey = Const.FARMER_INDEX + farmerId;
-        // 2. 获取该农户的所有申请键
-        Set<String> compositeKeys = template.opsForSet().members(farmerIndexKey);
-        if (compositeKeys == null || compositeKeys.isEmpty()) {
-            return Collections.emptySet();
-        }
-        // 3. 过滤已过期的键
-        Set<String> validKeys = new HashSet<>();
-        for (String key : compositeKeys) {
-            if (Boolean.TRUE.equals(template.hasKey(key))) {
-                validKeys.add(key);
-            } else {
-                // 清理过期键
-                template.opsForSet().remove(farmerIndexKey, key);
-                // 从操作类型集合中移除
-                String operationType = key.split(":")[0];
-                template.opsForSet().remove(operationType, key);
-                // 从目标类型集合中移除
-                String targetType = key.split(":")[1];
-                template.opsForSet().remove(targetType, key);
-            }
-        }
-        return validKeys;
-    }
 
     /**
      * 根据目标类型查询详细信息
@@ -109,7 +96,7 @@ public class InfoToRedisUtils {
     public Object getTargetInfo(String targetType, String targetId) {
         try {
             int id = Integer.parseInt(targetId);
-
+            //查询信息
             switch (targetType) {
                 case "product":
                     return selectAccountService.getProductInfoAccountByProductId(id);
@@ -124,65 +111,17 @@ public class InfoToRedisUtils {
             return null;
         }
     }
-    /**
-     * 从Redis中删除申请记录
-     */
-    public void deleteApplication(String compositeKey, String operation,
-                                  String targetType, String farmerId) {
-        // 删除主记录
-        template.delete(compositeKey);
-
-        // 从操作类型索引中删除
-        String applyListKey = "apply:" + operation;
-        template.opsForSet().remove(applyListKey, compositeKey);
-
-        // 从目标类型索引中删除
-        String targetListKey = "target:" + targetType;
-        template.opsForSet().remove(targetListKey, compositeKey);
-
-        // 从农户索引中删除
-        String farmerIndexKey = Const.FARMER_INDEX + farmerId;
-        template.opsForSet().remove(farmerIndexKey, compositeKey);
+    private Integer convertToInteger (String value){
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null; // 或者记录日志
+        }
     }
 
-    /**
-     * 通知农户处理结果
-     */
-//    private void notifyFarmer(String farmerId, String operation,
-//                              String targetType, String targetId, boolean approved) {
-//        String message = String.format(
-//                "您的%s%s申请(ID:%s)已被管理员%s",
-//                getChineseTargetType(targetType),
-//                getChineseOperation(operation),
-//                targetId,
-//                approved ? "批准" : "拒绝"
-//        );
-//
-//        notificationService.sendNotification(
-//                Integer.parseInt(farmerId),
-//                approved ? "申请批准通知" : "申请拒绝通知",
-//                message
-//        );
-//    }
 
-    // 辅助方法：获取中文操作类型
-    private String getChineseOperation(String operation) {
-        return switch (operation) {
-            case "add" -> "添加";
-            case "update" -> "更新";
-            case "delete" -> "删除";
-            default -> operation;
-        };
-    }
-
-    // 辅助方法：获取中文目标类型
-    private String getChineseTargetType(String targetType) {
-        return switch (targetType) {
-            case "product" -> "商品";
-            case "sensor" -> "传感器";
-            case "nft" -> "NFT";
-            default -> targetType;
-        };
-    }
 
 }
