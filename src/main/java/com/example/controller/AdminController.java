@@ -43,6 +43,8 @@ public class AdminController {
             ,  @RequestBody ProductInfoAccountDto accountDto)  {
         return service.updateSingleProductInfoAdmin(request, accountDto);
     }
+
+
     /**
      * 获取所有待处理的申请列表
      */

@@ -26,9 +26,4 @@ public class SensorInfoAddController {
         return service.addSensorInfoDto(request,dto);
     }
 
-
-
-
-
-
 }

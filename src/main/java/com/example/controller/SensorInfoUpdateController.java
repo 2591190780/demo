@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/AUSensor")
 public class SensorInfoUpdateController {
@@ -21,4 +23,10 @@ public class SensorInfoUpdateController {
     public RestBean<Void> updateSensorSingle(HttpServletRequest request, @RequestBody SensorInfoDto dto) {
         return service.updateSensorInfoDto(request,dto);
     }
+
+    @PutMapping("/updateMutil")
+    public RestBean<Void> updateSensorMutil(HttpServletRequest request, @RequestBody List<SensorInfoDto> dto) {
+        return service.updateAllSensorInfo(request,dto);
+    }
+
 }

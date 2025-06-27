@@ -54,14 +54,10 @@ public class AuthorizeController {
     }
 
     @PostMapping("/resetPassword") //密码验证方式修改密码
-    public RestBean<Void> resetPasswordConfirm(@RequestBody @Valid ResetPasswordByPasswordVO dto,
+    public RestBean<Void> resetPasswordConfirm(@RequestBody  ResetPasswordByPasswordVO dto,
                                              HttpServletRequest request ){
         String result = accountService.resetPasswordByPassword(dto, request);
-        if (result == null) {
-            return RestBean.success();
-        } else {
-            return RestBean.failure(400, result);
-        }
+        return result ==null ? RestBean.success():RestBean.failure(401,"修改失败");
     }
 
 

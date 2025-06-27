@@ -53,6 +53,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         // 1. 获取所有操作类型
         String[] operationTypes = {Const.FARMER_ADD_APPLY_LIST, Const.FARMER_UPDATE_APPLY_LIST
                 , Const.FARMER_DELETE_APPLY_LIST};
+
         List <PendingApplicationVO> pendingApplicationVOS = new ArrayList<>();
         for (String operation : operationTypes) {
             String applyListKey = "apply:" + operation ;
@@ -84,10 +85,13 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 };
                 String targetId = parts[3];
                 String farmerId = parts[4];
+
                 // 5. 获取农户信息
                 Account farmer = accountService.findAccountById(Integer.parseInt(farmerId));
+
                 // 6. 获取目标对象详情（根据类型查询不同表）
                 Object targetInfo = redisUtils.getTargetInfo(targetType, targetId);
+
                 //redis缓存中 过期时间以ttl存储。需要反推。
                 long expireMillis  =  template.opsForValue().getOperations().getExpire(applyListKey);
                 long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;

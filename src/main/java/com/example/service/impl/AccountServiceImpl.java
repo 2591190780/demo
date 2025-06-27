@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -151,7 +152,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         String username = vo.getUsername();
         String oldPassword = vo.getOldPassword();
         String newPassword = vo.getNewPassword();
-
+        if(username == "" || Objects.equals(oldPassword, "") || newPassword ==null) return "用户名密码不能为空";
         // 1. 查询用户但不验证密码（只获取存储的加密密码）
         Account account = this.query().eq("username", username).one();
         if (account == null) {

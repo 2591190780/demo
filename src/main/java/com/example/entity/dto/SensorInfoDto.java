@@ -22,7 +22,7 @@ public class SensorInfoDto {
     // * 传感器在农场安装位置
     private String location;
     // * 传感器是否激活
-    private  Boolean is_active;
+    private  Byte is_active;
     // * 传感创建时间
     private LocalDateTime create_time;
     // * 传感器更新时间
