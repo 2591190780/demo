@@ -17,4 +17,5 @@ public interface AccountService extends IService<Account> , UserDetailsService {
      String resetConfirm(ConfirmResetVO confirmVO);  //验证重置密码请求的验证码是否正确
      String resetEmailAccountPassword(EmailResetVO emailResetVO); //通过邮箱验证码重置密码
      String resetPasswordByPassword(ResetPasswordByPasswordVO vo, HttpServletRequest request);
+     String updateRoleByApply(Account account);
 }

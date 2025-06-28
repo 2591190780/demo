@@ -1,8 +1,8 @@
 package com.example.utils;
 
+import com.example.entity.dto.TransactionAccountDto;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -40,11 +40,22 @@ public class BlockchainHashUtil {
                 normalizeString(originLocation),
                 formatTimestamp(createTime)
         );
-
         // 2. 计算SHA-256哈希
         String hash = sha256(formattedData);
-
         // 3. 添加0x前缀（总长度66字符）
+        return "0x" + hash;
+    }
+
+    public  String  generateTransactionHash(TransactionAccountDto dto){
+        // 1. 标准化数据格式
+        String formattedData = String.format(
+            "BUY_ID:"+dto.getBuyer_id()
+                + "PRODUCT_ID:"+dto.getProduct_id()
+                + "SELLER_ID:"+dto.getSeller_id()
+                +"QUANTITY:"+dto.getQuantity()
+        );
+
+        String hash = sha256(formattedData);
         return "0x" + hash;
     }
 

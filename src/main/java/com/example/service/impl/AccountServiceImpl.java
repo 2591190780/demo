@@ -10,12 +10,11 @@ import com.example.entity.vo.request.EmailResetVO;
 import com.example.entity.vo.request.ResetPasswordByPasswordVO;
 import com.example.mapper.AccountMapper;
 import com.example.service.AccountService;
-import com.example.utils.Const;
-import com.example.utils.FlowUtils;
-import com.example.utils.JwtUtils;
+import com.example.utils.*;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.User;
@@ -47,6 +46,22 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     @Resource
     JwtUtils jwtUtils;
+
+    @Resource
+    WalletBlockChainUtil walletBlockChainUtil;
+
+    @Resource
+    InfoToRedisUtils infoToRedisUtils;
+
+    @Override
+    public String updateRoleByApply(Account account){
+
+        infoToRedisUtils.InfoToRedis(account.getId(), account.getId()
+                , "update","userInfo");
+
+        return null;
+
+    }
 
     @Override
     public Account findAccountById(Integer id){
@@ -104,14 +119,19 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
         java.util.Date utilDate = new java.util.Date();
         java.sql.Timestamp sqlDate = new java.sql.Timestamp(utilDate.getTime());
+
+        Map<String,String> mapList =  walletBlockChainUtil.generateUserWallet();
         Account account = new Account(null,
                 username,
                 encodePassword,
                 email,
                 "2",
-                sqlDate);
+                sqlDate,
+                mapList.get("address")
+                );
         if(this.save(account)){
             this.RedisClearCode(email);
+
             return null;
         }else{
             return "内部错误，请联系管理员";
@@ -152,7 +172,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         String username = vo.getUsername();
         String oldPassword = vo.getOldPassword();
         String newPassword = vo.getNewPassword();
-        if(username == "" || Objects.equals(oldPassword, "") || newPassword ==null) return "用户名密码不能为空";
+        if(Objects.equals(username, "") || Objects.equals(oldPassword, "") || newPassword ==null) return "用户名密码不能为空";
         // 1. 查询用户但不验证密码（只获取存储的加密密码）
         Account account = this.query().eq("username", username).one();
         if (account == null) {
@@ -164,18 +184,22 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
         //使当前令牌失效
         String authorization = request.getHeader("Authorization");
-        if (authorization != null) {
             // 同时验证旧密码并更新新密码
-            boolean updated = this.update()
+        boolean updated = this.update()
                     .eq("id", account.getId())  // 使用主键更安全
                     .eq("password", account.getPassword()) // 确保密码未变化
                     .set("password", Encoder.encode(newPassword))
                     .update();
+        if (Boolean.TRUE.equals(updated) & authorization != null){
             jwtUtils.invalidDateJWT(authorization);
-            return updated ? null : "密码更新失败，请重试";
+            return  null ;
+        }else if(Boolean.TRUE.equals(updated)){
+            return null;
+        }else{
+            return "修改失败";
         }
-        return "内部错误，请联系管理员" ;
     }
+
 
 
     public void RedisClearCode(String email){
@@ -197,8 +221,6 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 .eq("email",text)
                 .one();
     }
-
-
 
     private boolean verifyLimit(String ip){
         String key=Const.VERIFY_EMAIL_LIMIT+ip;

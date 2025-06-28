@@ -16,6 +16,7 @@ public class Const {
     public static final  String PRODUCT_ID_LIST ="productIdList";
     public static final  String SENSOR_ID_LIST = "sensorIdList";
     public static final  String NFT_ID_LIST = "nftIdList";
+    public static final  String USET_ID_LIST = "usetIdList";
 
     //经常使用的属性
     public static  final  String JWT_BLACK_LIST="jwt_blacklist:";
@@ -34,5 +35,10 @@ public class Const {
     public static  final  String ROLE_OF_USER_ORDINARY="Ordinary";  //普通用户  2
     public static  final  String ROLE_OF_USER_ADMINISTRATOR="Administrator"; //管理员  3
 
+    /**
+     * 区块链
+     */
+    public static  final  String BLOCK_CHAIN_WALLET="BlockchainWallet";
+    public static  final  String BLOCK_CHAIN_PRIVATE_KEY="BlockchainPrivateKey";
 }
 

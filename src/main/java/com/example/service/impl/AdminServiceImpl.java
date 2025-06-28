@@ -7,8 +7,8 @@ import com.example.entity.vo.response.PendingApplicationVO;
 import com.example.mapper.AdminMapper;
 import com.example.service.AccountService;
 import com.example.service.AdminService;
-import com.example.service.ProductInfoUpdateAccountService;
-import com.example.service.SensorInfoUpdateService;
+import com.example.service.product.ProductInfoUpdateAccountService;
+import com.example.service.sensor.SensorInfoUpdateService;
 import com.example.utils.Const;
 import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
@@ -76,13 +76,10 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                     RestBean.failure(401,"内部错误，请联系管理员");
                     return null;
                 }  // 确保格式正确
+
+
                 String operationType = parts[1];
-                String targetType = switch (parts[2]){
-                    case Const.PRODUCT_ID_LIST -> "product"  ;
-                    case Const.SENSOR_ID_LIST -> "sensor";
-                    case Const.NFT_ID_LIST -> "nft";
-                    default -> throw new IllegalStateException("Unexpected value: " + parts[2]);
-                };
+                String targetType = this.constConvertType(parts[2]);
                 String targetId = parts[3];
                 String farmerId = parts[4];
 
@@ -98,6 +95,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 LocalDateTime createTime = LocalDateTime.now().minusSeconds(livedMillis);
                 LocalDateTime deadTime = createTime.plusSeconds(EXPIRE_DURATION.toSeconds());
                 // 7. 添加到结果列表
+
                 pendingApplicationVOS.add(new PendingApplicationVO(
                         operationType,
                         targetType,
@@ -113,6 +111,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         }
         return  pendingApplicationVOS;
     }
+
     @Override
     public boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList) {
         // 1. 验证复合键格式
@@ -124,12 +123,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         for (PendingApplicationVO vo : voList) {
             String applyListKey = "apply:" + vo.getOperation();
 
-            String tarType = switch (vo.getTargetType()) {
-                case "product" -> Const.PRODUCT_ID_LIST;
-                case "sensor" -> Const.SENSOR_ID_LIST;
-                case "nft" -> Const.NFT_ID_LIST;
-                default -> null;
-            };
+            String tarType = this.typeConvertConst(vo.getTargetType());
+
             String compositeKey = applyListKey + ":" + tarType+ ":" + vo.getTargetId() + ":" + vo.getFarmerId();
             // 2. 解析复合键
             String operation = vo.getOperation();
@@ -145,6 +140,27 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         return true;
 
     }
+
+    private String typeConvertConst(String type){
+        return switch (type) {
+        case "product" -> Const.PRODUCT_ID_LIST;
+        case "sensor" -> Const.SENSOR_ID_LIST;
+        case "nft" -> Const.NFT_ID_LIST;
+        case "userInfo" -> Const.USET_ID_LIST;
+        default -> null;
+             };
+        }
+
+    private String constConvertType(String type){
+        return switch (type){
+            case Const.PRODUCT_ID_LIST -> "product"  ;
+            case Const.SENSOR_ID_LIST -> "sensor";
+            case Const.NFT_ID_LIST -> "nft";
+            case Const.USET_ID_LIST -> "userInfo";
+            default -> throw new IllegalStateException("Unexpected value: " + type);
+        };
+    }
+
 
     private Object objectConfirm (PendingApplicationVO vo){
         if (vo == null) return null;

@@ -1,18 +1,12 @@
 package com.example.utils;
 
 import com.example.entity.RestBean;
-import com.example.entity.vo.request.ProductAddVO;
-import com.example.service.ProductInfoSelectAccountService;
-import com.example.service.SensorInfoSelectService;
+import com.example.service.product.ProductInfoSelectAccountService;
+import com.example.service.sensor.SensorInfoSelectService;
 import jakarta.annotation.Resource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
-import org.yaml.snakeyaml.events.Event;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -40,6 +34,7 @@ public class InfoToRedisUtils {
             case "product" -> Const.PRODUCT_ID_LIST;
             case "sensor" -> Const.SENSOR_ID_LIST;
             case "nft" -> Const.NFT_ID_LIST;
+            case "userInfo"->Const.USET_ID_LIST;
             default -> throw new IllegalStateException("无效的目标类型: " + targetType);
         };
         // 创建复合键防止冲突

@@ -7,14 +7,13 @@ import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.response.PendingApplicationVO;
 
 import com.example.service.AdminService;
-import com.example.service.ProductInfoUpdateAccountService;
+import com.example.service.product.ProductInfoUpdateAccountService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.ibatis.jdbc.Null;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -51,12 +50,13 @@ public class AdminController {
     @GetMapping("/admin/pending-applications")
     public <T>RestBean<T>  adminApplySelect(HttpServletRequest request ,HttpServletResponse response) throws IOException {
 
-        List<PendingApplicationVO> pendingApplicationVOS = adminService.getPendingApplications(request);
-            if (pendingApplicationVOS.isEmpty()) {
-                return RestBean.failure(401,"没有任何申请");
-            }
         response.setContentType("application/json;Charset=utf-8");
-        response.getWriter().write(RestBean.success(pendingApplicationVOS).asJsonString());
+        List<PendingApplicationVO> pendingApplicationVOS = adminService.getPendingApplications(request);
+            if (!(pendingApplicationVOS ==null)) {
+                response.getWriter().write(RestBean.success(pendingApplicationVOS).asJsonString());
+                return null;
+            }
+        response.getWriter().write(RestBean.failure(401,"请检查权限或没有任何请求").asJsonString());
         return null;
     }
 

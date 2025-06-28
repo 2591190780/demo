@@ -20,4 +20,7 @@ public class Account {
     String email;
     String role;
     Timestamp register_date;
+
+    // 钱包地址字段
+    String walletAddress;
 }

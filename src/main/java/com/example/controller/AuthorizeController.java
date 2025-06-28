@@ -57,9 +57,8 @@ public class AuthorizeController {
     public RestBean<Void> resetPasswordConfirm(@RequestBody  ResetPasswordByPasswordVO dto,
                                              HttpServletRequest request ){
         String result = accountService.resetPasswordByPassword(dto, request);
-        return result ==null ? RestBean.success():RestBean.failure(401,"修改失败");
+        return result == null ? RestBean.success():RestBean.failure(401,result);
     }
-
 
     private <T>RestBean<Void> messageHandle(T vo, Function<T, String> function) {
         return messageHandle(()->function.apply(vo));
@@ -67,6 +66,6 @@ public class AuthorizeController {
 
     private  RestBean<Void> messageHandle(Supplier<String> action){
         String message = action.get();
-        return message == null? RestBean.success():RestBean.failure(400,message);
+        return message == null ? RestBean.success():RestBean.failure(400,message);
     }
 }

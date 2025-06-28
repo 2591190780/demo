@@ -1,5 +1,8 @@
 package com.example;
 
+import jakarta.annotation.Resource;
+import org.fisco.bcos.sdk.v3.crypto.CryptoSuite;
+import org.fisco.bcos.sdk.v3.crypto.keypair.CryptoKeyPair;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,9 +29,20 @@ class ConnectionTest {
 
 	@Autowired
 	private DataSource dataSource;
+
+	@Resource
+	CryptoSuite cryptoSuite;
+
+	@Test
+	void  generateWA(){
+		CryptoKeyPair keyPair = cryptoSuite.generateRandomKeyPair();
+		String address = keyPair.getAddress();
+		String privateKey = keyPair.getHexPrivateKey();
+	}
+
 	@Test
 	void passwordEncoder() throws SQLException {
-		System.out.println(new BCryptPasswordEncoder().encode("user"));
+		System.out.println(new BCryptPasswordEncoder().encode("123456"));
 	}
 
 	@Test

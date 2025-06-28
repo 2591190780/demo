@@ -10,6 +10,7 @@ import org.hibernate.validator.constraints.Length;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("sensor_datainfo")
@@ -23,7 +24,7 @@ public class SensorDataInfoDto {
     // * 传感器数值
     private BigDecimal value;
     // * 采集数据时间
-    private Timestamp timestamp;
+    private LocalDateTime timestamp;
     // * 区块链上报数据
     @Length(min = 66, max = 66)
     private String blockchain_hash;

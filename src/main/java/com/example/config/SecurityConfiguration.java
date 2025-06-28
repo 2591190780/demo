@@ -8,6 +8,7 @@ import com.example.filter.JwtAuthorizeFilter;
 import com.example.service.AccountService;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
+import com.example.utils.WalletBlockChainUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,6 +39,9 @@ public class SecurityConfiguration {
 
     @Resource
     AccountService accountService;
+
+    @Resource
+    WalletBlockChainUtil walletBlockChainUtil;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, View error) throws Exception {
