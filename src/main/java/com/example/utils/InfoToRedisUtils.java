@@ -79,6 +79,9 @@ public class InfoToRedisUtils {
         // 从操作类型索引中删除
         String applyListKey = "apply:" + operation;
         template.opsForSet().remove(applyListKey,compositeKey);
+
+        template.opsForSet().remove(targetType,compositeKey);
+
         // 从农户索引中删除
         String farmerIndexKey = Const.FARMER_INDEX + this.convertToInteger(farmerId);
         template.opsForSet().remove(farmerIndexKey, compositeKey);

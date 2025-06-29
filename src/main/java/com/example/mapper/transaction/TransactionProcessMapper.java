@@ -5,5 +5,5 @@ import com.example.entity.dto.TransactionAccountDto;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface TransactionInfoAddMapper extends BaseMapper<TransactionAccountDto>{
+public interface TransactionProcessMapper extends BaseMapper<TransactionAccountDto>{
 }

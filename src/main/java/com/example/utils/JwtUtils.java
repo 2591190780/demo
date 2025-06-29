@@ -16,16 +16,12 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+
 
 @Component
 public class JwtUtils {
-
-    private final StringHttpMessageConverter stringHttpMessageConverter;
 
     @Value("${spring.security.jwt.key}")
     String key;
@@ -37,11 +33,10 @@ public class JwtUtils {
     StringRedisTemplate template;
 
     public JwtUtils(StringHttpMessageConverter stringHttpMessageConverter) {
-        this.stringHttpMessageConverter = stringHttpMessageConverter;
     }
 
     public boolean invalidDateJWT(String headerToken) {
-        String token = this.converToken(headerToken);
+        String token = this.convertToken(headerToken);
         if (token == null) {
             return false;
         }
@@ -69,7 +64,7 @@ public class JwtUtils {
     }
 
     public DecodedJWT resolveJWT(String headerToken) {  //token解析并验证token的有效性
-        String token = this.converToken(headerToken);
+        String token = this.convertToken(headerToken);
         if(token==null) return null;
         Algorithm algorithm = Algorithm.HMAC256(key);
         JWTVerifier jwtVerifier = JWT.require(algorithm).build();
@@ -116,6 +111,12 @@ public class JwtUtils {
         return claims.get("id").asInt();
     }
 
+    public  Integer getRequesetId(HttpServletRequest request){
+        String authorization = request.getHeader("Authorization");
+        DecodedJWT jwt = this.resolveJWT(authorization);
+        return  this.toId(jwt);
+    }
+
     public String toRole(DecodedJWT decodedJWT) {
         Map<String , Claim>claims = decodedJWT.getClaims();
         return claims.get("role").asString();
@@ -137,7 +138,21 @@ public class JwtUtils {
         return role.equals("3");
     }
 
-    private String converToken(String headertoken){  //验证前端发送的token，并返回
+    public Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
+        return this.userIdVerify(request, fid);
+    }
+
+    public Boolean userIdVerify(HttpServletRequest request, Integer fid) {
+        String authorization = request.getHeader("Authorization");
+        DecodedJWT jwt = this.resolveJWT(authorization);
+        String role = this.toRole(jwt);
+        Integer id = this.toId(jwt);
+        if (Objects.equals(role, "3")) return true;
+        return id.equals(fid);
+    }
+
+
+    private String convertToken(String headertoken){  //验证前端发送的token，并返回
         if (headertoken ==null || !headertoken.startsWith("Bearer")){
             return null;
         }

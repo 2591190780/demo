@@ -52,6 +52,7 @@ public class SecurityConfiguration {
                                 "/webjars/**",
                                 "/v3/api-docs/**",
                                 "/swagger-resources/**"
+                                ,"/alipay/**"
                             //    ,"/api/selectProducts/**"
                         ).permitAll() //knife4j相关接口
                         .requestMatchers("api/auth/**","/error").permitAll()
@@ -99,6 +100,7 @@ public class SecurityConfiguration {
         vo.setEmail(account.getEmail());
         vo.setDate(String.valueOf(new Date(System.currentTimeMillis())));
         String role = account.getRole();
+        String address = account.getWalletAddress();
         //数据库传入"1","2","3"，后端判断
         switch (role) {
             case "1":

@@ -121,18 +121,19 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         java.sql.Timestamp sqlDate = new java.sql.Timestamp(utilDate.getTime());
 
         Map<String,String> mapList =  walletBlockChainUtil.generateUserWallet();
+        String key = mapList.get("privateKey");
+        String address = mapList.get("address");
         Account account = new Account(null,
                 username,
                 encodePassword,
                 email,
                 "2",
                 sqlDate,
-                mapList.get("address")
+                address
                 );
         if(this.save(account)){
             this.RedisClearCode(email);
-
-            return null;
+            return address + ":"+ key;
         }else{
             return "内部错误，请联系管理员";
         }

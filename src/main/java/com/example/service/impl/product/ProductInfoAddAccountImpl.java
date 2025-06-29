@@ -57,7 +57,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
 
         //验证增加的产品 为当前用户下的 产品 （管理员不受限）
         Integer fid = vo.getFarmerId();
-        boolean verifyId = this.getUserIdVerify(request,fid);
+        boolean verifyId = utils.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("权限不足");
 
         //农户提交新产品的信息    此时需要等待管理员确认后才激活产品售卖(功能注释了)。
@@ -101,19 +101,8 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         return RestBean.success();
     }
 
-    private Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
-        return userIdVerify(request, fid, utils);
-    }
 
 
-    public static Boolean userIdVerify(HttpServletRequest request, Integer fid, JwtUtils utils) {
-        String authorization = request.getHeader("Authorization");
-        DecodedJWT jwt = utils.resolveJWT(authorization);
-        String role = utils.toRole(jwt);
-        Integer id = utils.toId(jwt);
-        if (Objects.equals(role, "3")) return true;
-        return id.equals(fid);
-    }
 
     private Boolean generateProductAccount(ProductAddVO vo){
         if (vo == null) { RestBean.failure(401,"错误的参数类型"); return false;}

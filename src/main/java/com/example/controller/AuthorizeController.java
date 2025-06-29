@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,8 +40,19 @@ public class AuthorizeController {
 
     }
     @PostMapping("/register")  //注册
-    public RestBean<Void> registerUser(@RequestBody @Valid EmailRegisterVO vo) {
-        return this.messageHandle(vo,accountService::registerEmailAccount);
+    public ResponseEntity<RestBean<String[]>> registerUser(@RequestBody @Valid EmailRegisterVO vo) {
+          String[] message =  accountService.registerEmailAccount(vo).split(":");
+          if(message.length != 2){
+              return ResponseEntity.ok()
+                      .body(
+                              RestBean.failure(401,message[0])
+                      );
+          }
+          return ResponseEntity.ok()
+                  .body(
+                          RestBean.success(message)
+                  );
+
     }
 
     @PostMapping("/reset-confirm") //验证码确认

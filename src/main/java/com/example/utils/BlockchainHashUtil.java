@@ -1,5 +1,6 @@
 package com.example.utils;
 
+import com.example.entity.dto.SensorDataInfoDto;
 import com.example.entity.dto.TransactionAccountDto;
 import org.springframework.stereotype.Component;
 
@@ -49,14 +50,32 @@ public class BlockchainHashUtil {
     public  String  generateTransactionHash(TransactionAccountDto dto){
         // 1. 标准化数据格式
         String formattedData = String.format(
-            "BUY_ID:"+dto.getBuyer_id()
-                + "PRODUCT_ID:"+dto.getProduct_id()
-                + "SELLER_ID:"+dto.getSeller_id()
+                "ORDER_ID:"+normalizeString(dto.getOrderId())
+                +"BUY_ID:"+dto.getBuyerId()
+                + "PRODUCT_ID:"+dto.getProductId()
+                + "SELLER_ID:"+dto.getSellerId()
                 +"QUANTITY:"+dto.getQuantity()
+                +"TOTAL_PRICE:"+dto.getTotalPrice()
+                //+"ACTUAL_PAYMENT:"+dto.getActual_payment()
+                +"ORDER_TIME:"+formatTimestamp(dto.getOrderTime())
         );
-
         String hash = sha256(formattedData);
         return "0x" + hash;
+    }
+
+    public String generateSensorHash(
+            SensorDataInfoDto dto
+    ){
+        String formattedData = String.format(
+                "SENSOR_ID:"+ dto.getSensorId()
+                        +"VALUE"+dto.getValue()
+                        +"CREATE_TIME"+formatTimestamp(dto.getCreate_time())
+        );
+        // 2. 计算SHA-256哈希
+        String hash = sha256(formattedData);
+        // 3. 添加0x前缀（总长度66字符）
+        return "0x" + hash;
+
     }
 
     private static String normalizeString(String input) {

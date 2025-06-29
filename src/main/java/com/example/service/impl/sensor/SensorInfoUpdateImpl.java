@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.service.impl.product.ProductInfoAddAccountImpl.userIdVerify;
 
 @Service
 public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorInfoDto>
@@ -27,11 +26,10 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
     //修改单个传感器信息
     @Override
     public <T>RestBean<T> updateSensorInfoDto(HttpServletRequest request, SensorInfoDto dto){
-        if (!roleVerify(request)) return RestBean.failure(401,"权限不足");
+        if (!jwtUtils.userRoleVerify(request)) return RestBean.failure(401,"只有农户才能修改传感器信息");
         String authorization = request.getHeader("Authorization");
         DecodedJWT jwt = jwtUtils.resolveJWT(authorization);
         Integer userId = jwtUtils.toId(jwt);
-
         if(!Objects.equals(dto.getFarmId(), userId) ){
             if (Objects.equals(jwtUtils.toRole(jwt), "3")){
                 return this.update(dto,userId) ? RestBean.success():RestBean.failure(500,"内部错误请联系管理员");
@@ -45,7 +43,7 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
     //激活
     @Override
     public <T>RestBean<T> updateSensorInfoDtoadmin(HttpServletRequest request, SensorInfoDto dto){
-        if (!roleVerifyAdmin(request)) return RestBean.failure(401,"权限不足");
+        if (!jwtUtils.userRoleVerifyAdmin(request)) return RestBean.failure(401,"权限不足");
         if(updateAdmin(dto)) return RestBean.success();
         return  RestBean.failure(500,"参数有误");
     }
@@ -60,7 +58,7 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
             boolean allSuccess = true;
             for (SensorInfoDto sensordto : dto) {
                 Integer fid = sensordto.getFarmId();
-                if(!getUserIdVerify(request,fid))
+                if(!jwtUtils.getUserIdVerify(request,fid))
                     return  RestBean.failure(500,"无权限的操作，请检查传感器编号");
                 // 对每个产品执行更新
                 String authorization = request.getHeader("Authorization");
@@ -89,7 +87,7 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
             boolean allSuccess = true;
             for (SensorInfoDto sensordto : dto) {
                 Integer fid = sensordto.getFarmId();
-                if(!getUserIdVerify(request,fid))
+                if(!jwtUtils.getUserIdVerify(request,fid))
                     return  RestBean.failure(500,"无权限的操作，请检查传感器编号");
                 // 对每个产品执行更新
                 if (!updateAdmin(sensordto)) {
@@ -108,22 +106,7 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
 
     }
 
-    //传感器激活审核
-    private  boolean roleVerify (HttpServletRequest request) {
-        String authorization = request.getHeader("Authorization");
-        DecodedJWT jwt = jwtUtils.resolveJWT(authorization);
-        String role = jwtUtils.toRole(jwt);
-        return role.equals("1");
-    }
-    private  boolean roleVerifyAdmin (HttpServletRequest request) {
-        String authorization = request.getHeader("Authorization");
-        DecodedJWT jwt = jwtUtils.resolveJWT(authorization);
-        String role = jwtUtils.toRole(jwt);
-        return role.equals("3");
-    }
-    private Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
-        return userIdVerify(request, fid, jwtUtils);
-    }
+
 
 //更新函数方法
 private boolean update(SensorInfoDto dto,Integer userId){

@@ -3,6 +3,10 @@ package com.example.utils;
 import jakarta.servlet.http.PushBuilder;
 
 public class Const {
+    /**
+     * 交易订单，相关信息
+     */
+    public static final  String ORDER_ID_INFO = "orderIdInfo";
 
     /**
      * 产品  农户的相关操作  存入Redis队列等待管理员处理
@@ -18,7 +22,9 @@ public class Const {
     public static final  String NFT_ID_LIST = "nftIdList";
     public static final  String USET_ID_LIST = "usetIdList";
 
-    //经常使用的属性
+    /**
+     * JWT过滤器设置
+     */
     public static  final  String JWT_BLACK_LIST="jwt_blacklist:";
 
     public static  final  int ORDER_CORS= -110 ;

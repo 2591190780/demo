@@ -15,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static com.example.service.impl.product.ProductInfoAddAccountImpl.userIdVerify;
 
 @Service
 public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateAccountMapper, ProductInfoAccountDto>
@@ -38,10 +37,10 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
     public <T> RestBean<T> updateSingleProductInfo(HttpServletRequest request, ProductInfoAccountDto account){
         //验证角色是否正确（农户或者管理员）
         boolean verifyRole = utils.userRoleVerify(request);
-        if(!verifyRole)return RestBean.forbidden("只有农户才能修改价格");
+        if(!verifyRole) return RestBean.forbidden("只有农户才能修改价格");
         //验证修改的产品 为当前用户下的 产品 （管理员不受限） -->农户只能修改自己的农产品
         Integer fid = account.getFarmerId();
-        boolean verifyId = this.getUserIdVerify(request,fid);
+        boolean verifyId = utils.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
 
         if(update(account)) {
@@ -81,7 +80,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
             boolean allSuccess = true;
             for (ProductInfoAccountDto account : accountList) {
                 Integer fid = account.getFarmerId();
-                if(!getUserIdVerify(request,fid))
+                if(!utils.getUserIdVerify(request,fid))
                     return  RestBean.failure(500,"无权限的操作，请检查农产品编号");
                 // 对每个产品执行更新
                 if (!update(account)) {
@@ -134,9 +133,6 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
      */
 
 
-    public Boolean getUserIdVerify(HttpServletRequest request,Integer fid){
-        return userIdVerify(request, fid, utils);
-    }
 
 
     //用户需要将update消息提交到redis队列中，等待管理员用户确认后生效
