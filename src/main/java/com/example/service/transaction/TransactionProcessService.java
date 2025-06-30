@@ -8,12 +8,14 @@ import java.util.List;
 
 public interface TransactionProcessService extends IService<TransactionAccountDto> {
     //添加交易记录 生成hash存储到数据库中
-    Boolean TransactionInfoAdd(TransactionAccountDto transactionAccountDto, HttpServletRequest request);
+    TransactionAccountDto TransactionInfoAdd(TransactionAccountDto transactionAccountDto, HttpServletRequest request);
     //更新订单状态
     boolean transactionStatusUpdate(TransactionAccountDto dto,String status);
     TransactionAccountDto getOrderByHash(String hash);
-
-    Boolean TransactionInfoAddMulti(List<TransactionAccountDto> dtoList);
-
+    List<TransactionAccountDto> TransactionInfoAddMulti(List<TransactionAccountDto> dtoList);
+    boolean cancelTransaction(HttpServletRequest request,String hash);
+    boolean cancelTransactionMulti(HttpServletRequest request,List<String> hashList);
+    List<TransactionAccountDto> transactionSelectMulti(HttpServletRequest request,Integer id);
+    TransactionAccountDto transactionSelect(HttpServletRequest request,Integer id);
 
 }

@@ -35,7 +35,7 @@ public class TransactionAccountDto {
     private LocalDateTime completeTime;  // 映射数据库 complete_time
     private BigDecimal actualPayment;    // 映射数据库 actual_payment
     private LocalDateTime deliveryTime;  // 映射数据库 delivery_time
-    private Long alipayOrder;            // 映射数据库 alipay_order
+    private String alipayOrder;            // 映射数据库 alipay_order
 
     public TransactionAccountDto() {
 

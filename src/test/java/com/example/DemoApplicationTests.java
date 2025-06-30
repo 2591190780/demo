@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import javax.sql.DataSource;
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -32,6 +33,15 @@ class ConnectionTest {
 
 	@Resource
 	CryptoSuite cryptoSuite;
+
+	@Test
+	void testStringToBigdecimal() throws SQLException {
+		BigDecimal answer = BigDecimal.valueOf(24.33);
+		BigDecimal result = BigDecimal.valueOf(Float.parseFloat("24.33"));
+		System.out.println(result);
+		System.out.println(answer);
+		System.out.println(result.equals(answer));
+	}
 
 	@Test
 	void  generateWA(){

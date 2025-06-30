@@ -158,4 +158,15 @@ public class JwtUtils {
         }
         return headertoken.substring(7);
     }
+
+    public Integer convertToInteger(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (NumberFormatException e) {
+            return null; // 或者记录日志
+        }
+    }
 }
