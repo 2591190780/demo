@@ -120,16 +120,22 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         java.util.Date utilDate = new java.util.Date();
         java.sql.Timestamp sqlDate = new java.sql.Timestamp(utilDate.getTime());
 
+        /**
+         * 后续需要由前端生成私钥和地址，传回地址
+         * String address = emailRegisterVO.getWalletAddress();
+         */
         Map<String,String> mapList =  walletBlockChainUtil.generateUserWallet();
         String key = mapList.get("privateKey");
         String address = mapList.get("address");
+
         Account account = new Account(null,
                 username,
                 encodePassword,
                 email,
                 "2",
                 sqlDate,
-                address
+                address,
+                null
                 );
         if(this.save(account)){
             this.RedisClearCode(email);

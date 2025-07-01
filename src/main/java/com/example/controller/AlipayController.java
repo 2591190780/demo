@@ -61,6 +61,10 @@ public class AlipayController {
             ,@RequestBody TransactionAccountDto transactionAccountDto) throws IOException {
 
         response.setContentType("application/json;Charset=utf-8");
+        /**
+         * 在这里还需要加入 传入订单信息 与 商家库存 是否满足的逻辑。需要返回提示。
+         * 在service中加入 订单有效性逻辑判断。
+         */
         TransactionAccountDto dto = this.transactionProcessService.TransactionInfoAdd(transactionAccountDto,request);
         if (dto != null){
             response.getWriter().write(RestBean.success(dto).asJsonString());
@@ -73,6 +77,10 @@ public class AlipayController {
     @PutMapping("/payInfoMulti")
     public void  payInfoMulti(HttpServletRequest request,HttpServletResponse response,@RequestBody List<TransactionAccountDto> dto) throws IOException {
         response.setContentType("application/json;Charset=utf-8");
+        /**
+         * 在这里还需要加入 传入订单信息 与 商家库存 是否满足的逻辑。需要返回提示。
+         * 在service中加入 订单有效性逻辑判断。
+         */
         List <TransactionAccountDto> dtoList = this.transactionProcessService.TransactionInfoAddMulti(dto);
         if (dtoList != null){
             response.getWriter().write(RestBean.success(dto).asJsonString());
@@ -81,7 +89,6 @@ public class AlipayController {
         }
 
     }
-
 
     //根据redis中的缓存发送给alipay到支付页面
     @GetMapping("/pay") // 前端路径参数格式?subject=xxx&traceNo=xxx&totalAmount=xxx
@@ -142,15 +149,15 @@ public class AlipayController {
                 sendJsonResponse(response, 401, "订单状态无效或已过期");                return;
             }
             totalAmount = totalAmount.add(order.getTotalPrice());
+
             //——————————————————————————这里可以计算优惠逻辑————————————————————————————————————————
             /*
-             数据库新增  商家优惠表 :  id  product_id farmer_id  折扣  折扣描述  折扣生效日期  折扣截至日期
-                       新建实付金额 REAL_PAY_COUNT 存入 redis 缓存中 便于后续处理
-             */
-            //____________________________________end______________________________________
+            数据库新增  商家优惠表 :  id  product_id farmer_id  折扣  折扣描述  折扣生效日期  折扣截至日期
+                   新建实付金额 REAL_PAY_COUNT 存入 redis 缓存中 便于后续处理
+            */
+            //____________________________________end___________________________________________
             stringRedisTemplate.opsForValue().set( hash
                     , order.getTotalPrice().toString(),15,TimeUnit.MINUTES);
-
             // 只收集前3个商品名称
             if (productCount < 3) {
                 String productName = productInfoSelectAccountService
@@ -181,7 +188,6 @@ public class AlipayController {
         aliPay.setTotalAmount(totalAmount.doubleValue());
         aliPay.setSubject(subject);
         aliPay.setTraceNo(combinedOrderId);
-
         // 配置支付宝客户端
         AlipayClient alipayClient = new DefaultAlipayClient(
                 "https://openapi-sandbox.dl.alipaydev.com/gateway.do",
@@ -258,6 +264,7 @@ public class AlipayController {
         }
     }
 
+
     @PostMapping("/notify")  // 注意这里必须是POST接口
     public String payNotify(HttpServletRequest request) throws Exception {
         // 1. 获取所有参数
@@ -311,7 +318,10 @@ public class AlipayController {
             System.out.println("支付宝交易号: " + tradeNo);
             System.out.println("支付金额: " + totalAmount);
 
-            Set<String> hashes = stringRedisTemplate.opsForSet().members(outTradeNo);
+            /**
+             * 这里对数据库中 交易记录表的商品交易状态进行了更新。
+             */
+            Set<String> hashes = stringRedisTemplate.opsForSet().members(outTradeNo); //获取redis中交易hash的缓存
             for (String hash : hashes) {
                 String counts = stringRedisTemplate.opsForValue().get(hash);
                 BigDecimal count = BigDecimal.valueOf(Float.parseFloat(counts));
@@ -319,6 +329,12 @@ public class AlipayController {
                 dto.setActualPayment(count);
                 dto.setCertificationHash(hash);
                 dto.setAlipayOrder(tradeNo);
+
+                /**
+                 *这里继续对
+                 *
+                 */
+
                 if( transactionProcessService.transactionStatusUpdate(dto,"2")){
                     stringRedisTemplate.delete(hash);
                     stringRedisTemplate.opsForSet().remove(outTradeNo,hash);

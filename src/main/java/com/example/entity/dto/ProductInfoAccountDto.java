@@ -45,4 +45,10 @@ public class ProductInfoAccountDto {
 
     private byte isActive;
 
+    private String productImgurl;
+
+    public ProductInfoAccountDto() {
+
+    }
+
 }

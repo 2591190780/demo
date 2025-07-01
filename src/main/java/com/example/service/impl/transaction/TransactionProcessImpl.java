@@ -51,6 +51,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         String order_id = generateOrderId();  //生成订单号
         dto.setOrderId(order_id);
         dto.setOrderTime(LocalDateTime.now());  //生成下单时间
+
         if (!this.requestProductVerify(dto)){
             return  null;
         }
@@ -172,13 +173,16 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
 
     }
 
-
     private void cleanTransactionFromRedis(Integer buyerId, String hash) {
         // 清理Redis中的订单信息
+        /**
+         * 用户在提交支付请求时，已经在逻辑里执行了删除redis原有缓存的逻辑，这里可能已经为空了，添加判断语句。
+         */
         String buyerKey = buyerId.toString();
-        stringRedisTemplate.opsForSet().remove(buyerKey, hash);
-        stringRedisTemplate.delete(hash);
-
+        if (Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(buyerKey, hash))) {
+            stringRedisTemplate.opsForSet().remove(buyerKey, hash);
+            stringRedisTemplate.delete(hash);
+        }
     }
 
     private  Boolean TransactionMessageIntoRedis(TransactionAccountDto transactionAccountDto){
@@ -186,7 +190,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         String buyer_id = transactionAccountDto.getBuyerId().toString();
         String hash  = transactionAccountDto.getCertificationHash();
 
-        //通过buyerID存储redis信息
+        //通过buyerID 存储redis信息  id:hash(订单hash)
         if(Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(buyer_id,hash))) return false;
         stringRedisTemplate.opsForSet().add(buyer_id,hash);
         stringRedisTemplate.expire(buyer_id,15,TimeUnit.MINUTES);

@@ -1,4 +1,13 @@
 spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
   jackson:
 #    date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
@@ -7,6 +16,11 @@ spring:
   web:
     resources:
       add-mappings: true
+
+
+  # ————————————————————————————————————————————————————————————————
+  #这是 服务器 发送邮箱 的主机，后续交付需要 管理员 自行配置。  mail
+  #—————————————————————————————————————————————————————————————————
   mail:
     host: smtp.163.com
     username: zly15727831672@163.com
@@ -25,7 +39,6 @@ spring:
       expire: 2
   data:
     redis:
-
       host: 127.0.0.1
       port: 6379
       password: 123
@@ -39,6 +52,15 @@ spring:
     username: root
     password: root
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+ipfs:
+  host: /ip4/127.0.0.1/tcp/5001  # 使用完整路径格式
+  # port: 5001  # 删除此行，避免冲突
+  gateway: http://127.0.0.1:8082  # 使用本地网关
 
 
 mybatis-plus:
@@ -68,8 +90,11 @@ springdoc:
       # paths-to-match: 配置要匹配的路径,默认为/**
       packages-to-scan: com.example.controller
       # packages-to-scan: 配置要扫描的包的路径,直接配置为Controller类所在的包名即可
-alipay:
 
+# ————————————————————————————————————————————————————————————————
+#这是 alipay 沙箱环境的配置 ，后续交付需要 管理员 自行配置。  alipay
+#—————————————————————————————————————————————————————————————————
+alipay:
   appId: 9021000149697578
 
   alipayPublicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkMIOsWi1J6bLy0/GkTO9h8GyYeR2NayrhQgTqiF0wVGTw8EQtpMIxNuHZ9HPmnDd+dOuKj7pKKC/H4+N81JSCU6pmg0qpsKNliPoGaOCaTLnxckkofUsBZH0lYROdYZIt48xJQYJv/4lQvmtq6geT0KkqGtrCSk7H8h73DeHVQbo7ly1ndQO1uHrTYe94KyL4ro5MxipPhRdsR9dPaHnszf+r4d4hXd8qXCozheZJ2p2Fw9Tvf/Pb5vkHEu9IbeU13OTbX5pq8jD2hdRGv2NruRGWYE4CLcY3tmha76U29fpagBIOU0B14KBJr4KLLi4yUCnXcrWm/JJUk0YJURXCQIDAQAB

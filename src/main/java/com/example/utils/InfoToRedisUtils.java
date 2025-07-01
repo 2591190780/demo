@@ -34,7 +34,7 @@ public class InfoToRedisUtils {
             case "product" -> Const.PRODUCT_ID_LIST;
             case "sensor" -> Const.SENSOR_ID_LIST;
             case "nft" -> Const.NFT_ID_LIST;
-            case "userInfo"->Const.USET_ID_LIST;
+            case "userInfo"->Const.USER_ID_LIST;
             default -> throw new IllegalStateException("无效的目标类型: " + targetType);
         };
         // 创建复合键防止冲突

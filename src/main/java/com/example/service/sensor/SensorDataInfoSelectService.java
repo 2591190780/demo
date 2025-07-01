@@ -1,0 +1,12 @@
+package com.example.service.sensor;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.entity.dto.SensorDataInfoDto;
+
+import java.util.List;
+
+public interface SensorDataInfoSelectService extends IService<SensorDataInfoDto> {
+    SensorDataInfoDto getSensorDataInfoBySensorId(Integer id);
+    List<SensorDataInfoDto> findSensorInfoByFarmerId(Integer id);
+    List<SensorDataInfoDto> findSensorInfoByTypeId(String id);
+}

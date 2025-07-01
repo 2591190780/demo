@@ -24,6 +24,7 @@ public class WalletBlockChainUtil {
 
     public Map<String,String> generateUserWallet() {
 
+        //后续需要由前端生成私钥，返回给后端地址
         CryptoKeyPair keyPair = cryptoSuite.getCryptoKeyPair();
         String address = keyPair.getAddress();
         String privateKey = keyPair.getHexPrivateKey();

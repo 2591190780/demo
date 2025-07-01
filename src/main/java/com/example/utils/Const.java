@@ -1,7 +1,5 @@
 package com.example.utils;
 
-import jakarta.servlet.http.PushBuilder;
-
 public class Const {
     /**
      * 交易订单，相关信息
@@ -21,8 +19,11 @@ public class Const {
     public static final  String PRODUCT_ID_LIST ="productIdList";
     public static final  String SENSOR_ID_LIST = "sensorIdList";
     public static final  String NFT_ID_LIST = "nftIdList";
-    public static final  String USET_ID_LIST = "usetIdList";
+    public static final  String USER_ID_LIST = "userIdList";
 
+    public static final  String IMG_FOR_PRODUCT = "imgForProduct";
+    public static final  String IMG_FOR_NFT = "imgForNft";
+    public static final  String IMG_FOR_USER = "imgForUser";
     /**
      * JWT过滤器设置
      */

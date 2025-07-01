@@ -40,4 +40,6 @@ public class ProductAddVO {
     private LocalDateTime createTime;
 
     private byte isActive;
+
+    private String productImgurl;
 }

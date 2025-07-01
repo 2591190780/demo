@@ -17,4 +17,6 @@ public class EmailRegisterVO {
     @Length(min=6,max=20, message = "用户名密码长度必须在6-20个字符之间")
     String password;
 
+    String walletAddress;
+
 }

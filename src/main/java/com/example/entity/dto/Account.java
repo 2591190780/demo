@@ -23,4 +23,7 @@ public class Account {
 
     // 钱包地址字段
     String walletAddress;
+
+    String userImgurl;
+
 }

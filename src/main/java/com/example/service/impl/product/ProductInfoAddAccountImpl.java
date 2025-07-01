@@ -8,12 +8,16 @@ import com.example.entity.dto.ProductInfoAccountDto;
 
 import com.example.entity.vo.request.ProductAddVO;
 import com.example.mapper.product.ProductInfoAddAccountMapper;
+import com.example.service.IPFSService;
 import com.example.service.product.ProductInfoAddAccountService;
 import com.example.utils.BlockchainHashUtil;
 import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
+import com.example.utils.MessageIntoIPFSUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -32,23 +36,16 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
 
     @Resource
     InfoToRedisUtils redisUtils;
-    /**
-     * 生成产品存证哈希
-     *
-     * @param farmerId 农户ID
-     * @param name 产品名称
-     * @param category 产品类别
-     * @param originLocation 原产地
-     * @param createTime 创建时间
-     * @return 66字符的十六进制哈希值 (0x开头)
-     */
-    /**
-     *
-     * @param request
-     * @param vo
-     * @return
-     * @param <T>
-     */
+
+    @Resource
+    MessageIntoIPFSUtil messageIntoIPFSUtil;
+
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    IPFSService ipfsService;
+
     @Override
     public <T> RestBean<T> addUserProductSingle(HttpServletRequest request, ProductAddVO vo){
         //验证角色是否正确（农户或者管理员）
@@ -60,7 +57,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         boolean verifyId = utils.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("权限不足");
 
-        //农户提交新产品的信息    此时需要等待管理员确认后才激活产品售卖(功能注释了)。
+        //农户提交新产品的信息    此时需要等待管理员确认后才激活产品售卖
         if(this.generateProductAccount(vo)){
             redisUtils.InfoToRedis(vo.getProductId(), vo.getFarmerId()
                     , "add","product");
@@ -68,6 +65,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         }
         return RestBean.failure(401,"请检查传入的参数");
     }
+
 
 
     @Override
@@ -117,6 +115,8 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         String certificationHash = hashUtil.generateProductHash(
                 farmerId, name, category , origin,now
         );
+
+
         ProductInfoAccountDto dto;
         dto = new ProductInfoAccountDto(
                 productId,
@@ -129,9 +129,9 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
                 certificationHash,
                 now,
                 now,
-                active
+                active,
+                null
         );
-
         if(this.save(dto)){
             RestBean.success();
             vo.setProductId(dto.getProductId());

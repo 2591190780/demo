@@ -146,7 +146,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         case "product" -> Const.PRODUCT_ID_LIST;
         case "sensor" -> Const.SENSOR_ID_LIST;
         case "nft" -> Const.NFT_ID_LIST;
-        case "userInfo" -> Const.USET_ID_LIST;
+        case "userInfo" -> Const.USER_ID_LIST;
         default -> null;
              };
         }
@@ -156,7 +156,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
             case Const.PRODUCT_ID_LIST -> "product"  ;
             case Const.SENSOR_ID_LIST -> "sensor";
             case Const.NFT_ID_LIST -> "nft";
-            case Const.USET_ID_LIST -> "userInfo";
+            case Const.USER_ID_LIST -> "userInfo";
             default -> throw new IllegalStateException("Unexpected value: " + type);
         };
     }
