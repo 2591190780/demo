@@ -116,7 +116,6 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
                 farmerId, name, category , origin,now
         );
 
-
         ProductInfoAccountDto dto;
         dto = new ProductInfoAccountDto(
                 productId,

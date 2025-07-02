@@ -4,6 +4,7 @@ package com.example.controller;
 import com.example.entity.RestBean;
 
 import com.example.entity.dto.ProductInfoAccountDto;
+import com.example.entity.vo.request.ApplyHandlingRequestVO;
 import com.example.entity.vo.response.PendingApplicationVO;
 
 import com.example.service.AdminService;
@@ -44,6 +45,7 @@ public class AdminController {
     }
 
 
+
     /**
      * 获取所有待处理的申请列表
      */
@@ -62,13 +64,15 @@ public class AdminController {
 
     @PutMapping("/admin/handling-applications")
     public RestBean<Void> adminApplyHandling(
-            HttpServletRequest request
-            , @RequestBody  List<PendingApplicationVO> voList) throws IOException {
-         return this.adminService.handleApplication(request,voList)
-                 ? RestBean.success():RestBean.failure(500,"参数有误");
+            HttpServletRequest request,
+            @RequestBody ApplyHandlingRequestVO aHR) throws IOException {
+
+            List<PendingApplicationVO> voList = aHR.getData();
+            byte answer = aHR.getAnswer();
+         return this.adminService.handleApplication(request,voList,answer)
+                 ? RestBean.success():RestBean.failure(401,"申请已过期或参数有误。");
 
     }
-
 
 
 }

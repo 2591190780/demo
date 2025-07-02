@@ -3,10 +3,12 @@ package com.example.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
+import com.example.entity.dto.NFTInfoDto;
 import com.example.entity.vo.response.PendingApplicationVO;
 import com.example.mapper.AdminMapper;
 import com.example.service.AccountService;
 import com.example.service.AdminService;
+import com.example.service.NFT.NFTInfoService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.service.sensor.SensorInfoUpdateService;
 import com.example.utils.Const;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.time.Duration;
 
@@ -43,6 +46,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
     @Resource
     SensorInfoUpdateService sensorInfoUpdateService;
 
+    @Resource
+    NFTInfoService nftInfoService;
 
 
     private static final Duration EXPIRE_DURATION = Duration.ofHours(24);
@@ -95,7 +100,6 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 }else {
                     targetInfo = redisUtils.getTargetInfo(targetType, targetId);
                 }
-
                 //redis缓存中 过期时间以ttl存储。需要反推。
                 long expireMillis  =  template.opsForValue().getOperations().getExpire(applyListKey);
                 long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;
@@ -120,7 +124,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
     }
 
     @Override
-    public boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList) {
+    public boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList,byte answer) {
         // 1. 验证复合键格式
         // 1. 获取所有操作类型
         if (!utils.userRoleVerifyAdmin(request)) {
@@ -134,13 +138,19 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
             /**
              * 如果传入入的是 申请修改用户角色信息 -->  "update" + Const.USER_ID_LIST + role + id
              */
-            String compositeKey = applyListKey + ":" + tarType+ ":" + vo.getTargetId() + ":" + vo.getFarmerId();
+            String compositeKey = applyListKey + ":" + tarType+ ":" + vo.getTargetId() + ":" + vo.getId();
+            //检查 键 是否在redis缓存中
+            if (!Boolean.TRUE.equals(template.hasKey(compositeKey))) {
+                return false;
+            }
+
             // 2. 解析复合键
             String operation = vo.getOperation();
             String targetId = vo.getTargetId();
-            String farmerId = vo.getFarmerId();
+            String farmerId = vo.getId();
+
             // 3. 执行实际业务逻辑
-            this.objectConfirm(vo);
+            this.objectConfirm(vo,answer);
             // 4. 从Redis中删除记录和索引
             redisUtils.deleteApplication(compositeKey, operation, tarType, farmerId);
 //        // 5. 发送通知给农户
@@ -154,8 +164,9 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         return switch (type) {
         case "product" -> Const.PRODUCT_ID_LIST;
         case "sensor" -> Const.SENSOR_ID_LIST;
-        case "nft" -> Const.NFT_ID_LIST;
+        case "nft_info" -> Const.NFT_ID_LIST;
         case "userInfo" -> Const.USER_ID_LIST;
+        case "nft_rule" -> Const.NFT_RULE_ID_LIST;
         default -> null;
              };
         }
@@ -164,30 +175,33 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         return switch (type){
             case Const.PRODUCT_ID_LIST -> "product"  ;
             case Const.SENSOR_ID_LIST -> "sensor";
-            case Const.NFT_ID_LIST -> "nft";
+            case Const.NFT_ID_LIST -> "nft_info";
             case Const.USER_ID_LIST -> "userInfo";
+            case Const.NFT_RULE_ID_LIST -> "nft_rule";
             default -> throw new IllegalStateException("Unexpected value: " + type);
         };
     }
 
 
-    private Object objectConfirm (PendingApplicationVO vo){
+    private Object objectConfirm (PendingApplicationVO vo,byte ans){
         if (vo == null) return null;
         String operation = vo.getOperation();
         String targetType = vo.getTargetType();
         String targetId = vo.getTargetId();
-        String farmerId = vo.getFarmerId();
-
+        String farmerId = vo.getId();
 
         Object result = switch (targetType) {
             case "product" -> productInfoUpdateAccountService.productUpdateAdmin(
                     this.convertToInteger(targetId),
-                    this.convertToInteger(farmerId), (byte) 1);
+                    this.convertToInteger(farmerId),  ans);
             //case "sensor":
             case "userInfo" -> accountService.updateRoleAdmin(Integer.valueOf(farmerId),targetId);
+            case "nft_info" -> nftInfoService.NFTInfoUpdateAdmin(
+                    this.convertToInteger(targetId),ans);
             default -> throw new IllegalStateException("未知的数据类型" + targetType);
         };
         return result;
+
     }
 
     private Integer convertToInteger (String value){

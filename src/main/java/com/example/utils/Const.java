@@ -20,6 +20,7 @@ public class Const {
     public static final  String SENSOR_ID_LIST = "sensorIdList";
     public static final  String NFT_ID_LIST = "nftIdList";
     public static final  String USER_ID_LIST = "userIdList";
+    public static final  String NFT_RULE_ID_LIST = "nftRuleIdList";
 
     public static final  String IMG_FOR_PRODUCT = "imgForProduct";
     public static final  String IMG_FOR_NFT = "imgForNft";

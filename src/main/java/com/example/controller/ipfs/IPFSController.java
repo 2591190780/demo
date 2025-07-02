@@ -1,4 +1,4 @@
-package com.example.controller.NFT;
+package com.example.controller.ipfs;
 
 
 
@@ -74,6 +74,7 @@ public class IPFSController {
         if (this.operationTypeImgAdd(operationType,request,id,cid)){
             return RestBean.success("上传成功，图片的CID为"+cid);
         };
+
         // 上传到IPFS
         return RestBean.failure(401,"不支持的操作类型");
 
@@ -100,6 +101,7 @@ public class IPFSController {
             if (!Objects.equals(account.getId(), targetId)) return false;
             account.setUserImgurl(cid);
             this.accountService.updateImg(request,account);
+            return true;
         }
 
         return false;
