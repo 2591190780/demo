@@ -37,7 +37,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
     public <T> RestBean<T> updateSingleProductInfo(HttpServletRequest request, ProductInfoAccountDto account){
         //验证角色是否正确（农户或者管理员）
         boolean verifyRole = utils.userRoleVerify(request);
-        if(!verifyRole) return RestBean.forbidden("只有农户才能修改价格");
+        if(!verifyRole) return RestBean.forbidden("只有农户才能修改");
         //验证修改的产品 为当前用户下的 产品 （管理员不受限） -->农户只能修改自己的农产品
         Integer fid = account.getFarmerId();
         boolean verifyId = utils.getUserIdVerify(request,fid);
@@ -128,12 +128,9 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
     }
     /**
      * 权限验证
-     * @param request
+     * @param
      * @return
      */
-
-
-
 
     //用户需要将update消息提交到redis队列中，等待管理员用户确认后生效
     public boolean update(ProductInfoAccountDto account){
@@ -141,12 +138,14 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         Integer farmerId= account.getFarmerId();
         BigDecimal price = account.getPrice();
         BigDecimal stock = account.getStock();
+        String imgURL = account.getProductImgurl();
         return  this.update()
                 .eq("product_id",productId)
                 .eq("farmer_id",farmerId)
                 .set("price",price)
                 .set("stock",stock)
                 .set("is_active",0)
+                .set("product_imgurl",imgURL)
                 .update();
     }
 

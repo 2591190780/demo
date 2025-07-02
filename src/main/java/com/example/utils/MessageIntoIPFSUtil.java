@@ -10,6 +10,10 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+
+/**
+ *    暂时没什么用的工具类
+ */
 @Component
 public class MessageIntoIPFSUtil {
 

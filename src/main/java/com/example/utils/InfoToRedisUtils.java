@@ -1,6 +1,7 @@
 package com.example.utils;
 
 import com.example.entity.RestBean;
+import com.example.service.AccountService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.sensor.SensorInfoSelectService;
 import jakarta.annotation.Resource;
@@ -16,10 +17,11 @@ public class InfoToRedisUtils {
     StringRedisTemplate template;
 
     @Resource
-    ProductInfoSelectAccountService selectAccountService;
+    ProductInfoSelectAccountService productSelectAccountService;
 
     @Resource
-    SensorInfoSelectService selectInfoService;
+    SensorInfoSelectService sensorInfoSelectService;
+
 
     public <T> RestBean<T> InfoToRedis(Integer id, Integer farmerId,
                                        String operationType, String targetType) {
@@ -34,10 +36,13 @@ public class InfoToRedisUtils {
             case "product" -> Const.PRODUCT_ID_LIST;
             case "sensor" -> Const.SENSOR_ID_LIST;
             case "nft" -> Const.NFT_ID_LIST;
-            case "userInfo"->Const.USER_ID_LIST;
+            case "userInfo"-> Const.USER_ID_LIST;
             default -> throw new IllegalStateException("无效的目标类型: " + targetType);
         };
         // 创建复合键防止冲突
+        /**
+         * 如果传入入的是 申请修改用户角色信息 -->  "update" + Const.USER_ID_LIST + role + id
+         */
         String compositeKey = applyListKey +":" +targetListKey + ":" + id + ":" + farmerId;
 
         // 检查是否已存在相同的申请 (使用复合键检查)
@@ -94,14 +99,17 @@ public class InfoToRedisUtils {
     public Object getTargetInfo(String targetType, String targetId) {
         try {
             int id = Integer.parseInt(targetId);
+
             //查询信息
             switch (targetType) {
                 case "product":
-                    return selectAccountService.getProductInfoAccountByProductId(id);
-//                case "sensor":
-//                    return selectInfoService  (id);
+                    return productSelectAccountService.getProductInfoAccountByProductId(id);
+                case "sensor":
+                    return sensorInfoSelectService.getSensorInfoBySensorId(id);
 //                case "nft":
 //                    return nftTemplateService.getNftTemplateById(id);
+//                case "userInfo":
+//                    return accountService.findAccountById(id);
                 default:
                     return null;
             }

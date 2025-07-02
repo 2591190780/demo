@@ -17,4 +17,6 @@ public class AuthorizeVO {
     Date expire;
     String email;
     String date;
+    // 钱包地址字段
+    String walletAddress;
 }

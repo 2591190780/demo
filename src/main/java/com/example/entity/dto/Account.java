@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("user_info")
@@ -19,11 +20,10 @@ public class Account {
     String password;
     String email;
     String role;
-    Timestamp register_date;
+    LocalDateTime register_date;
 
     // 钱包地址字段
     String walletAddress;
-
     String userImgurl;
 
 }

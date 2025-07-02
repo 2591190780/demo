@@ -24,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -54,13 +55,31 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     InfoToRedisUtils infoToRedisUtils;
 
     @Override
-    public String updateRoleByApply(Account account){
+    public boolean updateRoleByApply(HttpServletRequest request,Account account){
+        if (!Objects.equals(account.getId(), jwtUtils.getRequesetId(request))) return false;
+        infoToRedisUtils.InfoToRedis(Integer.valueOf(account.getRole())
+                ,account.getId(),"update","userInfo");
+        return true;
 
-        infoToRedisUtils.InfoToRedis(account.getId(), account.getId()
-                , "update","userInfo");
+    }
 
-        return null;
+    @Override
+    public boolean updateRoleAdmin(Integer id,String role){
+        return this.update().eq("id",id)
+                .set("role",role).update();
 
+    }
+
+
+    @Override
+    public boolean updateImg(HttpServletRequest request ,Account account){
+        if (ObjectUtils.isEmpty(account)){
+            return false;
+        }
+        if(!account.getId().equals(jwtUtils.getRequesetId(request))) return false;
+
+        return  this.update().eq("id",account.getId())
+                .set("user_imgurl",account.getUserImgurl()).update();
     }
 
     @Override
@@ -117,9 +136,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if(this.existAccountByUsername(username)) return "用户名已存在";
         String encodePassword =  Encoder.encode(password);
 
-        java.util.Date utilDate = new java.util.Date();
-        java.sql.Timestamp sqlDate = new java.sql.Timestamp(utilDate.getTime());
-
+        LocalDateTime sqlDate = LocalDateTime.now();
         /**
          * 后续需要由前端生成私钥和地址，传回地址
          * String address = emailRegisterVO.getWalletAddress();

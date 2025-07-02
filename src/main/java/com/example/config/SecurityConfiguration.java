@@ -100,8 +100,11 @@ public class SecurityConfiguration {
         vo.setUsername(account.getUsername());
         vo.setEmail(account.getEmail());
         vo.setDate(String.valueOf(new Date(System.currentTimeMillis())));
-        String role = account.getRole();
+
         String address = account.getWalletAddress();
+        vo.setWalletAddress(address);
+
+        String role = account.getRole();
         //数据库传入"1","2","3"，后端判断
         switch (role) {
             case "1":

@@ -43,6 +43,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
     @Resource
     SensorInfoUpdateService sensorInfoUpdateService;
 
+
+
     private static final Duration EXPIRE_DURATION = Duration.ofHours(24);
 
     @Override
@@ -76,26 +78,31 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                     RestBean.failure(401,"内部错误，请联系管理员");
                     return null;
                 }  // 确保格式正确
-
-
                 String operationType = parts[1];
                 String targetType = this.constConvertType(parts[2]);
-                String targetId = parts[3];
-                String farmerId = parts[4];
+                String targetId = parts[3]; //如果是userinfo 这里是 role
+                String farmerId = parts[4];  // 如果操作目标是userinfo 这里是 id
 
                 // 5. 获取农户信息
                 Account farmer = accountService.findAccountById(Integer.parseInt(farmerId));
+                Object targetInfo ;
 
-                // 6. 获取目标对象详情（根据类型查询不同表）
-                Object targetInfo = redisUtils.getTargetInfo(targetType, targetId);
+                if(targetType.equals("userInfo")){
+                    // 6. 获取目标对象详情（根据类型查询不同表）
+                    farmer.setPassword(null);
+                    targetInfo = farmer;
+
+                }else {
+                    targetInfo = redisUtils.getTargetInfo(targetType, targetId);
+                }
 
                 //redis缓存中 过期时间以ttl存储。需要反推。
                 long expireMillis  =  template.opsForValue().getOperations().getExpire(applyListKey);
                 long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;
                 LocalDateTime createTime = LocalDateTime.now().minusSeconds(livedMillis);
                 LocalDateTime deadTime = createTime.plusSeconds(EXPIRE_DURATION.toSeconds());
-                // 7. 添加到结果列表
 
+                // 7. 添加到结果列表
                 pendingApplicationVOS.add(new PendingApplicationVO(
                         operationType,
                         targetType,
@@ -124,7 +131,9 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
             String applyListKey = "apply:" + vo.getOperation();
 
             String tarType = this.typeConvertConst(vo.getTargetType());
-
+            /**
+             * 如果传入入的是 申请修改用户角色信息 -->  "update" + Const.USER_ID_LIST + role + id
+             */
             String compositeKey = applyListKey + ":" + tarType+ ":" + vo.getTargetId() + ":" + vo.getFarmerId();
             // 2. 解析复合键
             String operation = vo.getOperation();
@@ -168,11 +177,14 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         String targetType = vo.getTargetType();
         String targetId = vo.getTargetId();
         String farmerId = vo.getFarmerId();
+
+
         Object result = switch (targetType) {
             case "product" -> productInfoUpdateAccountService.productUpdateAdmin(
                     this.convertToInteger(targetId),
                     this.convertToInteger(farmerId), (byte) 1);
             //case "sensor":
+            case "userInfo" -> accountService.updateRoleAdmin(Integer.valueOf(farmerId),targetId);
             default -> throw new IllegalStateException("未知的数据类型" + targetType);
         };
         return result;

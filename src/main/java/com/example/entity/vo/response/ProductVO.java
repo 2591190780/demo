@@ -35,4 +35,8 @@ public class ProductVO {
     private LocalDateTime  updateTime;
     // * 创建时间
     private LocalDateTime createTime;
+
+    private byte isActive;
+
+    private String productImgurl;
 }

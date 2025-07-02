@@ -2,6 +2,7 @@ package com.example.service.product;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.entity.RestBean;
+import com.example.entity.dto.Account;
 import com.example.entity.dto.ProductInfoAccountDto;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -14,4 +15,5 @@ public interface ProductInfoUpdateAccountService extends IService<ProductInfoAcc
      <T> RestBean<T> updateSingleProductInfoAdmin(HttpServletRequest request, ProductInfoAccountDto account);
      <T> RestBean<T> updateAllProductInfoAdmin(HttpServletRequest request, List<ProductInfoAccountDto> accountList);
      boolean productUpdateAdmin(Integer productId,Integer farmerId,byte active);
+
 }

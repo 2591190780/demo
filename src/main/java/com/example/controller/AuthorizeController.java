@@ -1,6 +1,7 @@
 package com.example.controller;
 
 import com.example.entity.RestBean;
+import com.example.entity.dto.Account;
 import com.example.entity.vo.request.ConfirmResetVO;
 import com.example.entity.vo.request.EmailRegisterVO;
 import com.example.entity.vo.request.EmailResetVO;
@@ -28,7 +29,12 @@ public class AuthorizeController {
     @Resource
     AccountService accountService;
 
+    @PutMapping("/update/role") //得在登录状态下
+    public  RestBean<String>  updateRoleApply(HttpServletRequest request, @RequestBody Account account){
+        return this.accountService.updateRoleByApply(request,account)? RestBean.success("请等待管理员处理。")
+                : RestBean.failure(401,"请求失败。");
 
+    }
     @GetMapping("/ask-code") //请求发送验证码
     public RestBean<Void> askVerifyCode(@RequestParam  @Email  String email ,
                                         @RequestParam @Pattern(regexp = "(register|reset)") String type,
@@ -52,9 +58,7 @@ public class AuthorizeController {
                   .body(
                           RestBean.success(message)
                   );
-
     }
-
     @PostMapping("/reset-confirm") //验证码确认
     public RestBean<Void> resetConfirm(@RequestBody @Valid ConfirmResetVO vo){
         return this.messageHandle(vo, accountService::resetConfirm);

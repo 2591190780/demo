@@ -139,6 +139,8 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
         vo.setCertificationHash(account.getCertificationHash());
         vo.setCreateTime(account.getCreateTime() );
         vo.setUpdateTime(account.getUpdateTime());
+        vo.setProductImgurl(account.getProductImgurl());
+        vo.setIsActive(account.getIsActive());
         return vo;
     }
 }
