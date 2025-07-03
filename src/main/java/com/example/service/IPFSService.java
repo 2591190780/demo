@@ -37,8 +37,8 @@ public class IPFSService {
             /**
              * CID 形式是 QmUoqPMfF2zekW5GiDCsBsVaa794n8u118dtLU7quUVeSn 大致这样
              * 可访问连接形式  https://ipfs.globalupload.io/Qm......（加上ipfs前缀）
-             *
              */
+
             return new IPFSResponse(cid);
         } catch (Exception e) {
             // 添加 Windows 环境下的特定错误处理

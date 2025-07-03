@@ -4,10 +4,12 @@ package com.example.controller.ipfs;
 
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
+import com.example.entity.dto.NFTInfoDto;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.service.AccountService;
 import com.example.service.IPFSService;
+import com.example.service.NFT.NFTInfoService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.utils.JwtUtils;
@@ -45,6 +47,9 @@ public class IPFSController {
     @Resource
     AccountService accountService;
 
+    @Resource
+    NFTInfoService nfTInfoService;
+
     @PostMapping("/add")
     public <T> RestBean<String> imgAdd(HttpServletRequest request,
                                        @RequestParam String id,  //传入要修改的目标记录ID
@@ -71,7 +76,7 @@ public class IPFSController {
              */
 
             //添加对象操作
-        if (this.operationTypeImgAdd(operationType,request,id,cid)){
+        if (this.operationTypeImgAdd(request,operationType, String.valueOf(userId),id,cid)){
             return RestBean.success("上传成功，图片的CID为"+cid);
         };
 
@@ -80,16 +85,19 @@ public class IPFSController {
 
     }
 
+    /**
+     *用户在上传图片时  需要 （若没有账户信息）先生成账户信息-->上传图片-->(若为NFT)制定NFT规则。
+     *                      提交修改-->isActive=0-->管理员通过
+     */
 
-
-    private boolean operationTypeImgAdd(String operationType ,HttpServletRequest request
+    private boolean operationTypeImgAdd(HttpServletRequest request,String operationType ,String userId
             ,String id //修改产品传入的就是产品id 修改用户传的就是用户id
             ,String cid){
-        Integer targetId = jwtUtils.convertToInteger(id);
+        Integer targetId = jwtUtils.convertToInteger(userId);
         if (operationType.equals("product")) {
             ProductVO vo = this.productInfoSelectAccountService.getProductInfoAccountByProductId(
                     targetId);
-            if (!Objects.equals(vo.getFarmerId(), targetId)) return false; //操作目标的所属农户不属于当前登录状态下的用户 则操作失败
+            //service的update操作已经做了权限验证
             ProductInfoAccountDto dto = new ProductInfoAccountDto();
             BeanUtils.copyProperties(vo,dto);
             dto.setProductId(jwtUtils.convertToInteger(id));
@@ -98,13 +106,14 @@ public class IPFSController {
             return true;
         } else if (operationType.equals("userInfo")) {
             Account account = this.accountService.findAccountById(targetId);
-            if (!Objects.equals(account.getId(), targetId)) return false;
             account.setUserImgurl(cid);
-            this.accountService.updateImg(request,account);
-            return true;
+            return this.accountService.updateImg(request,account) ;
+        }else if (operationType.equals("nftInfo")){
+            NFTInfoDto nftInfoDto = this.nfTInfoService.NFTInfoSelectByTemplateId(targetId);
+            nftInfoDto.setImageUrl(cid);
+            return this.nfTInfoService.NFTaddImg(request,nftInfoDto);
         }
-
-        return false;
+            return false;
     }
 
 

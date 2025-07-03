@@ -3,6 +3,7 @@ package com.example.utils;
 import com.example.entity.RestBean;
 import com.example.service.AccountService;
 import com.example.service.NFT.NFTInfoService;
+import com.example.service.NFT.NFTRuleService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.sensor.SensorInfoSelectService;
 import jakarta.annotation.Resource;
@@ -26,7 +27,8 @@ public class InfoToRedisUtils {
     @Resource
     NFTInfoService nftInfoService;
 
-
+    @Resource
+    NFTRuleService nftRuleService;
 
     public <T> RestBean<T> InfoToRedis(Integer id, Integer farmerId,
                                        String operationType, String targetType) {
@@ -114,9 +116,8 @@ public class InfoToRedisUtils {
                     return sensorInfoSelectService.getSensorInfoBySensorId(id);
                 case "nft_info":
                     return nftInfoService.NFTInfoSelectByTemplateId(id);
-    //            case "nft_rule":
-//                case "userInfo":
-//                    return accountService.findAccountById(id);
+                case "nft_rule": return  nftRuleService.nftRuleSelectByID(id);
+
                 default:
                     return null;
             }

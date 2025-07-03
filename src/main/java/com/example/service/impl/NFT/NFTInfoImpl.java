@@ -11,6 +11,7 @@ import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,6 +19,12 @@ import java.util.Objects;
 
 @Service
 public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implements NFTInfoService {
+
+    private final JwtUtils jwtUtils;
+
+    public NFTInfoImpl(JwtUtils jwtUtils) {
+        this.jwtUtils = jwtUtils;
+    }
 
     /**
      * 查询不需要权限验证
@@ -80,6 +87,18 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
                 .set("update_time",LocalDateTime.now())
                 .update();
     }
-
+    @Override
+    public boolean NFTaddImg(HttpServletRequest request,NFTInfoDto dto){
+        if (ObjectUtils.isEmpty(dto)){
+            return false;
+        }
+        if(!dto.getPublicBy().equals(jwtUtils.getRequesetId(request))) return false;
+        /**
+         * NFT 图片只允许上传一次  不可修改
+         */
+        if(this.NFTInfoSelectByTemplateId(dto.getTemplateId()).getImageUrl()!=null) return false;
+        return  this.update().eq("id",dto.getTemplateId())
+                .set("user_imgurl",dto.getImageUrl()).update();
+    }
 
 }
