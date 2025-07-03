@@ -16,18 +16,16 @@ import java.time.LocalDateTime;
 public class NFTRuleDto {
     @TableId(type = IdType.AUTO)  // 自增主键
     private Integer ruleId;
-
     private String name;
+    private String ruleDescription;
     private Integer templateId;
     private String conditionValue;
     private Integer validityPeriod;
     private int isActive;
     private LocalDateTime createdAt;
-    private int table;
+    private int tableName;
     private LocalDateTime conditionStartTime;
     private LocalDateTime conditionEndTime;
-    private String ruleDescription;
-
     private String applyHash;
     private LocalDateTime updateTime;
 

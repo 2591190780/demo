@@ -10,11 +10,11 @@ public class Const {
     /**
      * 产品  农户的相关操作  存入Redis队列等待管理员处理
      */
-    public static final  String FARMER_UPDATE_APPLY_LIST = "FARMER_UPDATE_APPLY_LIST";
-    public static final  String FARMER_ADD_APPLY_LIST="farmerAddApplyList";
-    public static final  String FARMER_DELETE_APPLY_LIST="farmerDeleteList";
+    public static final  String FARMER_UPDATE_APPLY_LIST = "userUpdateApplyList";
+    public static final  String FARMER_ADD_APPLY_LIST="userAddApplyList";
+    public static final  String FARMER_DELETE_APPLY_LIST="userDeleteList";
 
-    public static final  String FARMER_INDEX ="FarmerIndex";
+    public static final  String FARMER_INDEX ="userIndex";
 
     public static final  String PRODUCT_ID_LIST ="productIdList";
     public static final  String SENSOR_ID_LIST = "sensorIdList";

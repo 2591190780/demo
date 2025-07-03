@@ -1,7 +1,11 @@
 package com.example.utils;
 
+import com.example.entity.dto.NFTInfoDto;
+import com.example.entity.dto.NFTRuleDto;
 import com.example.entity.dto.SensorDataInfoDto;
 import com.example.entity.dto.TransactionAccountDto;
+import com.example.service.NFT.NFTInfoService;
+import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -12,6 +16,9 @@ import java.time.format.DateTimeFormatter;
 
 @Component
 public class BlockchainHashUtil {
+
+    @Resource
+    NFTInfoService nftInfoService;
 
     private static final DateTimeFormatter TIMESTAMP_FORMATTER =
             DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
@@ -62,6 +69,25 @@ public class BlockchainHashUtil {
         String hash = sha256(formattedData);
         return "0x" + hash;
     }
+
+    public  String  generateNFTRuleHash(NFTRuleDto dto){
+        // 1. 标准化数据格式
+        NFTInfoDto nftInfoDto = nftInfoService.NFTInfoSelectByTemplateId(dto.getTemplateId());
+        String formattedData = String.format(
+                "NAME:"+normalizeString(dto.getName())
+                        +"TEMPLATE_ID:"+dto.getTemplateId()
+                        + "TABLE:"+dto.getTableName()
+                        + "VALIDITY_PERIOD:"+dto.getValidityPeriod()
+                        +"NFT_NAME:"+normalizeString(nftInfoDto.getName())
+                        +"ISSUANCE_LIMIT:"+nftInfoDto.getIssuanceLimit()
+                        +"NFT_LEVEL:"+normalizeString(nftInfoDto.getNftLevel())
+                        +"PUBLIC_BY:"+nftInfoDto.getPublicBy()
+        );
+        String hash = sha256(formattedData);
+        return "0x" + hash;
+    }
+
+
 
     public String generateSensorHash(
             SensorDataInfoDto dto

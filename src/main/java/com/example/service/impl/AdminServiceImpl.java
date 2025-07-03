@@ -4,11 +4,13 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.dto.NFTInfoDto;
+import com.example.entity.dto.NFTRuleDto;
 import com.example.entity.vo.response.PendingApplicationVO;
 import com.example.mapper.AdminMapper;
 import com.example.service.AccountService;
 import com.example.service.AdminService;
 import com.example.service.NFT.NFTInfoService;
+import com.example.service.NFT.NFTRuleService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.service.sensor.SensorInfoUpdateService;
 import com.example.utils.Const;
@@ -49,6 +51,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
     @Resource
     NFTInfoService nftInfoService;
 
+    @Resource
+    NFTRuleService nftRuleService;
 
     private static final Duration EXPIRE_DURATION = Duration.ofHours(24);
 
@@ -198,10 +202,10 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
             case "userInfo" -> accountService.updateRoleAdmin(Integer.valueOf(farmerId),targetId);
             case "nft_info" -> nftInfoService.NFTInfoUpdateAdmin(
                     this.convertToInteger(targetId),ans);
+            case "nft_rule" -> nftRuleService.nftRuleUpdateAdmin(Integer.valueOf(targetId),ans);
             default -> throw new IllegalStateException("未知的数据类型" + targetType);
         };
         return result;
-
     }
 
     private Integer convertToInteger (String value){

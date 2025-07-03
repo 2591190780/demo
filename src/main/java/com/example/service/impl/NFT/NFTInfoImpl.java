@@ -19,30 +19,6 @@ import java.util.Objects;
 @Service
 public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implements NFTInfoService {
 
-    @Resource
-    JwtUtils jwtUtils;
-
-    @Resource
-    InfoToRedisUtils infoToRedisUtils;
-
-    @Override
-    public boolean NFTInfoAddSingle(HttpServletRequest request,NFTInfoDto nftInfoDto){
-        /**
-         * 前端传入--> 名称、描述、图片、发行个数、nft稀有度，metadata元数据
-         * 后端需要 使用ipfs 以及 上链获取nft地址
-         */
-        Integer userId =  jwtUtils.getRequesetId(request);
-        if(!Objects.equals(nftInfoDto.getPublicBy(), userId)) return false;
-        LocalDateTime createTime = LocalDateTime.now();
-        nftInfoDto.setCreatedAt(createTime);
-        nftInfoDto.setIsActive(0);
-        if (this.save(nftInfoDto)){
-            // 请求发送给 Redis等待管理员确认
-            infoToRedisUtils.InfoToRedis(nftInfoDto.getTemplateId(),userId,"add","nft_info");
-            return true;
-        }
-        return false;
-    }
     /**
      * 查询不需要权限验证
      */
@@ -92,18 +68,11 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
             queryWrapper.eq("nft_level", params.getNftLevel());
         }
 
-        // 时间范围查询
-        if (params.getCreatedAt() != null) {
-            queryWrapper.ge("update_time", params.getCreatedAt());
-        }
-
         return this.list(queryWrapper);
         }
-
     /**
      * NFT在发行后需要上链，所以不能更改基本信息。
      */
-
     @Override
     public boolean NFTInfoUpdateAdmin(Integer id,byte answer){
         return  this.update().eq("template_id",id)
@@ -113,15 +82,4 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
     }
 
 
-    @Override
-    public boolean NFTInfoUpdateMulti(NFTInfoDto nftInfoDto){
-
-        return true;
-    }
-
-
-    @Override
-    public List<NFTInfoDto> NFTInfoSelectMulti(List<NFTInfoDto> nftInfoDtoList){
-        return null;
-    }
 }
