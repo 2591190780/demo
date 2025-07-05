@@ -32,6 +32,7 @@ public class NFTAddInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> imple
         if(!Objects.equals(nftInfoDto.getPublicBy(), userId)) return false;
         LocalDateTime createTime = LocalDateTime.now();
         nftInfoDto.setCreatedAt(createTime);
+        nftInfoDto.setRemainCount(nftInfoDto.getIssuanceLimit());
         nftInfoDto.setIsActive(0);
         if (this.save(nftInfoDto)){
             // 请求发送给 Redis等待管理员确认

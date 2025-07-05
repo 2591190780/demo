@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDateTime;
 
@@ -26,8 +27,10 @@ public class NFTRuleDto {
     private int tableName;
     private LocalDateTime conditionStartTime;
     private LocalDateTime conditionEndTime;
+
+    @Length(min = 66, max = 66)
     private String applyHash;
     private LocalDateTime updateTime;
-
+    private LocalDateTime passActive;
 
 }

@@ -127,6 +127,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         String email = emailRegisterVO.getEmail();
         String username = emailRegisterVO.getUsername();
         String password = emailRegisterVO.getPassword();
+        String phoneNumber = emailRegisterVO.getPhoneNumber();
 
         String code = stringRedisTemplate.opsForValue().get(Const.VERIFY_EMAIL_DATA+email);
         if (code==null) return "请先获取验证码";
@@ -134,6 +135,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         if (!code.equals(emailRegisterVO.getCode())) return "验证码错误";
         if(this.existAccountByEmail(email) )  return "邮箱已注册";
         if(this.existAccountByUsername(username)) return "用户名已存在";
+        if(this.existAccountByPhone(phoneNumber)) return "手机号已注册";
         String encodePassword =  Encoder.encode(password);
 
         LocalDateTime sqlDate = LocalDateTime.now();
@@ -152,7 +154,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
                 "2",
                 sqlDate,
                 address,
-                null
+                null,phoneNumber
                 );
         if(this.save(account)){
             this.RedisClearCode(email);
@@ -237,6 +239,10 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     private boolean existAccountByUsername(String username){
         return this.baseMapper.exists(Wrappers.<Account>query().eq("username",username));
+    }
+
+    private boolean existAccountByPhone(String phone){
+        return this.baseMapper.exists(Wrappers.<Account>query().eq("phone_number",phone));
     }
 
     public Account findAccountByNameOrEmail(String text){

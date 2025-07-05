@@ -19,4 +19,5 @@ public class AuthorizeVO {
     String date;
     // 钱包地址字段
     String walletAddress;
+    String phoneNumber;
 }

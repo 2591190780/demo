@@ -8,7 +8,9 @@ import com.example.service.AddressService;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.bouncycastle.pqc.crypto.newhope.NHOtherInfoGenerator;
 import org.checkerframework.checker.nullness.qual.Raw;
+import org.fisco.bcos.sdk.v3.codec.datatypes.Int;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,7 +25,13 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
     JwtUtils jwtUtils;
 
     @Override
-    public List<AddressDto> findByuserId(Integer id){
+    public boolean setDefaultAddress(Integer id, Integer ans){
+        return this.update().eq("user_id",id)
+                .set("default_address",ans).update();
+    }
+
+    @Override
+    public List<AddressDto> findByUserId(Integer id){
         return this.query().eq("user_id", id).list();
     }
 

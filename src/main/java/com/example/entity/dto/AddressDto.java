@@ -18,6 +18,8 @@ public class AddressDto {
 
     private String address;
 
+    private Integer defaultAddress;
+
     public AddressDto() {
 
     }

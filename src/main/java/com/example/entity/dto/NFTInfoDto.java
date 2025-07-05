@@ -11,8 +11,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @EntityScan
@@ -28,10 +30,16 @@ public class NFTInfoDto {
     private String name;
     private String description;
     private String imageUrl;
+
+    @Length(min = 42, max = 42)
     private String contractAddress;
+
     private Integer issuanceLimit;
+    private Integer remainCount;
+
     private int isActive;
     private LocalDateTime createdAt;
+
     @TableField(typeHandler = Fastjson2TypeHandler.class) // 关键：JSON类型处理器
     private JSONObject metadataUrl;
     private String nftLevel;

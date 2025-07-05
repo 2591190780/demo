@@ -87,6 +87,15 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
                 .set("update_time",LocalDateTime.now())
                 .update();
     }
+
+    @Override
+    public boolean NFTInfoUpdateCount(Integer id){
+        Integer num = this.NFTInfoSelectByTemplateId(id).getRemainCount();
+        return  this.update().eq("template_id",id)
+                .set("remain_count",num-1)
+                .update();
+    }
+
     @Override
     public boolean NFTaddImg(HttpServletRequest request,NFTInfoDto dto){
         if (ObjectUtils.isEmpty(dto)){

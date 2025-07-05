@@ -9,11 +9,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.ibatis.annotations.Mapper;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/address")
@@ -26,11 +26,26 @@ public class AddressController {
     @Resource
     JwtUtils jwtUtils;
 
+    @GetMapping("/user/set/default")
+    public  <T> RestBean<T> setDefault(HttpServletRequest request,
+                                       @Parameter(ref = "addressID") String id,
+                                       @Parameter(ref = "defaultFlag") String flag){
+
+        AddressDto dto = this.addressService.findById(jwtUtils.convertToInteger(id));
+        if(!Objects.equals(jwtUtils.getRequesetId(request),dto.getUserId()))
+        {return RestBean.failure(401,"未授权的操作");}
+            return this.addressService.setDefaultAddress(jwtUtils.convertToInteger(id),
+                    jwtUtils.convertToInteger(flag))? RestBean.success():RestBean.failure(401,"设置失败。");
+
+    }
+
     @GetMapping("/userid/select")
-    public <T>RestBean<T> selectByUserId(HttpServletRequest request, HttpServletResponse response, @Parameter String userid ) throws IOException {
-        List<AddressDto> dtoList = this.addressService.findByuserId(jwtUtils.convertToInteger(userid));
+    public <T>RestBean<T> selectByUserId(HttpServletRequest request, HttpServletResponse response,
+                                         @Parameter String userid ) throws IOException {
+        List<AddressDto> dtoList = this.addressService.findByUserId(jwtUtils.convertToInteger(userid));
         AddressDto addressDto = dtoList.get(0);
         if(this.addressService.userIdEqRequestId(request,addressDto)){
+            response.setContentType("application/json;Charset=utf-8");
             response.getWriter().write(RestBean.success(dtoList).asJsonString());
             return null;
         }
@@ -38,7 +53,8 @@ public class AddressController {
     }
 
     @GetMapping("/id/select")
-    public <T>RestBean<T> selectById(HttpServletRequest request, HttpServletResponse response, @Parameter String id ) throws IOException {
+    public <T>RestBean<T> selectById(HttpServletRequest request, HttpServletResponse response,
+                                     @Parameter String id ) throws IOException {
         AddressDto dto = this.addressService.findById(jwtUtils.convertToInteger(id));
         if(this.addressService.userIdEqRequestId(request,dto)){
             response.getWriter().write(RestBean.success(dto).asJsonString());

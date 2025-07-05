@@ -100,7 +100,6 @@ public class SecurityConfiguration {
         vo.setUsername(account.getUsername());
         vo.setEmail(account.getEmail());
         vo.setDate(String.valueOf(new Date(System.currentTimeMillis())));
-
         String address = account.getWalletAddress();
         vo.setWalletAddress(address);
 

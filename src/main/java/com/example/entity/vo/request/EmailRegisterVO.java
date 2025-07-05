@@ -18,5 +18,7 @@ public class EmailRegisterVO {
     String password;
 
     String walletAddress;
+    @Length(min=11,max=11)
+    String phoneNumber;
 
 }

@@ -199,8 +199,8 @@ public class AlipayController {
                 "RSA2");
 
         AlipayTradePagePayRequest payRequest = new AlipayTradePagePayRequest();
-        payRequest.setReturnUrl("http://t3edf3b8.natappfree.cc/alipay/return");
-        payRequest.setNotifyUrl("http://t3edf3b8.natappfree.cc/alipay/notify");
+        payRequest.setReturnUrl(Const.APLIPAY_RETURN_URL);
+        payRequest.setNotifyUrl(Const.APLIPAY_NOTIFY_URL);
 
         // 构建业务参数 - 使用LinkedHashMap保持顺序
         Map<String, Object> bizContentMap = new LinkedHashMap<>();
@@ -331,13 +331,16 @@ public class AlipayController {
                 dto.setAlipayOrder(tradeNo);
 
                 /**
-                 *这里继续对
-                 *
+                 * 这里要 执行 只能合约，NFT触发机制，hash上链等操作  对相应的表格进行操作 user_nft ......
+                 * 还没写。
                  */
+
 
                 if( transactionProcessService.transactionStatusUpdate(dto,"2")){
                     stringRedisTemplate.delete(hash);
                     stringRedisTemplate.opsForSet().remove(outTradeNo,hash);
+
+
                 }
                 System.out.println(stringRedisTemplate.opsForSet().size(outTradeNo));
             }

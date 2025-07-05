@@ -14,7 +14,7 @@ public interface NFTInfoService extends IService<NFTInfoDto> {
     List<NFTInfoDto> infoSelectByCondition(NFTInfoDto params);
      boolean NFTInfoUpdateAdmin(Integer id,byte answer);
     boolean NFTaddImg(HttpServletRequest request,NFTInfoDto dto);
-
+    boolean NFTInfoUpdateCount(Integer id);
 
 
 }

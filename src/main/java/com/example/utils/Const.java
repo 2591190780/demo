@@ -2,10 +2,17 @@ package com.example.utils;
 
 public class Const {
     /**
+     * NFT交易信息
+     */
+    public static final  String NFT_TRANSACTION = "NFT_TRANSACTION";
+    /**
      * 交易订单，相关信息
      */
     public static final  String ORDER_ID_INFO = "orderIdInfo";
     public static final  String REAL_PAY_COUNT = "realPayCount";
+
+    public static final  String APLIPAY_RETURN_URL = "http://t3edf3b8.natappfree.cc/alipay/return";
+    public static final  String APLIPAY_NOTIFY_URL = "http://t3edf3b8.natappfree.cc/alipay/notify";
 
     /**
      * 产品  农户的相关操作  存入Redis队列等待管理员处理

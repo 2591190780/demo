@@ -39,6 +39,12 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
     }
 
     @Override
+    public NFTRuleDto nftRuleSelectByActId (Integer id){
+        return this.query().eq("template_id", id)
+                .eq("is_active",1).one();
+    }
+
+    @Override
     public  List<NFTRuleDto> nftRuleSelectCondition(NFTRuleDto params){
         QueryWrapper<NFTRuleDto> queryWrapper = new QueryWrapper<>();
         // 精确匹配条件
@@ -73,6 +79,8 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
                 .set("update_time",LocalDateTime.now())
                 .update();
     }
+
+
 
     private String tableChoose(int type){
         return switch (type){

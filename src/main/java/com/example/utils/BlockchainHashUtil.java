@@ -1,9 +1,6 @@
 package com.example.utils;
 
-import com.example.entity.dto.NFTInfoDto;
-import com.example.entity.dto.NFTRuleDto;
-import com.example.entity.dto.SensorDataInfoDto;
-import com.example.entity.dto.TransactionAccountDto;
+import com.example.entity.dto.*;
 import com.example.service.NFT.NFTInfoService;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
@@ -82,6 +79,20 @@ public class BlockchainHashUtil {
                         +"ISSUANCE_LIMIT:"+nftInfoDto.getIssuanceLimit()
                         +"NFT_LEVEL:"+normalizeString(nftInfoDto.getNftLevel())
                         +"PUBLIC_BY:"+nftInfoDto.getPublicBy()
+        );
+        String hash = sha256(formattedData);
+        return "0x" + hash;
+    }
+
+    public  String  generateNFTTransactionRuleHash(NFTTransactionDto dto){
+        // 1. 标准化数据格式
+        String formattedData = String.format(
+                "NFT_ID:"+dto.getNftId()
+                        +"FROM_USER:"+dto.getFromUser()
+                        + "TO_USER:"+dto.getToUser()
+                        + "TYPE:"+dto.getType()
+                        +"PRICE:"+dto.getPrice()
+                        +"CREATE_TIME"+dto.getTxTime()
         );
         String hash = sha256(formattedData);
         return "0x" + hash;

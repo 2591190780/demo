@@ -17,5 +17,5 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     boolean cancelTransactionMulti(HttpServletRequest request,List<String> hashList);
     List<TransactionAccountDto> transactionSelectMulti(HttpServletRequest request,Integer id);
     TransactionAccountDto transactionSelect(HttpServletRequest request,Integer id);
-
+    TransactionAccountDto getOrderByAlipayOrder(String alipayOrder);
 }

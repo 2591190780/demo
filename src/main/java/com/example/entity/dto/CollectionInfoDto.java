@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDateTime;
 
@@ -25,6 +26,7 @@ public class CollectionInfoDto {
     //购物车产品添加时间
     private LocalDateTime create_time;
     //产品哈希值
+    @Length(min = 66, max = 66)
     private String product_hash;
     //添加类型 1购物车/2收藏夹
     private String operation_type;

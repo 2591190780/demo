@@ -5,6 +5,7 @@ import com.example.entity.dto.NFTRuleDto;
 import com.example.mapper.NFT.NFTRuleMapper;
 import com.example.service.NFT.NFTAddRuleService;
 import com.example.service.NFT.NFTInfoService;
+import com.example.service.NFT.NFTRuleService;
 import com.example.utils.BlockchainHashUtil;
 import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
@@ -30,6 +31,9 @@ public class NFTAddRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> imple
     @Resource
     BlockchainHashUtil blockchainHashUtil;
 
+    @Resource
+    NFTRuleService nftRuleService;
+
     @Override
     public boolean NFTRuleAddSingle(HttpServletRequest request, NFTRuleDto nftRuleDto){
 
@@ -39,11 +43,19 @@ public class NFTAddRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> imple
          */
         Integer userId =  jwtUtils.getRequesetId(request);
         Integer templateId = nftRuleDto.getTemplateId();
+        //发布者与当前登录的用户ID相同才可以进行后续操作。
         if (!Objects.equals(nftInfoService.NFTInfoSelectByTemplateId(templateId).getPublicBy(), userId)){
             return false;
         }
+        //如果新添加的规则对应的NFT 还存在 生效的 规则 则不允许添加
+        if(nftRuleService.nftRuleSelectByActId(templateId)!=null) return false;
         LocalDateTime createTime = LocalDateTime.now();
         nftRuleDto.setCreatedAt(createTime);
+        LocalDateTime endTime = null ;
+        if(nftRuleDto.getValidityPeriod()!=-1 && nftRuleDto.getValidityPeriod()!=0){
+            endTime =  createTime.plusDays(nftRuleDto.getValidityPeriod());
+        }
+        nftRuleDto.setPassActive(endTime);
         nftRuleDto.setIsActive(0);
         nftRuleDto.setTemplateId(templateId);
         nftRuleDto.setApplyHash(blockchainHashUtil.generateNFTRuleHash(nftRuleDto));
@@ -54,5 +66,6 @@ public class NFTAddRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> imple
         }
         return false;
     }
+
 
 }

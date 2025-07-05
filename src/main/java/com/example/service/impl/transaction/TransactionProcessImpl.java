@@ -108,6 +108,15 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         return updateResult;
     }
 
+    @Override
+    public  TransactionAccountDto getOrderByAlipayOrder(String alipayOrder){
+        TransactionAccountDto dto = this.query().eq("alipay_order", alipayOrder).one();
+        if (dto != null) {
+            return dto;
+        }
+        return null;
+    }
+
 
     @Override
     public  TransactionAccountDto getOrderByHash(String hash){
