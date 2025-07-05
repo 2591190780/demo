@@ -56,6 +56,8 @@ spring:
       enabled: true
       max-file-size: 10MB
       max-request-size: 10MB
+
+
 ipfs:
   host: /ip4/127.0.0.1/tcp/5001  # 使用完整路径格式
   # port: 5001  # 删除此行，避免冲突
