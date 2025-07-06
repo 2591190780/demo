@@ -248,7 +248,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     public Account findAccountByNameOrEmail(String text){
         return this.query()
                 .eq("username",text).or()
-                .eq("email",text)
+                .eq("email",text).or()
+                .eq("phone_number",text)
                 .one();
     }
 

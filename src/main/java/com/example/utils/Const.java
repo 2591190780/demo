@@ -11,8 +11,8 @@ public class Const {
     public static final  String ORDER_ID_INFO = "orderIdInfo";
     public static final  String REAL_PAY_COUNT = "realPayCount";
 
-    public static final  String APLIPAY_RETURN_URL = "http://t3edf3b8.natappfree.cc/alipay/return";
-    public static final  String APLIPAY_NOTIFY_URL = "http://t3edf3b8.natappfree.cc/alipay/notify";
+    public static final  String APLIPAY_RETURN_URL = "http://demotestccit.natapp1.cc/alipay/return";
+    public static final  String APLIPAY_NOTIFY_URL = "http://demotestccit.natapp1.cc/alipay/notify";
 
     /**
      * 产品  农户的相关操作  存入Redis队列等待管理员处理

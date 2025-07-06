@@ -1,4 +1,4 @@
-package com.example.controller.product;
+package com.example.controller.sensor;
 
 import com.example.annotation.Auditable;
 import com.example.entity.RestBean;

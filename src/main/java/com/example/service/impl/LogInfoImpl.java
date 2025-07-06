@@ -26,6 +26,7 @@ public class LogInfoImpl extends ServiceImpl<LogInfoMapper, LogInfoDto> implemen
             if (dto.getUserId() == null) {
                 dto.setUserId(-1); // 未知用户
             }
+
             // 2. 记录调试信息
             System.out.println("新增日志："+dto);
             // 3. 执行保存

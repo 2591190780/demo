@@ -163,7 +163,7 @@ public class AlipayController {
         for (String hash : hashes) {
             TransactionAccountDto order = transactionProcessService.getOrderByHash(hash);
             if (order == null || !"1".equals(order.getStatus())) {
-                sendJsonResponse(response, 401, "订单状态无效或已过期");                return;
+                sendJsonResponse(response, 401, "订单状态无效或已过期"); return;
             }
             totalAmount = totalAmount.add(order.getTotalPrice());
 
@@ -272,7 +272,6 @@ public class AlipayController {
                 String tradeNo = params.get("trade_no");  //支付宝的交易号
                 System.out.println("同步回调支付成功: 订单号=" + outTradeNo + ", 金额=" + totalAmount);
 
-
                 // 5. 重定向到前端支付成功页面
                 return "redirect:http://your-frontend-domain/payment-success.html";
             } else {
@@ -361,11 +360,9 @@ public class AlipayController {
                  * 还没写。
                  */
 
-
                 if( transactionProcessService.transactionStatusUpdate(dto,"2")){
                     stringRedisTemplate.delete(hash);
                     stringRedisTemplate.opsForSet().remove(outTradeNo,hash);
-
 
                 }
                 System.out.println(stringRedisTemplate.opsForSet().size(outTradeNo));
@@ -373,8 +370,6 @@ public class AlipayController {
 
             // TODO: 这里添加您的订单状态更新逻辑
             // 例如: orderService.updateOrderStatus(outTradeNo, "PAID");
-
-
             return "success";
         } catch (Exception e) {
             e.printStackTrace();

@@ -99,7 +99,6 @@ public class AuditAspect {
             if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
                 ip = request.getRemoteAddr();
             }
-
             // 处理多级代理的情况
             return ip.split(",")[0].trim();
         } catch (Exception e) {
