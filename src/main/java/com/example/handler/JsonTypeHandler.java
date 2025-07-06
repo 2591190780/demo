@@ -35,4 +35,5 @@ public class JsonTypeHandler extends JacksonTypeHandler {
             return String.valueOf(obj); // 转为字符串
         }
     }
+
 }

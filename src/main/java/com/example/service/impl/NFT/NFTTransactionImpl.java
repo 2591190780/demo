@@ -149,10 +149,16 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         nftTransactionDto.setTxHash(hash);
 
         if(this.save(nftTransactionDto)){
+            /**
+             * 这里要执行上链操作 ----->  blockChainEvidenceService
+             * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
+             *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+             */
             //对user_nft表格执行操作
             if (this.userNFTService.UserNFT(nftTransactionDto)){
                 this.update().eq("tx_hash", hash)
                         .set("active",1).update();
+
                 return true;
             }
             return false;

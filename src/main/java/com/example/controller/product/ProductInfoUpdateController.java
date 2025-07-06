@@ -1,5 +1,6 @@
 package com.example.controller.product;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.service.product.ProductInfoUpdateAccountService;
@@ -18,6 +19,11 @@ public class ProductInfoUpdateController {
     @Resource
     ProductInfoUpdateAccountService service;
 
+    @Auditable(
+            operationType = "UPDATE_SINGLE_PRODUCT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/updateSingle")
     public RestBean<Void> updateProducts(HttpServletRequest  request
             ,  @RequestBody ProductInfoAccountDto accountDto)  {
@@ -25,6 +31,11 @@ public class ProductInfoUpdateController {
         return service.updateSingleProductInfo(request, accountDto);
     }
 
+    @Auditable(
+            operationType = "UPDATE_ALL_PRODUCTS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/updateAll")
     public RestBean<Void> updateAllProducts(HttpServletRequest  request
             ,  @RequestBody List<ProductInfoAccountDto> accountDtos)  {

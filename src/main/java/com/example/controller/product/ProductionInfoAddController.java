@@ -1,5 +1,6 @@
 package com.example.controller.product;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.vo.request.ProductAddVO;
 import com.example.service.product.ProductInfoAddAccountService;
@@ -17,6 +18,11 @@ public class ProductionInfoAddController {
     @Resource
     ProductInfoAddAccountService service;
 
+    @Auditable(
+            operationType = "ADD_SINGLE_PRODUCT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/addSingle")
     public RestBean<Void> addSingleProduct (HttpServletRequest request,
                                             @RequestBody ProductAddVO vo
@@ -24,6 +30,11 @@ public class ProductionInfoAddController {
         return  service.addUserProductSingle(request,vo);
     }
 
+    @Auditable(
+            operationType = "ADD_MULTI_PRODUCT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/addAll")
     public RestBean<Void> addAllProducts(HttpServletRequest  request,@RequestBody List<ProductAddVO> voList){
         return service.addUserProductAll(request,voList);

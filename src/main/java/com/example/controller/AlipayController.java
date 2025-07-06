@@ -6,6 +6,7 @@ import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.example.annotation.Auditable;
 import com.example.config.AliPayConfig;
 import com.example.entity.AliPay;
 import com.example.entity.RestBean;
@@ -56,6 +57,12 @@ public class AlipayController {
     private static final String SIGN_TYPE ="RSA2";
 
     //生成订单信息并返回给前端
+
+    @Auditable(
+            operationType = "PAY_INFO_SINGLE_ALIPAY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/payInfoSingle")
     public void  payInfoTodb(HttpServletRequest request,HttpServletResponse response
             ,@RequestBody TransactionAccountDto transactionAccountDto) throws IOException {
@@ -73,7 +80,11 @@ public class AlipayController {
         }
     }
 
-
+    @Auditable(
+            operationType = "PAY_INFO_MULTI",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/payInfoMulti")
     public void  payInfoMulti(HttpServletRequest request,HttpServletResponse response,@RequestBody List<TransactionAccountDto> dto) throws IOException {
         response.setContentType("application/json;Charset=utf-8");
@@ -91,6 +102,12 @@ public class AlipayController {
     }
 
     //根据redis中的缓存发送给alipay到支付页面
+
+    @Auditable(
+            operationType = "PAY_ALIPAY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/pay") // 前端路径参数格式?subject=xxx&traceNo=xxx&totalAmount=xxx
     public void pay(HttpServletRequest httpRequest
             , HttpServletResponse  response) throws Exception {
@@ -229,6 +246,11 @@ public class AlipayController {
 
     }
 
+    @Auditable(
+            operationType = "ALIPAY_RETURN",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/alipay/return")
     public String handleReturn(HttpServletRequest request) throws AlipayApiException {
         // 1. 获取所有参数
@@ -264,7 +286,11 @@ public class AlipayController {
         }
     }
 
-
+    @Auditable(
+            operationType = "NOTIFY_ALIPAY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PostMapping("/notify")  // 注意这里必须是POST接口
     public String payNotify(HttpServletRequest request) throws Exception {
         // 1. 获取所有参数
@@ -356,17 +382,33 @@ public class AlipayController {
         }
     }
 
+    @Auditable(
+            operationType = "PAY_CANCEL",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/payCancel")
     public <T> RestBean<T> payCancel(HttpServletRequest request, @Parameter @Valid String hash) throws Exception {
         return this.transactionProcessService.cancelTransaction(request,hash)?
                 RestBean.success():RestBean.failure(401,"订单已失效或订单不存在");
     }
+
+    @Auditable(
+            operationType = "PAY_CANCEL_MULTI",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/payCancelMulti")
     public <T> RestBean<T> payCancelMulti(HttpServletRequest request, @Parameter @Valid List<String> hashes) throws Exception {
         return this.transactionProcessService.cancelTransactionMulti(request,hashes)?
                 RestBean.success():RestBean.failure(401,"订单已失效或订单不存在");
     }
 
+    @Auditable(
+            operationType = "PAY_SELECT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/paySelect")
     public  <T> RestBean<T> paySelect(HttpServletRequest request
             ,HttpServletResponse response, @Parameter @Valid String Id) throws IOException {
@@ -379,6 +421,11 @@ public class AlipayController {
         return null;
     }
 
+    @Auditable(
+            operationType = "PAY_SELECT_MULTI",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/paySelectMulti")
     public  <T> RestBean<T> paySelectMulti(HttpServletRequest request
             , @Parameter @Valid String Id

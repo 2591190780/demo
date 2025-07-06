@@ -1,5 +1,6 @@
 package com.example.controller.product;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.SensorDataInfoDto;
 import com.example.service.sensor.SensorDataInfoSelectService;
@@ -23,7 +24,11 @@ public class SensorDataInfoSelectController {
     @Resource
     SensorDataInfoSelectService service;
 
-
+    @Auditable(
+            operationType = "SEARCH_ID_SINGLE_SENSOR_DATA",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/searchIdSingle")
     public RestBean<Void> searchSensorDataInfoBySensorId(@RequestParam @Valid  String sensorId
             , HttpServletResponse response)throws IOException {

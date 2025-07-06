@@ -1,5 +1,6 @@
 package com.example.controller.collection;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.vo.request.CollectUpdateVO;
 import com.example.service.CollectInfoUpdateService;
@@ -15,6 +16,11 @@ public class CollectInfoUpdateController {
     @Resource
     CollectInfoUpdateService Service;
 
+    @Auditable(
+            operationType = "UPDATE_COLLECTION",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/update")
     public <T> RestBean<T> UpdateProduct(HttpServletRequest request, @RequestBody CollectUpdateVO vo){
         return Service.updateNum(request,vo);

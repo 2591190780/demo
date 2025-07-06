@@ -62,6 +62,11 @@ public class NFTAddRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> imple
         if (this.save(nftRuleDto)){
             // 请求发送给 Redis等待管理员确认
             infoToRedisUtils.InfoToRedis(nftRuleDto.getRuleId(),userId,"add","nft_rule");
+            /**
+             * 这里要执行上链操作 ----->  blockChainEvidenceService
+             * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
+             *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+             */
             return true;
         }
         return false;

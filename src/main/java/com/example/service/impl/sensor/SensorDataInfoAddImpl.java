@@ -38,6 +38,12 @@ public class SensorDataInfoAddImpl extends ServiceImpl<SensorDataInfoMapper, Sen
         if (!jwtUtils.getUserIdVerify(request,fid)) return RestBean.failure(500, "不准增加其他农户传感器信息");
         dto.setBlockchain_hash(blockchainHashUtil.generateSensorHash(dto));
             return this.save(dto) ? RestBean.success() : RestBean.failure(500, "内部错误请联系管理员");
+
+        /**
+         * 这里要执行上链操作 ----->  blockChainEvidenceService
+         * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
+         *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+         */
     }
 
     @Override
@@ -49,8 +55,13 @@ public class SensorDataInfoAddImpl extends ServiceImpl<SensorDataInfoMapper, Sen
             if(fid==null) return RestBean.failure(500, "没有该编号的传感器");
             if (!jwtUtils.getUserIdVerify(request,fid)) return RestBean.failure(500, "不准增加其他农户传感器信息");
             sensorData.setBlockchain_hash(blockchainHashUtil.generateSensorHash(sensorData));
-            if (!save(sensorData)) return RestBean.failure(500, "添加有误，操作终止");
+            if (!this.save(sensorData)) return RestBean.failure(500, "添加有误，操作终止");
         }
+        /**
+         * 这里要执行上链操作 ----->  blockChainEvidenceService
+         * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
+         *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+         */
         return RestBean.success();
     }
 

@@ -1,5 +1,6 @@
 package com.example.controller.collection;
 
+import com.example.annotation.Auditable;
 import com.example.entity.dto.CollectionInfoDto;
 
 import com.example.service.collection.CollectInfoSelectService;
@@ -18,6 +19,11 @@ public class CollectInfoSelectController {
     @Resource
     CollectInfoSelectService Service;
 
+    @Auditable(
+            operationType = "SELECT_COLLECTION",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/select")
     public List <CollectionInfoDto> SelectProduct(HttpServletRequest request, @RequestParam  @Valid String type){
         return Service.selectAllProduct(request,type);

@@ -60,6 +60,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         if(TransactionMessageIntoRedis(dto)){
             dto.setStatus("1");
             return this.save(dto)? dto:null;
+            /**
+             * 这里要执行上链操作 ----->  blockChainEvidenceService
+             * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
+             *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+             */
         }
         return null;
     }
@@ -80,6 +85,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
             if(TransactionMessageIntoRedis(dto)){
                 dto.setStatus("1");
                 flag = this.save(dto);
+                /**
+                 * 这里要执行上链操作 ----->  blockChainEvidenceService
+                 * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
+                 *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+                 */
             }
         }
         if(!flag){

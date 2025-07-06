@@ -1,5 +1,6 @@
 package com.example.controller.collection;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.CollectionInfoDto;
 import com.example.service.collection.CollectInfoAddService;
@@ -20,6 +21,11 @@ public class CollectInfoAddController {
     CollectInfoAddService Service;
 
 
+    @Auditable(
+            operationType = "ADD_COLLECT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/addCollect")
     public RestBean<Void> addAllProducts(HttpServletRequest request, @RequestBody CollectionInfoDto vo){
         return Service.addCollectInfoSingle(request,vo);

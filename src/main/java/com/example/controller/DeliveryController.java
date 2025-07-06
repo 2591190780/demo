@@ -3,6 +3,7 @@ package com.example.controller;
 
 import com.alibaba.fastjson2.JSONObject;
 import com.alipay.api.domain.DeliveryInfo;
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.DeliveryInfoDto;
 import com.example.service.transaction.DeliveryInfoService;
@@ -33,11 +34,22 @@ public class DeliveryController {
     @Resource
     TransactionProcessService transactionProcessService;
 
+    @Auditable(
+            operationType = "ADD_INFO_APP_DELIVERY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/add/info")
     public <T>RestBean<T> addInfo(HttpServletRequest request , @RequestBody DeliveryInfoDto dto){
        return this.deliveryInfoService.addDeliveryInfo(request,dto)?
                RestBean.success():RestBean.failure(401,"添加失败，请检查参数。");
     }
+
+    @Auditable(
+            operationType = "SELECT_INFO_DELIVERY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/select/info")
     public <T> RestBean<T> selectInfo(HttpServletRequest request,
                                       @Parameter String order,
@@ -52,6 +64,11 @@ public class DeliveryController {
         return null;
     }
 
+    @Auditable(
+            operationType = "UPDATE_INFO_DELIVERY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/update/info")
     public <T>RestBean<T> updateInfo(HttpServletRequest request ,
                                      @Parameter(ref = "alipayOrder") String alipayOrderId,

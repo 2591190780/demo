@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.vo.request.ConfirmResetVO;
@@ -29,12 +30,22 @@ public class AuthorizeController {
     @Resource
     AccountService accountService;
 
+    @Auditable(
+            operationType = "UPDATE_ROLE_API_AUTH",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/update/role") //得在登录状态下
     public  RestBean<String>  updateRoleApply(HttpServletRequest request, @RequestBody Account account){
         return this.accountService.updateRoleByApply(request,account)? RestBean.success("请等待管理员处理。")
                 : RestBean.failure(401,"请求失败。");
     }
 
+    @Auditable(
+            operationType = "ASK-CODE_USER",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/ask-code") //请求发送验证码
     public RestBean<Void> askVerifyCode(@RequestParam  @Email  String email ,
                                         @RequestParam @Pattern(regexp = "(register|reset)") String type,
@@ -45,6 +56,12 @@ public class AuthorizeController {
         return RestBean.success();
 
     }
+
+    @Auditable(
+            operationType = "REGISTER_USER",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PostMapping("/register")  //注册
     public ResponseEntity<RestBean<String[]>> registerUser(@RequestBody @Valid EmailRegisterVO vo) {
           String[] message =  accountService.registerEmailAccount(vo).split(":");
@@ -59,16 +76,32 @@ public class AuthorizeController {
                           RestBean.success(message)
                   );
     }
+
+    @Auditable(
+            operationType = "RESET-CONFIRM_USER",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PostMapping("/reset-confirm") //验证码确认
     public RestBean<Void> resetConfirm(@RequestBody @Valid ConfirmResetVO vo){
         return this.messageHandle(vo, accountService::resetConfirm);
     }
 
+    @Auditable(
+            operationType = "RESET-PASSWORD_BY_CODE_USER",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PostMapping("/reset-password") //验证码修改密码
     public RestBean<Void> resetPasswordConfirm(@RequestBody @Valid EmailResetVO vo){
         return this.messageHandle(vo,accountService::resetEmailAccountPassword);
     }
 
+    @Auditable(
+            operationType = "RESET_PASSWORD_USER",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PostMapping("/resetPassword") //密码验证方式修改密码
     public RestBean<Void> resetPasswordConfirm(@RequestBody  ResetPasswordByPasswordVO dto,
                                              HttpServletRequest request ){

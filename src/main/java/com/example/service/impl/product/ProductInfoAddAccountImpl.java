@@ -8,6 +8,7 @@ import com.example.entity.dto.ProductInfoAccountDto;
 
 import com.example.entity.vo.request.ProductAddVO;
 import com.example.mapper.product.ProductInfoAddAccountMapper;
+import com.example.service.BlockChainEvidenceService;
 import com.example.service.IPFSService;
 import com.example.service.product.ProductInfoAddAccountService;
 import com.example.utils.BlockchainHashUtil;
@@ -45,6 +46,9 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
 
     @Resource
     IPFSService ipfsService;
+
+    @Resource
+    BlockChainEvidenceService blockChainEvidenceService;
 
     @Override
     public <T> RestBean<T> addUserProductSingle(HttpServletRequest request, ProductAddVO vo){
@@ -132,6 +136,11 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
                 null
         );
         if(this.save(dto)){
+            /**
+             * 这里要执行上链操作 ----->  blockChainEvidenceService
+             * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
+             *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+             */
             RestBean.success();
             vo.setProductId(dto.getProductId());
             return true;}

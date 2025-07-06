@@ -1,5 +1,6 @@
 package com.example.controller.collection;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.CollectionInfoDto;
 import com.example.service.collection.CollectInfoDeleteService;
@@ -18,7 +19,11 @@ public class CollectInfoDeleteController {
     @Resource
     CollectInfoDeleteService Service;
 
-
+    @Auditable(
+            operationType = "DELETE_COLLECTION",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/delete")
     public RestBean<Void> addAllProducts(HttpServletRequest request, @RequestBody CollectionInfoDto vo){
         return Service.CollectInfoDelete(request,vo);

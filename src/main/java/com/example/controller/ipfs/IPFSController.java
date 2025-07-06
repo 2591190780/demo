@@ -2,6 +2,7 @@ package com.example.controller.ipfs;
 
 
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.dto.NFTInfoDto;
@@ -50,6 +51,12 @@ public class IPFSController {
     @Resource
     NFTInfoService nfTInfoService;
 
+
+    @Auditable(
+            operationType = "ADD_IMG_UPLOAD",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PostMapping("/add")
     public <T> RestBean<String> imgAdd(HttpServletRequest request,
                                        @RequestParam String id,  //传入要修改的目标记录ID

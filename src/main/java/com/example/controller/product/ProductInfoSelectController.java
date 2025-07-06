@@ -1,6 +1,7 @@
 package com.example.controller.product;
 
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.vo.response.ProductVO;
 import com.example.service.product.ProductInfoSelectAccountService;
@@ -28,6 +29,12 @@ public class ProductInfoSelectController {
      * @return
      * @throws IOException
      */
+
+    @Auditable(
+            operationType = "SEARCH_ID_PRODUCTS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/search/id")
     public RestBean<Void> getProductInfoByID(@RequestParam @Valid  String id,
                                              HttpServletResponse response) throws IOException {
@@ -47,6 +54,12 @@ public class ProductInfoSelectController {
      * @return
      * @throws IOException
      */
+
+    @Auditable(
+            operationType = "SEARCH_FARMER_ID_PRODUCT",
+            captureBefore = true,
+            captureAfter = true
+    )
         @GetMapping("/search/farmerId")
         public RestBean<Void> getProductInfoByFarmerID(@RequestParam @Valid  String id,
                                                        HttpServletResponse response) throws IOException {
@@ -66,6 +79,12 @@ public class ProductInfoSelectController {
      * @return
      * @throws IOException
      */
+
+    @Auditable(
+            operationType = "SEARCH_TEXT_PRODUCT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/search/text")
     public RestBean<Void> getProductInfoByName(@RequestParam String text,
                                                   HttpServletResponse response) throws IOException {
@@ -91,6 +110,11 @@ public class ProductInfoSelectController {
      * @throws IOException
      */
 
+    @Auditable(
+            operationType = "SEARCH_MULTI_PRODUCT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/search/all")
     public RestBean<Void> getProductInfoAll(@RequestParam @Valid  String id, @RequestParam @Valid  String fid,
                                             @RequestParam String name, @RequestParam String category,

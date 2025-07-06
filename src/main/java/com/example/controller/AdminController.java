@@ -1,6 +1,7 @@
 package com.example.controller;
 
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 
 import com.example.entity.dto.ProductInfoAccountDto;
@@ -32,12 +33,22 @@ public class AdminController {
     @Resource
     AdminService adminService;
 
+    @Auditable(
+            operationType = "UPDATE_ALL_ADMIN_OPERATE",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/updateAll/admin")
     public RestBean<Void> updateAllProductsAdmin(HttpServletRequest request
             , @RequestBody List<ProductInfoAccountDto> accountDtos)  {
         return service.updateAllProductInfoAdmin(request,accountDtos);
     }
 
+    @Auditable(
+            operationType = "UPDATE_SINGLE_ADMIN",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/updateSingle/admin")
     public RestBean<Void> updateProductsAdmin(HttpServletRequest  request
             ,  @RequestBody ProductInfoAccountDto accountDto)  {
@@ -49,6 +60,12 @@ public class AdminController {
     /**
      * 获取所有待处理的申请列表
      */
+
+    @Auditable(
+            operationType = "ADMIN_PENDING_APPLICATIONS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/admin/pending-applications")
     public <T>RestBean<T>  adminApplySelect(HttpServletRequest request ,HttpServletResponse response) throws IOException {
 
@@ -62,6 +79,11 @@ public class AdminController {
         return null;
     }
 
+    @Auditable(
+            operationType = "ADMIN_HANDLING_APPLICATIONS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/admin/handling-applications")
     public RestBean<Void> adminApplyHandling(
             HttpServletRequest request,

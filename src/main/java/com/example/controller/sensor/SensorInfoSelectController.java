@@ -1,5 +1,6 @@
 package com.example.controller.sensor;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.SensorInfoDto;
 import com.example.service.sensor.SensorInfoSelectService;
@@ -19,6 +20,11 @@ public class SensorInfoSelectController {
     @Resource
     SensorInfoSelectService service;
 
+    @Auditable(
+            operationType = "SELECT_SINGLE_SENSOR_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/selectSingle")
     public RestBean<Void> selectSensorInfoBySensorId( @RequestParam @Valid String id
     , HttpServletResponse response) throws IOException {
@@ -32,7 +38,11 @@ public class SensorInfoSelectController {
         return RestBean.failure(404, "没有该id的传感器");
     }
 
-
+    @Auditable(
+            operationType = "SELECT_MULTI_SENSOR_FARMER_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping ("/selectMultiFarm")
     public RestBean<Void> selectSensorInfoByFarmerId( @RequestParam @Valid String id
             , HttpServletResponse response) throws IOException{
@@ -44,6 +54,12 @@ public class SensorInfoSelectController {
         }
         return RestBean.failure(404, "该农户没有传感器");
     }
+
+    @Auditable(
+            operationType = "SELECT_MULTI_TYPE_SENSOR",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping ("/selectMultiType")
     public RestBean<Void> selectSensorInfoByTypeId( @RequestParam @Valid String id
             , HttpServletResponse response) throws IOException{
@@ -56,6 +72,11 @@ public class SensorInfoSelectController {
         return RestBean.failure(404, "没有该类型的传感器");
     }
 
+    @Auditable(
+            operationType = "SELECT_MULTI_TEXT_SENSOR",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping ("/selectMultiText")
     public RestBean<Void> selectSensorInfoByText(   @RequestParam String sensorId
             ,    @RequestParam String farmId

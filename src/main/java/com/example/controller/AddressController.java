@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.AddressDto;
 import com.example.service.AddressService;
@@ -26,6 +27,11 @@ public class AddressController {
     @Resource
     JwtUtils jwtUtils;
 
+    @Auditable(
+            operationType = "USER_SET_DEFAULT_ADDRESS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/user/set/default")
     public  <T> RestBean<T> setDefault(HttpServletRequest request,
                                        @Parameter(ref = "addressID") String id,
@@ -39,6 +45,11 @@ public class AddressController {
 
     }
 
+    @Auditable(
+            operationType = "USERID_SELECT_ADDRESS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/userid/select")
     public <T>RestBean<T> selectByUserId(HttpServletRequest request, HttpServletResponse response,
                                          @Parameter String userid ) throws IOException {
@@ -52,6 +63,11 @@ public class AddressController {
         return RestBean.failure(401,"您还没有添加地址。");
     }
 
+    @Auditable(
+            operationType = "ID_SELECT_ADDRESS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/id/select")
     public <T>RestBean<T> selectById(HttpServletRequest request, HttpServletResponse response,
                                      @Parameter String id ) throws IOException {
@@ -63,6 +79,11 @@ public class AddressController {
         return RestBean.failure(401,"未查询到该地址。");
     }
 
+    @Auditable(
+            operationType = "ADD_ADDRESS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/add")
     public <T>RestBean<T> addAddress(@RequestBody AddressDto dto, HttpServletRequest request) throws IOException {
         if(this.addressService.userIdEqRequestId(request,dto)){
@@ -72,6 +93,11 @@ public class AddressController {
         return RestBean.failure(401,"添加失败,请检查参数。");
     }
 
+    @Auditable(
+            operationType = "UPDATE_ADDRESS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/update")
     public <T>RestBean<T> updateAddress(@RequestBody AddressDto dto, HttpServletRequest request) throws IOException {
         if(this.addressService.userIdEqRequestId(request,dto)){
@@ -81,6 +107,11 @@ public class AddressController {
         return RestBean.failure(401,"添加失败,请检查参数。");
     }
 
+    @Auditable(
+            operationType = "DELETE_ADDRESS",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/delete")
     public <T>RestBean<T> deleteAddress(@RequestBody AddressDto dto, HttpServletRequest request) throws IOException {
         if(this.addressService.userIdEqRequestId(request,dto)){

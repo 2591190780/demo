@@ -1,5 +1,6 @@
 package com.example.controller;
 
+import com.example.annotation.Auditable;
 import com.example.entity.NFTPendingApplication;
 import com.example.entity.RestBean;
 import com.example.entity.dto.NFTInfoDto;
@@ -40,6 +41,11 @@ public class NFTController {
     @Resource
     JwtUtils  jwtUtils;
 
+    @Auditable(
+            operationType = "USER_NFT_NFTID_API_NFT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/user/nft/NFTID")
     public <T> RestBean<T> userNFTSelectNFTID(HttpServletResponse response,
                                                HttpServletRequest request,
@@ -53,6 +59,11 @@ public class NFTController {
         return null;
     }
 
+    @Auditable(
+            operationType = "USER_NFT_SELECT_USERID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/user/nft/selectUserID")
     public <T> RestBean<T> userNFTSelectUserID(HttpServletResponse response,
                                          HttpServletRequest request,
@@ -66,6 +77,11 @@ public class NFTController {
         return null;
     }
 
+    @Auditable(
+            operationType = "USER_NFT_SELECT_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/user/nft/selectID")
     public <T> RestBean<T> userNFTSelect(HttpServletResponse response,
                                          HttpServletRequest request,
@@ -80,6 +96,11 @@ public class NFTController {
     }
 
 
+    @Auditable(
+            operationType = "NFT_TRANSACTION_SELECT_BY_NFT_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/transaction/selectbyNFTID")
     public <T> RestBean<T> selectbyNFTID(@RequestParam("NFTID") String id,
                                          HttpServletResponse response) throws IOException {
@@ -93,6 +114,11 @@ public class NFTController {
         return null;
     }
 
+    @Auditable(
+            operationType = "NFT_TRANSACTION_SELECT_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/transaction/selectID") //查看NFT最新的获取规则 （根据ID）
     public <T> RestBean<T> selectByID(HttpServletResponse response,
                                       @RequestParam("ID") String id) throws IOException {
@@ -105,6 +131,11 @@ public class NFTController {
         return null;
     }
 
+    @Auditable(
+            operationType = "NFT_TRANSACTION_SELECT_BY_FORM_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/transaction/selectbyfromID")
     public <T> RestBean<T> selectbyfromid(@RequestParam("fromID") String fromID,
                                           HttpServletResponse response) throws IOException {
@@ -118,7 +149,11 @@ public class NFTController {
         return null;
     }
 
-
+    @Auditable(
+            operationType = "NFT_TRANSACTION_SELECT_BY_TO_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/transaction/selectbytoID")
     public <T> RestBean<T> selectbytoid(@RequestParam("toId") String toId,
                                         HttpServletResponse response) throws IOException {
@@ -132,6 +167,11 @@ public class NFTController {
         return null;
     }
 
+    @Auditable(
+            operationType = "NFT_TRANSACTION_SELECT_CONDITION",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/transaction/selectCondition")
     public <T> RestBean<T> selectCondition(@RequestBody NFTTransactionDto nftTransactionDto,
                                            HttpServletResponse response) throws IOException {
@@ -144,6 +184,11 @@ public class NFTController {
         return null;
     }
 
+    @Auditable(
+            operationType = "NFT_RULE_ACTIVE",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/nftRule/active") //查看NFT最新的获取规则 （根据ID）
     public <T> RestBean<T> nftRuleActive(HttpServletResponse response,
                                          @RequestParam String id) throws IOException {
@@ -156,6 +201,11 @@ public class NFTController {
        return null;
     }
 
+    @Auditable(
+            operationType = "NFT_TRANSACTION_APPLY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/transaction/apply")
     public <T> RestBean<T> applyNFTTransaction(HttpServletRequest request,
                                                @RequestBody NFTPendingApplication application){
@@ -166,12 +216,22 @@ public class NFTController {
                 RestBean.success():RestBean.failure(401,"请勿重复提交申请。");
     }
 
+    @Auditable(
+            operationType = "NFT_TRANSACTION_PAY",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/transaction/pay")
     public <T> RestBean<T> addTransaction( @RequestBody NFTTransactionDto dto){
           return this.nftTransactionService.addNFTTransaction(dto)?RestBean.success()
                   :RestBean.failure(401,"交易失败");
     }
 
+    @Auditable(
+            operationType = "NFT_TRANSACTION_GET",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/transaction/get")
     public <T> RestBean<T> getTransaction(HttpServletRequest request,
                                           HttpServletResponse response) throws IOException {
@@ -186,7 +246,11 @@ public class NFTController {
 
 
 
-
+    @Auditable(
+            operationType = "RULE_ADD_SINGLE",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/rule/addSingle")
     public <T> RestBean<T> addSingleRule(HttpServletRequest request,
                                          @RequestBody NFTRuleDto dto) {
@@ -194,6 +258,11 @@ public class NFTController {
                 RestBean.success():RestBean.failure(401,"添加失败，信息有误");
     }
 
+    @Auditable(
+            operationType = "RULE_SELECT_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/rule/select/id")
     public <T> RestBean<T> selectRule(HttpServletRequest request,
                                       HttpServletResponse response
@@ -208,6 +277,11 @@ public class NFTController {
           return RestBean.failure(401,"暂无该NFT规则");
     }
 
+    @Auditable(
+            operationType = "RULE_SELECT_NAME",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/rule/select/name")
     public <T>RestBean<T> selectRuleByName(HttpServletRequest request,
                                            HttpServletResponse response
@@ -221,6 +295,11 @@ public class NFTController {
         return RestBean.failure(401,"暂无该NFT规则");
     }
 
+    @Auditable(
+            operationType = "RULE_SELECT_TEMPLATE_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/rule/select/templateid")
     public <T>RestBean<T> selectRuleByTemplateId(HttpServletRequest request,
                                                  HttpServletResponse response
@@ -235,6 +314,11 @@ public class NFTController {
         return RestBean.failure(401,"暂无该NFT规则");
     }
 
+    @Auditable(
+            operationType = "RULE_SELECT_HASH",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/rule/select/hash")
     public <T>RestBean<T> selectRuleByHash(HttpServletRequest request,
                                            HttpServletResponse response
@@ -248,6 +332,11 @@ public class NFTController {
         return RestBean.failure(401,"暂无该NFT规则");
     }
 
+    @Auditable(
+            operationType = "RULE_SELECT_CONDITION",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/rule/select/condition")
     public <T>RestBean<T> selectRuleByCondition(HttpServletRequest request,
                                                 HttpServletResponse response
@@ -261,7 +350,11 @@ public class NFTController {
             return RestBean.failure(401,"暂无该NFT规则");
     }
 
-
+    @Auditable(
+            operationType = "NFT_INFO_ADD_SINGLE",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/info/addSingle")
     public <T> RestBean<T> addSingleInfo(HttpServletRequest request,
                                          @RequestBody NFTInfoDto dto){
@@ -269,6 +362,11 @@ public class NFTController {
                 RestBean.success():RestBean.failure(401,"添加失败，信息有误");
     }
 
+    @Auditable(
+            operationType = "NFT_INFO_SELECT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/info/select")
     public <T> RestBean<T> selectNFT (HttpServletResponse response,
                                       NFTInfoDto dto) throws IOException {
@@ -281,6 +379,11 @@ public class NFTController {
         return RestBean.failure(401,"暂无该NFT");
     }
 
+    @Auditable(
+            operationType = "NFT_INFO_SELECT_URL",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/info/select/url")
     public  <T> RestBean<T> selectNFTUrl (@RequestParam String url,
                                           HttpServletResponse response) throws IOException {
@@ -293,6 +396,11 @@ public class NFTController {
         return RestBean.failure(401,"暂无该NFT");
     }
 
+    @Auditable(
+            operationType = "NFT_INFO_SELECT_TEMPLATE_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/info/select/templateid")
     public  <T> RestBean<T> selectNFTID (@RequestParam String id,
                                          HttpServletResponse response) throws IOException {
@@ -305,6 +413,11 @@ public class NFTController {
         return RestBean.failure(401,"暂无该NFT");
     }
 
+    @Auditable(
+            operationType = "NFT_INFO_SELECT_PUBLIC_ID",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/info/select/publicid")
     public <T> RestBean<T> selectPublicID(@RequestParam String id,
                                           HttpServletResponse response) throws IOException {

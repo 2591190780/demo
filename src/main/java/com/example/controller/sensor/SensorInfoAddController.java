@@ -1,5 +1,6 @@
 package com.example.controller.sensor;
 
+import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.SensorInfoDto;
 import com.example.service.sensor.SensorInfoAddService;
@@ -21,6 +22,11 @@ public class SensorInfoAddController {
     @Resource
     SensorInfoAddService service;
 
+    @Auditable(
+            operationType = "ADD_SINGLE_SENSOR",
+            captureBefore = true,
+            captureAfter = true
+    )
     @PutMapping("/addSingle")
     public RestBean<Void> addSensorSingle(HttpServletRequest request,@RequestBody SensorInfoDto dto) {
         return service.addSensorInfoDto(request,dto);
