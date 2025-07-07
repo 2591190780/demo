@@ -40,8 +40,9 @@ public class NFTInfoDto {
     private int isActive;
     private LocalDateTime createdAt;
 
-    @TableField(typeHandler = Fastjson2TypeHandler.class) // 关键：JSON类型处理器
-    private JSONObject metadataUrl;
+
+    private String metadataUrl;
+
     private String nftLevel;
     private LocalDateTime updateTime;
     private Integer publicBy;

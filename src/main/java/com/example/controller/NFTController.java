@@ -209,9 +209,14 @@ public class NFTController {
     @PutMapping("/transaction/apply")
     public <T> RestBean<T> applyNFTTransaction(HttpServletRequest request,
                                                @RequestBody NFTPendingApplication application){
+
         if(!jwtUtils.getRequesetId(request).equals(
                 jwtUtils.convertToInteger(application.getBuyerID())))
             return RestBean.failure(402,"申请人异常。");
+        if(
+                this.nftInfoService.NFTInfoSelectByTemplateId(
+                        jwtUtils.convertToInteger(application.getNftID())).getIsActive()==0
+        ){return RestBean.failure(401,"NFT暂未激活。");}
         return this.nftTransactionService.buyApplyForNFT(application)?
                 RestBean.success():RestBean.failure(401,"请勿重复提交申请。");
     }

@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 public class LogInfoImpl extends ServiceImpl<LogInfoMapper, LogInfoDto> implements LogInfoService {
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean addLogInfo(LogInfoDto dto){
         try {
             // 1. 设置默认值

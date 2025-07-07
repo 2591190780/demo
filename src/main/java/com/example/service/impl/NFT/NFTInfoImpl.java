@@ -33,6 +33,7 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
     public NFTInfoDto NFTInfoSelectByTemplateId(Integer id){
         return this.query().eq("template_id", id).one();
     }
+
     @Override
     public List<NFTInfoDto> NFTInfoSelectByPublic(Integer publicBy){
         return this.query().eq("public_by", publicBy).list();

@@ -60,6 +60,7 @@ public class UserNFTImpl extends ServiceImpl<UserNFTMapper, UserNFTDto> implemen
         UserNFTDto toUserDto = this.selectNFTByUNid(dto.getToUser(),dto.getNftId());
         // 查找NFT的 相关信息以及NFT的发行规则
         NFTInfoDto nftInfo = this.nftInfoService.NFTInfoSelectByTemplateId(dto.getNftId());
+
         NFTRuleDto nftRuleDto = this.nftRuleService.nftRuleSelectByActId(nftInfo.getTemplateId());
 
         //检查NFT是否已过期。

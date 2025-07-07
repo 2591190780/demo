@@ -28,6 +28,7 @@ public class NFTTransactionDto {
 
     private LocalDateTime txTime;
     private int type;
+
     private BigDecimal price;
 
     private int active;
