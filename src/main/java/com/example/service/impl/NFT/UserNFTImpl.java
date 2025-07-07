@@ -80,6 +80,8 @@ public class UserNFTImpl extends ServiceImpl<UserNFTMapper, UserNFTDto> implemen
                     null,dto.getToUser(),dto.getNftId(),null,dto.getTxHash()
                     , LocalDateTime.now(),1,nftInfo.getMetadataUrl()
             );
+            //将NFT数量减一
+            nftInfoService.NFTInfoUpdateCount(dto.getNftId());
             return this.save(userNFTDto);
         }
         if(toUserDto == null){

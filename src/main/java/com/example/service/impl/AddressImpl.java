@@ -26,9 +26,11 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
 
     @Override
     public boolean setDefaultAddress(Integer id, Integer ans){
+        this.defaultSetting(id);
         return this.update().eq("user_id",id)
                 .set("default_address",ans).update();
     }
+
 
     @Override
     public List<AddressDto> findByUserId(Integer id){
@@ -42,13 +44,14 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
 
     @Override
     public  boolean addAddress(AddressDto dto){
+        if(dto.getDefaultAddress()==1)this.defaultSetting(dto.getUserId());
         return this.save(dto);
     }
 
     @Override
     public  boolean updateAddress(AddressDto dto){
-        return this.update().eq("id",dto.getId()).eq("user_id",dto.getAddress())
-                .set("user_address",dto.getAddress()).update();
+        return this.update().eq("id",dto.getId()).eq("user_id",dto.getUserAddress())
+                .set("user_address",dto.getUserAddress()).update();
     }
     @Override
     public  boolean deleteAddress(AddressDto dto){
@@ -57,11 +60,26 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
         addressMapper.delete(wrapper);
         return true;
     }
+    @Override
+    public  boolean updatePhone(AddressDto dto){
+        return this.update().eq("id",dto).eq("user_id",dto.getUserId())
+                .set("phone_number",dto.getPhoneNumber()).update();
+    }
 
     public boolean userIdEqRequestId(HttpServletRequest request,AddressDto dto){
         Integer rid = jwtUtils.getRequesetId(request);
         if(!rid.equals(dto.getUserId())) return false;
         return true;
+    }
+
+    private void defaultSetting(Integer id){
+        List<AddressDto> dtoList = this.findByUserId(id);
+        for (AddressDto dto : dtoList) {
+            if (dto.getDefaultAddress() == 1){
+                this.update().eq("id",dto.getId())
+                        .set("default_address",0).update();
+            }
+        }
     }
 
 }

@@ -34,8 +34,8 @@ public class AddressController {
     )
     @GetMapping("/user/set/default")
     public  <T> RestBean<T> setDefault(HttpServletRequest request,
-                                       @Parameter(ref = "addressID") String id,
-                                       @Parameter(ref = "defaultFlag") String flag){
+                                       @Parameter String id,
+                                       @Parameter String flag){
 
         AddressDto dto = this.addressService.findById(jwtUtils.convertToInteger(id));
         if(!Objects.equals(jwtUtils.getRequesetId(request),dto.getUserId()))
@@ -106,6 +106,22 @@ public class AddressController {
         }
         return RestBean.failure(401,"添加失败,请检查参数。");
     }
+
+    @Auditable(
+            operationType = "UPDATE_ADDRESS_PHONE",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @PutMapping("/update/phone")
+    public <T>RestBean<T> updatePhone(@RequestBody AddressDto dto, HttpServletRequest request) throws IOException {
+        if(this.addressService.userIdEqRequestId(request,dto)){
+            this.addressService.updatePhone(dto);
+            return RestBean.success();
+        }
+        return RestBean.failure(401,"添加失败,请检查参数。");
+    }
+
+
 
     @Auditable(
             operationType = "DELETE_ADDRESS",

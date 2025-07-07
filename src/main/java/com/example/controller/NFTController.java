@@ -227,6 +227,7 @@ public class NFTController {
                   :RestBean.failure(401,"交易失败");
     }
 
+
     @Auditable(
             operationType = "NFT_TRANSACTION_GET",
             captureBefore = true,
@@ -235,10 +236,11 @@ public class NFTController {
     @GetMapping("/transaction/get")
     public <T> RestBean<T> getTransaction(HttpServletRequest request,
                                           HttpServletResponse response) throws IOException {
-        List<NFTPendingApplication> applications = this.nftTransactionService.getApplyForNFT(request);
-        if(applications.isEmpty()){
+
+        if(this.nftTransactionService.getApplyForNFT(request)==null){
             return RestBean.failure(401,"暂时没有交易信息。");
         }
+        List<NFTPendingApplication> applications = this.nftTransactionService.getApplyForNFT(request);
         response.setContentType("application/json;Charset=utf-8");
         response.getWriter().write(RestBean.success(applications).asJsonString());
         return null;

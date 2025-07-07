@@ -5,13 +5,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.LogInfoDto;
 import com.example.mapper.LogInfoMapper;
 import com.example.service.LogInfoService;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
 @Service
 public class LogInfoImpl extends ServiceImpl<LogInfoMapper, LogInfoDto> implements LogInfoService {
-
 
     @Override
     public boolean addLogInfo(LogInfoDto dto){

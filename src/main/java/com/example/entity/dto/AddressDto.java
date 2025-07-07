@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 @Data
 @TableName("user_address")
@@ -16,9 +17,12 @@ public class AddressDto {
 
     private Integer userId;
 
-    private String address;
+    private String userAddress;
 
     private Integer defaultAddress;
+
+    @Length(min = 11, max = 11)
+    private String phoneNumber;
 
     public AddressDto() {
 

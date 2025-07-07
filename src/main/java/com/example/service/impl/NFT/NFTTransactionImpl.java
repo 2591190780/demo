@@ -112,14 +112,14 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         Integer id = jwtUtils.getRequesetId(request);
         Set<String> keys = stringRedisTemplate.keys(Const.NFT_TRANSACTION+":"+id);
         List<NFTPendingApplication> dtoList = null;
-        if (keys==null) return null;
+        if (keys != null && keys.isEmpty()) return null;
         for (String key : keys) {
             if(!Boolean.TRUE.equals(stringRedisTemplate.hasKey(key))) { //申请信息已过期，删除此信息。
                 stringRedisTemplate.opsForSet().remove(Const.NFT_TRANSACTION+":"+id,key);
             }
         }
         keys = stringRedisTemplate.keys(Const.NFT_TRANSACTION+":"+id);//重新获取set
-        if (keys==null) return null;
+        if (keys != null && keys.isEmpty()) return null;
         for (int i = 0;i<=keys.size();i++){
             String key = keys.iterator().next();
             String[] param = key.split(":");
@@ -156,6 +156,8 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
              */
             //对user_nft表格执行操作
             if (this.userNFTService.UserNFT(nftTransactionDto)){
+
+
                 this.update().eq("tx_hash", hash)
                         .set("active",1).update();
 

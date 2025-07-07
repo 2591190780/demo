@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.hibernate.validator.constraints.Length;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +20,8 @@ public class BlockChainEvidenceDto {
 
     private Integer dataType;
     private Integer relatedId;
+
+    @Length(min = 66, max = 66)
     private String txHash;
 
     private String bolckNumber;

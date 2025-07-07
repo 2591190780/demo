@@ -13,5 +13,6 @@ public interface AddressService extends IService<AddressDto> {
     boolean updateAddress(AddressDto dto);
     boolean deleteAddress(AddressDto dto);
     boolean userIdEqRequestId(HttpServletRequest request, AddressDto dto);
-    boolean setDefaultAddress(Integer id, Integer ans);
+    boolean setDefaultAddress(Integer id,  Integer ans);
+    boolean updatePhone(AddressDto dto);
 }

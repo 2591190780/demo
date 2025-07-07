@@ -24,8 +24,10 @@ public class LogInfoDto {
     private String errorMessage;
     private String status; // 使用String类型存储状态
     private String clientIp;
+    private String responseContent;
 
     public LogInfoDto() {
 
     }
+
 }

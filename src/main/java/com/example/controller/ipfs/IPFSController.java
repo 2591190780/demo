@@ -59,7 +59,7 @@ public class IPFSController {
     )
     @PostMapping("/add")
     public <T> RestBean<String> imgAdd(HttpServletRequest request,
-                                       @RequestParam String id,  //传入要修改的目标记录ID
+                                       @RequestParam("id") String id,  //传入要修改的目标记录ID
                                        @RequestParam("file") MultipartFile file,
                                        @RequestParam("operationType") String operationType) throws IOException {
         // 验证文件是否为空
@@ -72,10 +72,13 @@ public class IPFSController {
             return RestBean.failure(401,"仅支持图片文件上传");
         }
         Integer userId = jwtUtils.getRequesetId(request);
+
         // 1. 生成CID值
         IPFSService.IPFSResponse response = ipfsService.storeFile(file);  // 需要在 增添的操作对应的表上进行。
         String cid = response.cid();
+        System.out.println("cid = " + cid);
         // 2. 在目标对象进行操作
+
             /**
              * 图片上传后获得CID `QmXarR6rgkQ2fDSHjSY5nM2kuCXKYGViky5nohtwgF65Ec`
              *     - 直接访问：`ipfs://QmXarR6rgkQ2fDSHjSY5nM2kuCXKYGViky5nohtwgF65Ec`
@@ -100,10 +103,12 @@ public class IPFSController {
     private boolean operationTypeImgAdd(HttpServletRequest request,String operationType ,String userId
             ,String id //修改产品传入的就是产品id 修改用户传的就是用户id
             ,String cid){
-        Integer targetId = jwtUtils.convertToInteger(userId);
+
+        Integer uid = jwtUtils.convertToInteger(userId);
+        Integer tid = jwtUtils.convertToInteger(id);
         if (operationType.equals("product")) {
             ProductVO vo = this.productInfoSelectAccountService.getProductInfoAccountByProductId(
-                    targetId);
+                    tid);
             //service的update操作已经做了权限验证
             ProductInfoAccountDto dto = new ProductInfoAccountDto();
             BeanUtils.copyProperties(vo,dto);
@@ -112,12 +117,14 @@ public class IPFSController {
             this.productInfoUpdateAccountService.updateSingleProductInfo(request,dto);
             return true;
         } else if (operationType.equals("userInfo")) {
-            Account account = this.accountService.findAccountById(targetId);
+            Account account = this.accountService.findAccountById(uid);
             account.setUserImgurl(cid);
+            //service的update操作已经做了权限验证
             return this.accountService.updateImg(request,account) ;
         }else if (operationType.equals("nftInfo")){
-            NFTInfoDto nftInfoDto = this.nfTInfoService.NFTInfoSelectByTemplateId(targetId);
+            NFTInfoDto nftInfoDto = this.nfTInfoService.NFTInfoSelectByTemplateId(tid);
             nftInfoDto.setImageUrl(cid);
+            //service的update操作已经做了权限验证
             return this.nfTInfoService.NFTaddImg(request,nftInfoDto);
         }
             return false;

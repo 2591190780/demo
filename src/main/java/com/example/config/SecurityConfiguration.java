@@ -93,6 +93,7 @@ public class SecurityConfiguration {
         Account account =accountService.findAccountByNameOrEmail(user.getUsername());
         String token  = utils.createJwt(user,account.getId(),account.getRole(),account.getUsername());  //封装用户token信息
         AuthorizeVO vo = new AuthorizeVO();
+        vo.setId(account.getId());
         //BeanUtils.copyProperties();
         vo.setExpire(utils.expireTime());
         System.out.println(utils.expireTime());
@@ -102,7 +103,6 @@ public class SecurityConfiguration {
         vo.setDate(String.valueOf(new Date(System.currentTimeMillis())));
         String address = account.getWalletAddress();
         vo.setWalletAddress(address);
-
         String role = account.getRole();
         //数据库传入"1","2","3"，后端判断
         switch (role) {
