@@ -26,6 +26,9 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
     @Resource
     InfoToRedisUtils redisUtils;
 
+    @Resource
+    ProductInfoSelectAccountImpl selectAccount;
+
     /**
      * 修改单个
      * @param request
@@ -50,6 +53,21 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         }
         return  RestBean.failure(401,"参数有误");
     }
+
+    @Override
+    public <T> RestBean<T> updateProductInfoDown(HttpServletRequest request, ProductInfoAccountDto account){
+        //验证角色是否正确（农户或者管理员）
+        boolean verifyRole = utils.userRoleVerify(request);
+        if(!verifyRole) return RestBean.forbidden("只有农户才能修改");
+        //验证修改的产品 为当前用户下的 产品 （管理员不受限） -->农户只能修改自己的农产品
+        Integer fid = account.getFarmerId();
+        boolean verifyId = utils.getUserIdVerify(request,fid);
+        if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
+
+        return this.update().eq("farmer_id", fid).eq("product_id", account.getProductId())
+                    .set("active",(byte) 0).update() ?
+                RestBean.success() : RestBean.failure(401,"参数有误");
+        }
 
     @Override
     public <T> RestBean<T> updateSingleProductInfoAdmin(HttpServletRequest request, ProductInfoAccountDto account){
@@ -126,11 +144,16 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
             return RestBean.failure(500, "批量更新失败: " + e.getMessage());
         }
     }
-    /**
-     * 权限验证
-     * @param
-     * @return
-     */
+
+    @Override
+    public  boolean updateStock(Integer productId,Integer farmerId, BigDecimal count){
+        BigDecimal remain = this.selectAccount.getProductInfoAccountByProductId(productId).getStock()
+                .subtract(count);
+        if(remain.compareTo(new BigDecimal(0)) <0) return  false;
+        return  this.update().eq("product_id",productId).eq("farmer_id",farmerId)
+                .set("stock_remain",remain).update() ;
+    }
+
 
     //用户需要将update消息提交到redis队列中，等待管理员用户确认后生效
     public boolean update(ProductInfoAccountDto account){

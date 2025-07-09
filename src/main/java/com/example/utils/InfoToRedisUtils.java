@@ -107,7 +107,6 @@ public class InfoToRedisUtils {
     public Object getTargetInfo(String targetType, String targetId) {
         try {
             int id = Integer.parseInt(targetId);
-
             //查询信息
             switch (targetType) {
                 case "product":

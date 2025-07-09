@@ -18,4 +18,7 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     List<TransactionAccountDto> transactionSelectMulti(HttpServletRequest request,Integer id);
     TransactionAccountDto transactionSelect(HttpServletRequest request,Integer id);
     TransactionAccountDto getOrderByAlipayOrder(String alipayOrder);
+    boolean transactionUpdateDeliveryTime(String alipayOrder);
+    boolean upDateStatusOrHash(String text,String status);
+    boolean completeTransaction(String OrderID);
 }

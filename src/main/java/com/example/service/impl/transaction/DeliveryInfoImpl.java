@@ -12,6 +12,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
@@ -34,9 +35,15 @@ public class DeliveryInfoImpl extends ServiceImpl<DeliveryInfoMapper, DeliveryIn
         if (!this.verifyByAlipayOrder(request, deliveryInfoDto.getOrderId())){
             return false;
         }
-        JSONObject jsonObject = JSONObject.parseObject(deliveryInfoDto.getStartAddress());
-        deliveryInfoDto.setStartAddress(jsonObject.toJSONString());
-        return this.save(deliveryInfoDto);
+        if(this.selectDeliveryInfoByAlipayOrder(deliveryInfoDto.getOrderId()) != null) return false;
+        String string = "time:"+ LocalDateTime.now()+ "|"
+                + "address:" + deliveryInfoDto.getStartAddress();
+        deliveryInfoDto.setDeliveryProcess(string);
+
+        this.transactionProcessService.transactionUpdateDeliveryTime(deliveryInfoDto.getOrderId());
+        return this.save(deliveryInfoDto) &&
+                this.transactionProcessService.upDateStatusOrHash(deliveryInfoDto.getOrderId()
+                , "3");
     }
 
     @Override
@@ -44,16 +51,21 @@ public class DeliveryInfoImpl extends ServiceImpl<DeliveryInfoMapper, DeliveryIn
         return  this.query().eq("order_id", alipayOrderId).one();
     }
 
+
     @Override
-    public  boolean updateDeliveryInfo(HttpServletRequest request, String alipayOrderId,JSONObject jsonObject){
+    public  boolean updateDeliveryInfo(HttpServletRequest request, String alipayOrderId
+            , String newAddress,String time ){
         if (!this.verifyByAlipayOrder(request,alipayOrderId)){
             return false;
         }
         //通过alipay的订单号获取交易记录
         DeliveryInfoDto dto = this.selectDeliveryInfoByAlipayOrder(alipayOrderId);
-        String message = String.valueOf(dto.getDeliveryProcess());
+        String message = dto.getDeliveryProcess();
         //将后续的地址添加到原来的message上
-        message = message + jsonObject.toJSONString();
+        message = message + "|" +
+                "time:"+ time + "|" +
+                "address:" + newAddress ;
+
         return this.update().eq("order_id",alipayOrderId).set("delivery_process",message).update();
     }
 

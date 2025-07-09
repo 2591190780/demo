@@ -27,6 +27,7 @@ public class ProductVO {
     private BigDecimal price;
     // * 库存数量
     private BigDecimal stock;
+    private BigDecimal stockRemain;
     // * 原产地
     private String originLocation;
     //认证hash

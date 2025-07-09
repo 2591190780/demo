@@ -5,6 +5,7 @@ import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.dto.NFTInfoDto;
 import com.example.entity.dto.NFTRuleDto;
+import com.example.entity.dto.SensorInfoDto;
 import com.example.entity.vo.response.PendingApplicationVO;
 import com.example.mapper.AdminMapper;
 import com.example.service.AccountService;
@@ -203,6 +204,11 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
             case "nft_info" -> nftInfoService.NFTInfoUpdateAdmin(
                     this.convertToInteger(targetId),ans);
             case "nft_rule" -> nftRuleService.nftRuleUpdateAdmin(Integer.valueOf(targetId),ans);
+            case "sensor" -> sensorInfoUpdateService.updateSensorInfoDtoadmin(
+                            new SensorInfoDto(
+                                    this.convertToInteger(targetId),
+                                    this.convertToInteger(farmerId),null,null
+                                    ,ans,null,null));
             default -> throw new IllegalStateException("未知的数据类型" + targetType);
         };
         return result;

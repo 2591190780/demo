@@ -65,7 +65,8 @@ public class AdminController {
             captureAfter = true
     )
     @GetMapping("/admin/pending-applications")
-    public <T>RestBean<T>  adminApplySelect(HttpServletRequest request ,HttpServletResponse response) throws IOException {
+    public <T>RestBean<T>  adminApplySelect(HttpServletRequest request
+            ,HttpServletResponse response) throws IOException {
 
         response.setContentType("application/json;Charset=utf-8");
         List<PendingApplicationVO> pendingApplicationVOS = adminService.getPendingApplications(request);
@@ -88,6 +89,7 @@ public class AdminController {
             @RequestBody ApplyHandlingRequestVO aHR) throws IOException {
 
             List<PendingApplicationVO> voList = aHR.getData();
+            if (voList == null) {return RestBean.failure(401,"请检查参数格式。");}
             byte answer = aHR.getAnswer();
          return this.adminService.handleApplication(request,voList,answer)
                  ? RestBean.success():RestBean.failure(401,"申请已过期或参数有误。");

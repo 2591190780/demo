@@ -42,8 +42,8 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
 
     //激活
     @Override
-    public <T>RestBean<T> updateSensorInfoDtoadmin(HttpServletRequest request, SensorInfoDto dto){
-        if (!jwtUtils.userRoleVerifyAdmin(request)) return RestBean.failure(401,"权限不足");
+    public <T>RestBean<T> updateSensorInfoDtoadmin( SensorInfoDto dto){
+        //if (!jwtUtils.userRoleVerifyAdmin(request)) return RestBean.failure(401,"权限不足");
         if(updateAdmin(dto)) return RestBean.success();
         return  RestBean.failure(500,"参数有误");
     }

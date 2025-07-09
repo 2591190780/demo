@@ -10,8 +10,11 @@ import com.example.annotation.Auditable;
 import com.example.config.AliPayConfig;
 import com.example.entity.AliPay;
 import com.example.entity.RestBean;
+import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
+import com.example.entity.vo.response.ProductVO;
 import com.example.service.product.ProductInfoSelectAccountService;
+import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.service.transaction.TransactionProcessService;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
@@ -51,6 +54,9 @@ public class AlipayController {
     @Resource
     ProductInfoSelectAccountService productInfoSelectAccountService;
 
+    @Resource
+    ProductInfoUpdateAccountService productInfoUpdateAccountService;
+
     private static final String GATEWAY_URL ="https://openapi-sandbox.dl.alipaydev.com/gateway.do";
     private static final String FORMAT ="JSON";
     private static final String CHARSET ="utf-8";
@@ -64,19 +70,29 @@ public class AlipayController {
             captureAfter = true
     )
     @PutMapping("/payInfoSingle")
-    public void  payInfoTodb(HttpServletRequest request,HttpServletResponse response
+    public <T> RestBean<T>  payInfoTodb(HttpServletRequest request,HttpServletResponse response
             ,@RequestBody TransactionAccountDto transactionAccountDto) throws IOException {
 
         response.setContentType("application/json;Charset=utf-8");
         /**
-         * 在这里还需要加入 传入订单信息 与 商家库存 是否满足的逻辑。需要返回提示。
+         * 在这里还需要加入 传入订单信息 与 商家库存 是否满足的逻辑。需要返回提示。(已完成。)
          * 在service中加入 订单有效性逻辑判断。
          */
-        TransactionAccountDto dto = this.transactionProcessService.TransactionInfoAdd(transactionAccountDto,request);
+        ProductVO pdto = this.productInfoSelectAccountService.
+                getProductInfoAccountByProductId(transactionAccountDto.getProductId());
+        if(pdto.getStockRemain()
+                .subtract(transactionAccountDto.getQuantity())  //这里可以直接比大小，多此一举了，无语。
+                .compareTo(BigDecimal.valueOf(0)) < 0){
+            return RestBean.failure(401,"商家库存不足。");
+        }
+        if(pdto.getIsActive() == 0) return  RestBean.failure(401,"产品还未上架。");
+        TransactionAccountDto dto = this.transactionProcessService
+                .TransactionInfoAdd(transactionAccountDto,request);
         if (dto != null){
             response.getWriter().write(RestBean.success(dto).asJsonString());
+            return null;
         }else{
-            response.getWriter().write(RestBean.failure(401,"未查询到订单信息").asJsonString());
+            return RestBean.failure(401,"未查询到订单信息");
         }
     }
 
@@ -86,7 +102,8 @@ public class AlipayController {
             captureAfter = true
     )
     @PutMapping("/payInfoMulti")
-    public void  payInfoMulti(HttpServletRequest request,HttpServletResponse response,@RequestBody List<TransactionAccountDto> dto) throws IOException {
+    public void  payInfoMulti(HttpServletRequest request,HttpServletResponse response
+            ,@RequestBody List<TransactionAccountDto> dto) throws IOException {
         response.setContentType("application/json;Charset=utf-8");
         /**
          * 在这里还需要加入 传入订单信息 与 商家库存 是否满足的逻辑。需要返回提示。
@@ -111,6 +128,7 @@ public class AlipayController {
     @GetMapping("/pay") // 前端路径参数格式?subject=xxx&traceNo=xxx&totalAmount=xxx
     public void pay(HttpServletRequest httpRequest
             , HttpServletResponse  response) throws Exception {
+        response.setContentType("application/json;Charset=utf-8");
         /**
          * 1. 用户先提交订单，执行transaction.add函数 添加交易信息等待用户支付
          *
@@ -139,6 +157,7 @@ public class AlipayController {
         }
         // 检查有效订单
         if (hashes == null || hashes.isEmpty()) {
+
             response.getWriter().write(RestBean.failure(401, "没有待支付的订单").asJsonString());
             return;
         }
@@ -251,9 +270,11 @@ public class AlipayController {
             captureBefore = true,
             captureAfter = true
     )
+
     @GetMapping("/alipay/return")
     public String handleReturn(HttpServletRequest request) throws AlipayApiException {
         // 1. 获取所有参数
+
         Map<String, String> params = getAllParameters(request);
         // 2. 打印原始参数（调试用）
         System.out.println("同步回调原始参数: " + params);
@@ -325,7 +346,6 @@ public class AlipayController {
                 System.err.println("验签失败，待验签内容: " + signContent);
                 System.err.println("签名值: " + params.get("sign"));
                 System.err.println("支付宝公钥: " + aliPayConfig.getAlipayPublicKey());
-
                 return "failure";
             }
             // 6. 验证时间戳（防止重放攻击）
@@ -333,7 +353,6 @@ public class AlipayController {
                 System.err.println("回调时间已过期");
                 return "failure";
             }
-
             // 7. 处理业务逻辑
             String outTradeNo = params.get("out_trade_no");
             String tradeNo = params.get("trade_no");
@@ -354,18 +373,20 @@ public class AlipayController {
                 dto.setActualPayment(count);
                 dto.setCertificationHash(hash);
                 dto.setAlipayOrder(tradeNo);
-
                 /**
                  * 这里要 执行 只能合约，NFT触发机制，hash上链等操作  对相应的表格进行操作 user_nft ......
                  * 还没写。
                  */
-
                 if( transactionProcessService.transactionStatusUpdate(dto,"2")){
                     stringRedisTemplate.delete(hash);
                     stringRedisTemplate.opsForSet().remove(outTradeNo,hash);
-
                 }
-                System.out.println(stringRedisTemplate.opsForSet().size(outTradeNo));
+                System.out.println("等待支付的交易订单数量还剩余: "+stringRedisTemplate.opsForSet().size(outTradeNo));
+                if(this.productInfoUpdateAccountService.updateStock(dto.getProductId(),dto.getSellerId(),dto.getQuantity())){
+                    System.out.println("商品库存信息更新成功。");
+                }
+
+
             }
 
             // TODO: 这里添加您的订单状态更新逻辑
@@ -377,16 +398,19 @@ public class AlipayController {
         }
     }
 
+
     @Auditable(
             operationType = "PAY_CANCEL",
             captureBefore = true,
             captureAfter = true
     )
-    @PutMapping("/payCancel")
-    public <T> RestBean<T> payCancel(HttpServletRequest request, @Parameter @Valid String hash) throws Exception {
+    @GetMapping("/payCancel")   //  通过hash取消订单
+    public <T> RestBean<T> payCancel(HttpServletRequest request
+            , @Parameter(ref = "hash")  String hash) throws Exception {
         return this.transactionProcessService.cancelTransaction(request,hash)?
                 RestBean.success():RestBean.failure(401,"订单已失效或订单不存在");
     }
+
 
     @Auditable(
             operationType = "PAY_CANCEL_MULTI",
@@ -394,17 +418,20 @@ public class AlipayController {
             captureAfter = true
     )
     @PutMapping("/payCancelMulti")
-    public <T> RestBean<T> payCancelMulti(HttpServletRequest request, @Parameter @Valid List<String> hashes) throws Exception {
+    public <T> RestBean<T> payCancelMulti(HttpServletRequest request
+            , @RequestBody @Valid List<String> hashes) throws Exception {
         return this.transactionProcessService.cancelTransactionMulti(request,hashes)?
                 RestBean.success():RestBean.failure(401,"订单已失效或订单不存在");
     }
+
+
 
     @Auditable(
             operationType = "PAY_SELECT",
             captureBefore = true,
             captureAfter = true
     )
-    @PutMapping("/paySelect")
+    @GetMapping("/paySelect")
     public  <T> RestBean<T> paySelect(HttpServletRequest request
             ,HttpServletResponse response, @Parameter @Valid String Id) throws IOException {
         Integer userId = jwtUtils.convertToInteger(Id);
@@ -412,16 +439,41 @@ public class AlipayController {
         if (dto == null) {
             return RestBean.failure(401,"未查询到您的订单");
         }
+        response.setContentType("application/json;Charset=utf-8");
         response.getWriter().write(RestBean.success(dto).asJsonString());
         return null;
     }
+
+
+    @Auditable(
+            operationType = "SELECT_BY_ALIPAY_ORDER",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @PutMapping("/paySelect/alipayOrder")
+    public  <T> RestBean<T> paySelectByAlipayOrder(HttpServletRequest request
+            ,HttpServletResponse response, @Parameter @Valid String alipayOrder) throws IOException {
+        TransactionAccountDto dto = this.transactionProcessService.getOrderByAlipayOrder(alipayOrder);
+        if (dto == null) {
+            return RestBean.failure(401,"未查询到您的订单");
+        }
+        if(!Objects.equals(jwtUtils.getRequesetId(request), dto.getBuyerId())
+                &&
+                !Objects.equals(jwtUtils.getRequesetId(request), dto.getSellerId()))
+        {return RestBean.failure(401,"暂无权限查看。");}
+        response.setContentType("application/json;Charset=utf-8");
+        response.getWriter().write(RestBean.success(dto).asJsonString());
+        return null;
+    }
+
+
 
     @Auditable(
             operationType = "PAY_SELECT_MULTI",
             captureBefore = true,
             captureAfter = true
     )
-    @PutMapping("/paySelectMulti")
+    @GetMapping("/paySelectMulti")
     public  <T> RestBean<T> paySelectMulti(HttpServletRequest request
             , @Parameter @Valid String Id
             ,HttpServletResponse response ) throws IOException {
@@ -431,6 +483,7 @@ public class AlipayController {
         if (dtoList == null) {
             return RestBean.failure(401,"未查询到您的订单");
         }
+        response.setContentType("application/json;Charset=utf-8");
         response.getWriter().write(RestBean.success(dtoList).asJsonString());
         return null;
 

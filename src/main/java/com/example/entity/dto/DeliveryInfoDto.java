@@ -17,16 +17,16 @@ public class DeliveryInfoDto {
     @TableId(type = IdType.AUTO)  // 自增主键
     private Integer id;
 
-    String  orderId;
+    String orderId;
     String startAddress;
     String endAddress;
     String startTime;
     String endTime;
-    JSONObject deliveryProcess;
+    String deliveryProcess;
 
     @Length(min = 11, max = 11)
-    Integer sellerPhonenumber;
+    String sellerPhonenumber;
     @Length(min = 11, max = 11)
-    Integer buyerPhonenumber;
+    String buyerPhonenumber;
 
 }

@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @RestController
@@ -42,7 +43,7 @@ public class DeliveryController {
     @PutMapping("/add/info")
     public <T>RestBean<T> addInfo(HttpServletRequest request , @RequestBody DeliveryInfoDto dto){
        return this.deliveryInfoService.addDeliveryInfo(request,dto)?
-               RestBean.success():RestBean.failure(401,"添加失败，请检查参数。");
+               RestBean.success():RestBean.failure(401,"添加失败，请勿重复添加同时检查参数。");
     }
 
     @Auditable(
@@ -64,6 +65,7 @@ public class DeliveryController {
         return null;
     }
 
+
     @Auditable(
             operationType = "UPDATE_INFO_DELIVERY",
             captureBefore = true,
@@ -71,9 +73,10 @@ public class DeliveryController {
     )
     @GetMapping("/update/info")
     public <T>RestBean<T> updateInfo(HttpServletRequest request ,
-                                     @Parameter(ref = "alipayOrder") String alipayOrderId,
-                                     @Parameter(ref = "data") JSONObject jsonObject){
-      return this.deliveryInfoService.updateDeliveryInfo(request,alipayOrderId,jsonObject) ?
+                                     @Parameter String alipayOrder,
+                                     @Parameter String time,
+                                     @Parameter String data){
+      return this.deliveryInfoService.updateDeliveryInfo(request,alipayOrder,data,time) ?
               RestBean.success():RestBean.failure(401,"修改失败，请检查参数。");
     }
 

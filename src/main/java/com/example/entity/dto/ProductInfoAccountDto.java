@@ -32,6 +32,8 @@ public class ProductInfoAccountDto {
     private BigDecimal price;
     // * 库存数量
     private BigDecimal stock;
+
+    private BigDecimal stockRemain;
     // * 原产地
     private String originLocation;
     // 认证哈希值（固定长度66字符）

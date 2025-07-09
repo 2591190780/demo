@@ -109,8 +109,6 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
     }
 
 
-
-
     @Override
     public List<NFTPendingApplication>  getApplyForNFT(HttpServletRequest request) {
         Integer id = jwtUtils.getRequesetId(request);

@@ -15,15 +15,13 @@ import com.example.utils.Const;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -43,8 +41,9 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
 
     //添加单个交易信息
     @Override
+    //服了，这里为毛线返回整个类，无语，写昏头了。
+    //哦，没昏头，这里用户提交的交易申请要给用户确认。所以得返回交易的具体信息。草
     public TransactionAccountDto TransactionInfoAdd(TransactionAccountDto dto, HttpServletRequest request){
-
         //前端传入 卖家id，产品id，数量，总价，后端生成交易hash，订单号，以及下单时间。并返回给前端
         Integer requesetId = jwtUtils.getRequesetId(request); //获取当前登录状态的ID
         dto.setBuyerId(requesetId);
@@ -59,7 +58,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         dto.setCertificationHash(hash);
         if(TransactionMessageIntoRedis(dto)){
             dto.setStatus("1");
-            return this.save(dto)? dto:null;
+            return this.save(dto)? dto :null;
             /**
              * 这里要执行上链操作 ----->  blockChainEvidenceService
              * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
@@ -98,6 +97,12 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         return  dtoList;
     }
 
+    @Override
+    public  boolean transactionUpdateDeliveryTime(String alipayOrder){
+        return this.update().eq("alipay_order",alipayOrder)
+                .set("delivery_time",LocalDateTime.now()).update();
+    }
+
     //更新订单状态
     @Override
     public boolean transactionStatusUpdate(TransactionAccountDto dto,String status){
@@ -127,6 +132,13 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         return null;
     }
 
+    @Override
+    public  boolean upDateStatusOrHash(String text,String status){
+        return this.update().eq("alipay_order", text).or()
+                .eq("certification_hash", text)
+                .set("status",status).update();
+    }
+
 
     @Override
     public  TransactionAccountDto getOrderByHash(String hash){
@@ -142,6 +154,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         String userId = jwtUtils.getRequesetId(request).toString();
         if(Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(userId, hash))){
             stringRedisTemplate.opsForSet().remove(userId,hash);
+            this.upDateStatusOrHash(hash,"6");
             return true;
         }
         return false;
@@ -154,6 +167,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         for(String hash : hashList){
             if(Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(userId, hash))){
                 stringRedisTemplate.opsForSet().remove(userId,hash);
+                this.upDateStatusOrHash(hash,"6");
             }else{
                  flag = Boolean.FALSE;
             }
@@ -163,9 +177,14 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
 
     @Override
     public TransactionAccountDto transactionSelect(HttpServletRequest request,Integer id){
-        String userId = jwtUtils.getRequesetId(request).toString();
-        if(userId != id.toString()) return null;
-        Set<String> hashes = stringRedisTemplate.opsForSet().members(userId);
+        Integer userId = jwtUtils.getRequesetId(request);
+        if(!Objects.equals(userId, id)) return null;
+        Set<String> hashes = stringRedisTemplate.opsForSet().members(userId.toString());
+        if(hashes == null || hashes.isEmpty()) return null;
+        for(String hash : hashes){
+            this.clearLateDateTemplate(id,hash);
+        }
+        hashes = stringRedisTemplate.opsForSet().members(userId.toString());
         if(hashes == null || hashes.isEmpty()) return null;
         String hash = hashes.iterator().next();
         TransactionAccountDto dto = this.getOrderByHash(hash);
@@ -174,9 +193,14 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
 
     @Override
     public List<TransactionAccountDto> transactionSelectMulti(HttpServletRequest request,Integer id){
-        String userId = jwtUtils.getRequesetId(request).toString();
-        if(userId != id.toString()) return null;
-        Set<String> hashes = stringRedisTemplate.opsForSet().members(userId);
+        Integer userId = jwtUtils.getRequesetId(request);
+        if(!Objects.equals(userId, id)) return null;
+        Set<String> hashes = stringRedisTemplate.opsForSet().members(userId.toString());
+        if(hashes == null || hashes.isEmpty()) return null;
+        for(String hash : hashes){
+            this.clearLateDateTemplate(id,hash);
+        }
+        hashes = stringRedisTemplate.opsForSet().members(userId.toString());
         if(hashes == null || hashes.isEmpty()) return null;
         List<TransactionAccountDto> dtoList = new ArrayList<>();
         for (String hash : hashes){
@@ -184,6 +208,13 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
             dtoList.add(dto);
         }
         return dtoList;
+    }
+
+    @Override
+    public  boolean completeTransaction(String OrderID){
+
+        return this.upDateStatusOrHash(OrderID,"5") &&
+                this.update().eq("alipay_order",OrderID).update();
     }
 
 
@@ -201,14 +232,22 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         if (Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(buyerKey, hash))) {
             stringRedisTemplate.opsForSet().remove(buyerKey, hash);
             stringRedisTemplate.delete(hash);
+            this.upDateStatusOrHash(hash,"6");
         }
     }
+
+
+    private void clearLateDateTemplate(Integer id ,String hash){
+        if (!Boolean.TRUE.equals(stringRedisTemplate.hasKey(hash))) {
+            stringRedisTemplate.opsForSet().remove(String.valueOf(id),hash);
+        }
+    }
+
 
     private  Boolean TransactionMessageIntoRedis(TransactionAccountDto transactionAccountDto){
         //将订单信息存入redis缓存中,等待支付。(15分钟过期)
         String buyer_id = transactionAccountDto.getBuyerId().toString();
         String hash  = transactionAccountDto.getCertificationHash();
-
         //通过buyerID 存储redis信息  id:hash(订单hash)
         if(Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(buyer_id,hash))) return false;
         stringRedisTemplate.opsForSet().add(buyer_id,hash);
@@ -218,11 +257,9 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         return true;
     }
 
-
     private String generateOrderId(){
         return Const.ORDER_ID_INFO + UUID.randomUUID().toString().replace("-", "");
     }
-
 
 }
 

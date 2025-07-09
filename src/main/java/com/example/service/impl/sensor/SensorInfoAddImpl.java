@@ -6,9 +6,11 @@ import com.example.entity.RestBean;
 import com.example.entity.dto.SensorInfoDto;
 import com.example.mapper.sensor.SensorInfoMapper;
 import com.example.service.sensor.SensorInfoAddService;
+import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -19,6 +21,8 @@ public class SensorInfoAddImpl extends ServiceImpl<SensorInfoMapper, SensorInfoD
 
      @Resource
      JwtUtils jwtUtils;
+    @Autowired
+    private InfoToRedisUtils infoToRedisUtils;
 
      @Override
      public <T> RestBean<T> addSensorInfoDto(HttpServletRequest request,SensorInfoDto dto) {
@@ -37,8 +41,12 @@ public class SensorInfoAddImpl extends ServiceImpl<SensorInfoMapper, SensorInfoD
           Integer id = jwtUtils.toId(jwt);
           dto.setFarmId(id);
           dto.setCreate_time(LocalDateTime.now());
-          return this.save(dto) ? RestBean.success():RestBean.failure(500,"内部错误请联系管理员");
-
+          dto.setIs_active((byte) 0);
+          if(this.save(dto)){
+               this.infoToRedisUtils.InfoToRedis(dto.getSensorId(),id,"add","sensor");
+               return RestBean.success();
+          }
+          return RestBean.failure(500,"内部错误请联系管理员");
      }
 
 

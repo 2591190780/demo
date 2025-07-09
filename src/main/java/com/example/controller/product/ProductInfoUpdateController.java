@@ -43,5 +43,16 @@ public class ProductInfoUpdateController {
     }
 
 
+    @Auditable(
+            operationType = "UPDATE_PRODUCT_DOWN",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @PutMapping("/update/downProduct")
+    public <T>RestBean<T> downProduct(HttpServletRequest  request
+            ,@RequestBody ProductInfoAccountDto accountDto){
+        return this.service.updateProductInfoDown(request,accountDto);
+    }
+
 
 }

@@ -141,6 +141,7 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
         vo.setUpdateTime(account.getUpdateTime());
         vo.setProductImgurl(account.getProductImgurl());
         vo.setIsActive(account.getIsActive());
+        vo.setStockRemain(account.getStockRemain());
         return vo;
     }
 }
