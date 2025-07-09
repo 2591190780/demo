@@ -11,11 +11,13 @@ import com.example.entity.vo.response.PendingApplicationVO;
 import com.example.service.AdminService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -67,7 +69,6 @@ public class AdminController {
     @GetMapping("/admin/pending-applications")
     public <T>RestBean<T>  adminApplySelect(HttpServletRequest request
             ,HttpServletResponse response) throws IOException {
-
         response.setContentType("application/json;Charset=utf-8");
         List<PendingApplicationVO> pendingApplicationVOS = adminService.getPendingApplications(request);
             if (!(pendingApplicationVOS ==null)) {
@@ -77,6 +78,7 @@ public class AdminController {
         response.getWriter().write(RestBean.failure(401,"请检查权限或没有任何请求").asJsonString());
         return null;
     }
+
 
     @Auditable(
             operationType = "ADMIN_HANDLING_APPLICATIONS",
@@ -96,5 +98,23 @@ public class AdminController {
 
     }
 
+    @Auditable(
+            operationType = "ADMIN_CATEGORY_APPLICATIONS",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/admin/category/pending-applications")
+    public RestBean<List<PendingApplicationVO>> getPendingApplications(HttpServletRequest request
+            , HttpServletResponse response
+            , @Parameter @Valid String Type) throws IOException {
+        response.setContentType("application/json;Charset=utf-8");
+        List<PendingApplicationVO> pendingApplicationVOS = adminService.getPendingApplyCategory(request,Type);
+        if (!(pendingApplicationVOS ==null)) {
+            response.getWriter().write(RestBean.success(pendingApplicationVOS).asJsonString());
+            return null;
+        }
+        response.getWriter().write(RestBean.failure(401,"请检查权限或没有任何请求").asJsonString());
+        return null;
+    }
 
 }

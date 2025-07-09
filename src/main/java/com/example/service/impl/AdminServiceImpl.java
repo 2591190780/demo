@@ -65,7 +65,6 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         // 1. 获取所有操作类型
         String[] operationTypes = {Const.FARMER_ADD_APPLY_LIST, Const.FARMER_UPDATE_APPLY_LIST
                 , Const.FARMER_DELETE_APPLY_LIST};
-
         List <PendingApplicationVO> pendingApplicationVOS = new ArrayList<>();
         for (String operation : operationTypes) {
             String applyListKey = "apply:" + operation ;
@@ -92,16 +91,13 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 String targetType = this.constConvertType(parts[2]);
                 String targetId = parts[3]; //如果是userinfo 这里是 role
                 String farmerId = parts[4];  // 如果操作目标是userinfo 这里是 id
-
                 // 5. 获取农户信息
                 Account farmer = accountService.findAccountById(Integer.parseInt(farmerId));
                 Object targetInfo ;
-
                 if(targetType.equals("userInfo")){
                     // 6. 获取目标对象详情（根据类型查询不同表）
                     farmer.setPassword(null);
                     targetInfo = farmer;
-
                 }else {
                     targetInfo = redisUtils.getTargetInfo(targetType, targetId);
                 }
@@ -110,7 +106,6 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;
                 LocalDateTime createTime = LocalDateTime.now().minusSeconds(livedMillis);
                 LocalDateTime deadTime = createTime.plusSeconds(EXPIRE_DURATION.toSeconds());
-
                 // 7. 添加到结果列表
                 pendingApplicationVOS.add(new PendingApplicationVO(
                         operationType,
@@ -122,6 +117,66 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                         deadTime,
                         targetInfo
                 ));
+            }
+        }
+        return  pendingApplicationVOS;
+    }
+
+
+    @Override
+    public List<PendingApplicationVO> getPendingApplyCategory(HttpServletRequest request, String Type){
+        if (!utils.userRoleVerifyAdmin(request)) {
+            return null;
+        }
+        // 1. 获取所有操作类型
+        String[] operationTypes = {Const.FARMER_ADD_APPLY_LIST, Const.FARMER_UPDATE_APPLY_LIST
+                , Const.FARMER_DELETE_APPLY_LIST};
+        List <PendingApplicationVO> pendingApplicationVOS = new ArrayList<>();
+        for (String operation : operationTypes) {
+            String applyListKey = "apply:" + operation ;
+            // 2. 获取该操作类型下的所有复合键
+            Set<String> compositeKeys = template.opsForSet().members(applyListKey);
+            if (compositeKeys == null ||  compositeKeys.isEmpty()) continue;
+            for (String compositeKey : compositeKeys) {
+                // 检查键是否有效（未过期）
+                if (Boolean.FALSE.equals(template.hasKey(compositeKey))) {
+                    // 从索引中移除过期键
+                    template.opsForSet().remove(applyListKey, compositeKey);
+                    continue;
+                }
+                // 4. 解析复合键
+                String[] parts = compositeKey.split(":");
+                String operationType = parts[1];
+                String targetType = this.constConvertType(parts[2]);
+                String targetId = parts[3]; //如果是userinfo 这里是 role
+                String farmerId = parts[4];  // 如果操作目标是userinfo 这里是 id
+                if(targetType.equals(Type)){
+                    // 5. 获取农户信息
+                    Account farmer = accountService.findAccountById(Integer.parseInt(farmerId));
+                    Object targetInfo ;
+                    if(targetType.equals("userInfo")){
+                        // 6. 获取目标对象详情（根据类型查询不同表）
+                        farmer.setPassword(null);
+                        targetInfo = farmer;
+                    }else {
+                        targetInfo = redisUtils.getTargetInfo(targetType, targetId);
+                    }
+                    //redis缓存中 过期时间以ttl存储。需要反推。
+                    long expireMillis  =  template.opsForValue().getOperations().getExpire(applyListKey);
+                    long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;
+                    LocalDateTime createTime = LocalDateTime.now().minusSeconds(livedMillis);
+                    LocalDateTime deadTime = createTime.plusSeconds(EXPIRE_DURATION.toSeconds());
+                    pendingApplicationVOS.add(new PendingApplicationVO(
+                            operationType,
+                            targetType,
+                            targetId,
+                            farmerId,
+                            farmer != null ? farmer.getUsername() : "未知农户",
+                            createTime,
+                            deadTime,
+                            targetInfo
+                    ));
+                }
 
             }
         }
@@ -148,12 +203,10 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
             if (!Boolean.TRUE.equals(template.hasKey(compositeKey))) {
                 return false;
             }
-
             // 2. 解析复合键
             String operation = vo.getOperation();
             String targetId = vo.getTargetId();
             String farmerId = vo.getId();
-
             // 3. 执行实际业务逻辑
             this.objectConfirm(vo,answer);
             // 4. 从Redis中删除记录和索引

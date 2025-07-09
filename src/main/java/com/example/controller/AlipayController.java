@@ -63,7 +63,6 @@ public class AlipayController {
     private static final String SIGN_TYPE ="RSA2";
 
     //生成订单信息并返回给前端
-
     @Auditable(
             operationType = "PAY_INFO_SINGLE_ALIPAY",
             captureBefore = true,
@@ -270,7 +269,6 @@ public class AlipayController {
             captureBefore = true,
             captureAfter = true
     )
-
     @GetMapping("/alipay/return")
     public String handleReturn(HttpServletRequest request) throws AlipayApiException {
         // 1. 获取所有参数
