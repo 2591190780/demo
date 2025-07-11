@@ -7,9 +7,11 @@ import com.example.entity.RestBean;
 import com.example.entity.dto.SensorInfoDto;
 import com.example.mapper.sensor.SensorInfoMapper;
 import com.example.service.sensor.SensorInfoUpdateService;
+import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +24,8 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
 
     @Resource
     JwtUtils jwtUtils;
+    @Resource
+    private InfoToRedisUtils infoToRedisUtils;
 
     //修改单个传感器信息
     @Override
@@ -30,13 +34,17 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
         String authorization = request.getHeader("Authorization");
         DecodedJWT jwt = jwtUtils.resolveJWT(authorization);
         Integer userId = jwtUtils.toId(jwt);
-        if(!Objects.equals(dto.getFarmId(), userId) ){
+        if(!Objects.equals(dto.getFarmId(), userId)){
             if (Objects.equals(jwtUtils.toRole(jwt), "3")){
                 return this.update(dto,userId) ? RestBean.success():RestBean.failure(500,"内部错误请联系管理员");
             }
             return RestBean.failure(500,"权限不足");
         }
-        return this.update(dto,userId) ? RestBean.success():RestBean.failure(500,"内部错误请联系管理员");
+        if(this.update(dto,userId)){
+            infoToRedisUtils.InfoToRedis(dto.getSensorId(),dto.getFarmId(),"update","sensor");
+            return RestBean.success();
+        }
+        return RestBean.failure(500,"内部错误请联系管理员");
 
     }
 
@@ -68,6 +76,7 @@ public class SensorInfoUpdateImpl extends ServiceImpl<SensorInfoMapper, SensorIn
                     // 记录失败日志（实际生产环境应更详细）
                     log.error(String.format("更新传感器，传感器ID:%s", sensordto.getSensorId()));
                 }
+                infoToRedisUtils.InfoToRedis(sensordto.getSensorId(),sensordto.getFarmId(),"update","sensor");
             }
             return allSuccess ?
                     RestBean.success() :
