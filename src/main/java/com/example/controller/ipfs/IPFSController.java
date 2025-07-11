@@ -9,7 +9,7 @@ import com.example.entity.dto.NFTInfoDto;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.service.AccountService;
-import com.example.service.IPFSService;
+import com.example.utils.IPFSUtils;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
@@ -23,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/imgUpload")
@@ -34,7 +33,7 @@ public class IPFSController {
     MessageIntoIPFSUtil messageIntoIPFSUtil;
 
     @Resource
-    IPFSService ipfsService;
+    IPFSUtils ipfsUtils;
 
     @Resource
     JwtUtils jwtUtils;
@@ -74,7 +73,7 @@ public class IPFSController {
         Integer userId = jwtUtils.getRequesetId(request);
 
         // 1. 生成CID值
-        IPFSService.IPFSResponse response = ipfsService.storeFile(file);  // 需要在 增添的操作对应的表上进行。
+        IPFSUtils.IPFSResponse response = ipfsUtils.storeFile(file);  // 需要在 增添的操作对应的表上进行。
         String cid = response.cid();
         System.out.println("cid = " + cid);
         // 2. 在目标对象进行操作

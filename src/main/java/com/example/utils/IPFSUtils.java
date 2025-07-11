@@ -1,4 +1,4 @@
-package com.example.service;
+package com.example.utils;
 
 import io.ipfs.api.IPFS;
 import io.ipfs.api.MerkleNode;
@@ -9,13 +9,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @Service
-public class IPFSService {
+public class IPFSUtils {
 
 
     private final IPFS ipfs;
     private final String gatewayUrl;
 
-    public IPFSService(IPFS ipfs, @Value("${ipfs.gateway}") String gatewayUrl) {
+    public IPFSUtils(IPFS ipfs, @Value("${ipfs.gateway}") String gatewayUrl) {
         this.ipfs = ipfs;
         this.gatewayUrl = gatewayUrl;
     }

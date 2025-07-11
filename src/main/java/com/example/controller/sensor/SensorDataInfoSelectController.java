@@ -3,6 +3,7 @@ package com.example.controller.sensor;
 import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.SensorDataInfoDto;
+import com.example.entity.dto.SensorInfoDto;
 import com.example.service.sensor.SensorDataInfoSelectService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -81,7 +82,7 @@ public class SensorDataInfoSelectController {
             captureAfter = true
     )
     @PutMapping("/searchByCondition")
-    public RestBean<Void> searchSensorDataInfoByCondition(@RequestBody SensorDataInfoDto dto,
+    public RestBean<Void> searchSensorDataInfoByCondition(@RequestBody SensorInfoDto dto,
                                                           HttpServletResponse response)throws IOException {
         List<SensorDataInfoDto> dtoList = service.findByCondition(dto);
         if(dtoList!=null) {

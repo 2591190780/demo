@@ -27,4 +27,7 @@ public class BlockChainEvidenceDto {
     private String bolckNumber;
     private LocalDateTime timestamp;
 
+    public BlockChainEvidenceDto() {
+
+    }
 }

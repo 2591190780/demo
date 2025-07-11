@@ -1,7 +1,6 @@
 package com.example.service.impl.product;
 
 
-import com.auth0.jwt.interfaces.DecodedJWT;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.RestBean;
 import com.example.entity.dto.ProductInfoAccountDto;
@@ -9,7 +8,7 @@ import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.request.ProductAddVO;
 import com.example.mapper.product.ProductInfoAddAccountMapper;
 import com.example.service.BlockChainEvidenceService;
-import com.example.service.IPFSService;
+import com.example.utils.IPFSUtils;
 import com.example.service.product.ProductInfoAddAccountService;
 import com.example.utils.BlockchainHashUtil;
 import com.example.utils.InfoToRedisUtils;
@@ -17,13 +16,11 @@ import com.example.utils.JwtUtils;
 import com.example.utils.MessageIntoIPFSUtil;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccountMapper, ProductInfoAccountDto>
@@ -45,7 +42,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
     StringRedisTemplate stringRedisTemplate;
 
     @Resource
-    IPFSService ipfsService;
+    IPFSUtils ipfsUtils;
 
     @Resource
     BlockChainEvidenceService blockChainEvidenceService;
