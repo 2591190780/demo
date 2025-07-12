@@ -62,6 +62,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         if(this.generateProductAccount(vo)){
             redisUtils.InfoToRedis(vo.getProductId(), vo.getFarmerId()
                     , "add","product");
+
             return RestBean.success();
         }
         return RestBean.failure(401,"请检查传入的参数");

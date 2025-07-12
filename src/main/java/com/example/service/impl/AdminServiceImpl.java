@@ -12,6 +12,8 @@ import com.example.service.AccountService;
 import com.example.service.AdminService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
+import com.example.service.blockchain.MessageReportService;
+import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.service.sensor.SensorInfoUpdateService;
 import com.example.utils.Const;
@@ -45,7 +47,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
 
     @Resource
     ProductInfoUpdateAccountService productInfoUpdateAccountService;
-
+    @Resource
+    ProductInfoSelectAccountService productInfoSelectAccountService;
     @Resource
     SensorInfoUpdateService sensorInfoUpdateService;
 
@@ -54,6 +57,10 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
 
     @Resource
     NFTRuleService nftRuleService;
+
+    @Resource
+    MessageReportService messageReportService;
+
 
     private static final Duration EXPIRE_DURATION = Duration.ofHours(24);
 
@@ -184,7 +191,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
     }
 
     @Override
-    public boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList,byte answer) {
+    public boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList,byte answer)
+            throws Exception {
         // 1. 验证复合键格式
         // 1. 获取所有操作类型
         if (!utils.userRoleVerifyAdmin(request)) {
@@ -241,27 +249,49 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
     }
 
 
-    private Object objectConfirm (PendingApplicationVO vo,byte ans){
+    private Object objectConfirm (PendingApplicationVO vo,byte ans) throws Exception {
         if (vo == null) return null;
         String operation = vo.getOperation();
         String targetType = vo.getTargetType();
         String targetId = vo.getTargetId();
         String farmerId = vo.getId();
-
+        //这里要获取到目标用户的钱包地址信息，然后进行上链操作。
+        String userAddress = this.accountService.findAccountById(convertToInteger(farmerId)).getWalletAddress();
+        //构建上传参数
+        List<Object> params = new ArrayList<>();
         Object result = switch (targetType) {
-            case "product" -> productInfoUpdateAccountService.productUpdateAdmin(
-                    this.convertToInteger(targetId),
-                    this.convertToInteger(farmerId),  ans);
-            //case "sensor":
-            case "userInfo" -> accountService.updateRoleAdmin(Integer.valueOf(farmerId),targetId);
-            case "nft_info" -> nftInfoService.NFTInfoUpdateAdmin(
+            case "product" -> {
+                this.productInfoUpdateAccountService.productUpdateAdmin(
+                        this.convertToInteger(targetId),
+                        this.convertToInteger(farmerId),  ans);
+                if(ans == (byte) 1){
+                    //产品上链操作  获取上链产品的hash值
+                String hash = this.productInfoSelectAccountService
+                        .getProductInfoAccountByProductId(this.convertToInteger(targetId)).getCertificationHash();
+                    params.add(0,1);
+                    params.add(1,convertToInteger(targetId));
+                    params.add(2,hash);
+                    //执行上链操作
+                messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE,params
+                        ,userAddress,Const.CONTRACT_FOR_MESSAGE_REPORT
+                        );
+                yield true;
+                }
+                yield false;
+            }
+            case "userInfo" -> this.accountService.updateRoleAdmin(Integer.valueOf(farmerId),targetId);
+
+            case "nft_info" -> this.nftInfoService.NFTInfoUpdateAdmin(
                     this.convertToInteger(targetId),ans);
-            case "nft_rule" -> nftRuleService.nftRuleUpdateAdmin(Integer.valueOf(targetId),ans);
-            case "sensor" -> sensorInfoUpdateService.updateSensorInfoDtoadmin(
+
+            case "nft_rule" -> this.nftRuleService.nftRuleUpdateAdmin(Integer.valueOf(targetId),ans);
+
+            case "sensor" -> this.sensorInfoUpdateService.updateSensorInfoDtoadmin(
                             new SensorInfoDto(
                                     this.convertToInteger(targetId),
                                     this.convertToInteger(farmerId),null,null
                                     ,ans,null,null));
+
             default -> throw new IllegalStateException("未知的数据类型" + targetType);
         };
         return result;

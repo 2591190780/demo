@@ -10,6 +10,6 @@ import java.util.List;
 
 public interface AdminService extends IService<PendingApplicationVO> {
     List<PendingApplicationVO> getPendingApplications(HttpServletRequest request);
-    boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList,byte answer);
+    boolean handleApplication(HttpServletRequest request,List<PendingApplicationVO> voList,byte answer) throws Exception;
     List<PendingApplicationVO> getPendingApplyCategory(HttpServletRequest request, String Type);
 }

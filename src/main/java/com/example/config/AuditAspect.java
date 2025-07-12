@@ -63,21 +63,18 @@ public class AuditAspect {
                     log.warn("无法从请求中获取用户ID");
                     logInfo.setUserId(-1); // 设置为未知用户
                 }
-
                 // 4. 设置客户端IP
-                logInfo.setClientIp(getClientIp(request));
+                logInfo.setClientIp(request.getRemoteAddr());
             }
         } catch (Exception e) {
             log.warn("获取请求上下文失败: {}", e.getMessage());
             logInfo.setClientIp("获取IP失败");
         }
-
         // 5. 执行目标方法并记录响应
         Object result = null;
         try {
             // 执行目标方法
             result = joinPoint.proceed();
-
             // 记录成功响应
             logInfo.setStatus("0");
             logInfo.setResponseContent(convertResponseToString(result)); // 记录响应内容
@@ -101,7 +98,6 @@ public class AuditAspect {
         if (response == null) {
             return "null";
         }
-
         try {
             // 如果是字符串直接返回
             if (response instanceof String) {
@@ -117,7 +113,6 @@ public class AuditAspect {
                 }
                 return convertObjectToJson(body);
             }
-
             // 其他类型转换为JSON
             return convertObjectToJson(response);
         } catch (Exception e) {

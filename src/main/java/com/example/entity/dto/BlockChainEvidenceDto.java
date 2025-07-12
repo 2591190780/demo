@@ -23,6 +23,8 @@ public class BlockChainEvidenceDto {
 
     @Length(min = 66, max = 66)
     private String txHash;
+    @Length(min = 66, max = 66)
+    private String submitHash;
 
     private String bolckNumber;
     private LocalDateTime timestamp;

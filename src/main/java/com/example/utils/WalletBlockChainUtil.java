@@ -30,6 +30,8 @@ public class WalletBlockChainUtil {
         String privateKey = keyPair.getHexPrivateKey();
         return Map.of("address",address,"privateKey",privateKey);
 
+        //这里直接执行用户信息区块链上注册操作
+
     }
 
     private  String getAddress(String publicKey) {

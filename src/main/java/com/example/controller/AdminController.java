@@ -88,7 +88,7 @@ public class AdminController {
     @PutMapping("/admin/handling-applications")
     public RestBean<Void> adminApplyHandling(
             HttpServletRequest request,
-            @RequestBody ApplyHandlingRequestVO aHR) throws IOException {
+            @RequestBody ApplyHandlingRequestVO aHR) throws Exception {
 
             List<PendingApplicationVO> voList = aHR.getData();
             if (voList == null) {return RestBean.failure(401,"请检查参数格式。");}

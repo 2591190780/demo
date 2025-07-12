@@ -19,7 +19,7 @@ public class BlockChainEvidenceImpl extends ServiceImpl<BlockChainEvidenceMapper
     public boolean addInfo(Integer dataType,Integer relatedId,String hash){
         return this.save(
                 new BlockChainEvidenceDto(
-                        null,dataType,relatedId,hash,null,null
+                        null,dataType,relatedId,null,hash,null,null
                 )
         );
     }
@@ -47,14 +47,29 @@ public class BlockChainEvidenceImpl extends ServiceImpl<BlockChainEvidenceMapper
     }
 
     @Override
-    public BlockChainEvidenceDto selectInfoByHash(String hash){
+    public BlockChainEvidenceDto selectInfoByTxHash(String hash){
+
         return this.query().eq("tx_hash", hash).one();
     }
 
     @Override
-    public boolean updateInfo(String block,String hash){
-        return this.update().eq("tx_hash",hash).set("block_number",block)
-                .set("timestamp", LocalDateTime.now()).update();
+    public boolean updateInfoById(Integer id , Integer block,String txHash){
+        return this.update().eq("evidence_id",id).set("block_number",block)
+                .set("timestamp", LocalDateTime.now()).set("tx_hash",txHash).update();
     }
+
+    @Override
+    public boolean updateInfoBySubmitHash(String block,String txHash,String submitHash){
+        return this.update().eq("submit_hash",submitHash).set("block_number",block)
+                .set("timestamp", LocalDateTime.now()).set("tx_hash",txHash).update();
+    }
+
+
+    @Override
+    public BlockChainEvidenceDto selectInfoBySubmitHash(String submitHash){
+        return this.query().eq("submit_hash", submitHash).one();
+    }
+
+
 
 }

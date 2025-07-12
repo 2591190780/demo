@@ -16,8 +16,10 @@ import com.example.entity.vo.response.ProductVO;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.service.transaction.TransactionProcessService;
+import com.example.utils.BlockchainHashUtil;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
+import com.example.utils.WeBaseUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -56,6 +58,9 @@ public class AlipayController {
 
     @Resource
     ProductInfoUpdateAccountService productInfoUpdateAccountService;
+
+    @Resource
+    WeBaseUtils weBaseUtils;
 
     private static final String GATEWAY_URL ="https://openapi-sandbox.dl.alipaydev.com/gateway.do";
     private static final String FORMAT ="JSON";
@@ -359,13 +364,15 @@ public class AlipayController {
             System.out.println("支付成功，订单: " + outTradeNo);
             System.out.println("支付宝交易号: " + tradeNo);
             System.out.println("支付金额: " + totalAmount);
-
             /**
              * 这里对数据库中 交易记录表的商品交易状态进行了更新。
              */
-            Set<String> hashes = stringRedisTemplate.opsForSet().members(outTradeNo); //获取redis中交易hash的缓存
+            //获取redis中交易hash的缓存
+            Set<String> hashes = stringRedisTemplate.opsForSet().members(outTradeNo);
             for (String hash : hashes) {
+                //从redis中获取待付款信息
                 String counts = stringRedisTemplate.opsForValue().get(hash);
+                //获取单笔交易的金额。
                 BigDecimal count = BigDecimal.valueOf(Float.parseFloat(counts));
                 TransactionAccountDto dto = new TransactionAccountDto();
                 dto.setActualPayment(count);
@@ -375,18 +382,26 @@ public class AlipayController {
                  * 这里要 执行 只能合约，NFT触发机制，hash上链等操作  对相应的表格进行操作 user_nft ......
                  * 还没写。
                  */
+                //补充hash上链操作
+                /**
+                 * 首先根据hash获取的订单交易信息-->获取sellerID 跟 buyerID
+                 *    --> 获取userinfo中的wallet地址作为操作用户 --> 获取智能合约地址 --> 将交易hash以及相关信息上传至这两个账户的区块上
+                 *    --> 更新数据库中区块链上联信息操作。
+                 *  weBaseUtils.callContractMethod()
+                 */
+
+                //更新交易订单的状态为已支付
                 if( transactionProcessService.transactionStatusUpdate(dto,"2")){
+                    //清楚redis中的信息缓存。
                     stringRedisTemplate.delete(hash);
                     stringRedisTemplate.opsForSet().remove(outTradeNo,hash);
                 }
                 System.out.println("等待支付的交易订单数量还剩余: "+stringRedisTemplate.opsForSet().size(outTradeNo));
+                //更新商家商品库存信息。
                 if(this.productInfoUpdateAccountService.updateStock(dto.getProductId(),dto.getSellerId(),dto.getQuantity())){
                     System.out.println("商品库存信息更新成功。");
                 }
-
-
             }
-
             // TODO: 这里添加您的订单状态更新逻辑
             // 例如: orderService.updateOrderStatus(outTradeNo, "PAID");
             return "success";
