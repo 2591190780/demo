@@ -142,6 +142,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         String encodePassword =  Encoder.encode(password);
 
         LocalDateTime sqlDate = LocalDateTime.now();
+
         /**
          * 此处生成了密钥对并传给webase的密钥管理，注册了用户，回传给前端私钥以及地址信息。不对私钥进行存储。
          */

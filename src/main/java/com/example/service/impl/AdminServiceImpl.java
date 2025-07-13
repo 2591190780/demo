@@ -255,16 +255,14 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         String targetType = vo.getTargetType();
         String targetId = vo.getTargetId();
         String farmerId = vo.getId();
-        //这里要获取到目标用户的钱包地址信息，然后进行上链操作。
+        //这里要获取到目标用户的钱包地址信息，然后进行上链操作。（已完成）
         String userAddress = this.accountService.findAccountById(convertToInteger(farmerId)).getWalletAddress();
         //构建上传参数
         List<Object> params = new ArrayList<>();
         Object result = switch (targetType) {
             case "product" -> {
-                this.productInfoUpdateAccountService.productUpdateAdmin(
-                        this.convertToInteger(targetId),
-                        this.convertToInteger(farmerId),  ans);
-                if(ans == (byte) 1){
+                //只有在添加产品的时候才会触发上链，否则不会上链。
+                if(ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)){
                     //产品上链操作  获取上链产品的hash值
                 String hash = this.productInfoSelectAccountService
                         .getProductInfoAccountByProductId(this.convertToInteger(targetId)).getCertificationHash();
@@ -272,25 +270,38 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                     params.add(1,convertToInteger(targetId));
                     params.add(2,hash);
                     //执行上链操作
-                messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE,params
-                        ,userAddress,Const.CONTRACT_FOR_MESSAGE_REPORT
-                        );
-                yield true;
+                messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE
+                        ,params
+                        ,userAddress,Const.CONTRACT_FOR_MESSAGE_REPORT);
                 }
-                yield false;
+                yield this.productInfoUpdateAccountService.productUpdateAdmin(
+                        this.convertToInteger(targetId),
+                        this.convertToInteger(farmerId),  ans);
             }
-            case "userInfo" -> this.accountService.updateRoleAdmin(Integer.valueOf(farmerId),targetId);
-
-            case "nft_info" -> this.nftInfoService.NFTInfoUpdateAdmin(
-                    this.convertToInteger(targetId),ans);
-
-            case "nft_rule" -> this.nftRuleService.nftRuleUpdateAdmin(Integer.valueOf(targetId),ans);
-
+            case "userInfo" -> this.accountService.updateRoleAdmin(convertToInteger(farmerId),targetId);
+            case "nft_info" ->
+                this.nftInfoService.NFTInfoUpdateAdmin(
+                        this.convertToInteger(targetId), ans);
+            case "nft_rule" ->
+            //只有在添加的时候才会触发上链，否则不会上链。
+            {
+            if(ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)){
+                String hash = this.nftRuleService.nftRuleSelectByID(convertToInteger(targetId)).getApplyHash();
+                params.add(0,6);
+                params.add(1,convertToInteger(targetId));
+                params.add(2,hash);
+                messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE
+                        ,params
+                        ,userAddress,Const.CONTRACT_FOR_MESSAGE_REPORT);
+            }
+            yield this.nftRuleService.nftRuleUpdateAdmin(convertToInteger(targetId),ans);
+            }
             case "sensor" -> this.sensorInfoUpdateService.updateSensorInfoDtoadmin(
-                            new SensorInfoDto(
+                    new SensorInfoDto(
                                     this.convertToInteger(targetId),
                                     this.convertToInteger(farmerId),null,null
-                                    ,ans,null,null));
+                                    ,ans,null,null)
+            );
 
             default -> throw new IllegalStateException("未知的数据类型" + targetType);
         };

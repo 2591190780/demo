@@ -179,7 +179,7 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
             String result1 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,fromAddress,contractAddress);
             String result2 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,toAddress,contractAddress);
             System.out.println("买家购买信息上链结果:"+result1+"  "+"卖家购买信息上链结果:"+result2);
-            /**
+            /** （已完成）
              * 这里要执行上链操作 ----->  blockChainEvidenceService
              * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
              *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。

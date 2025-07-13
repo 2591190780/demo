@@ -8,6 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 
 public interface SensorDataInfoAddService extends IService<SensorDataInfoDto> {
-    <T> RestBean<T> addSensorDataInfoSingle(HttpServletRequest request, SensorDataInfoDto dto);
+    <T> RestBean<T> addSensorDataInfoSingle(HttpServletRequest request, SensorDataInfoDto dto) throws Exception;
     <T> RestBean<T> addSensorDataInfoMutil(HttpServletRequest request, List<SensorDataInfoDto> dto);
 }

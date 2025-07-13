@@ -7,6 +7,7 @@ import com.example.service.NFT.NFTAddRuleService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
 import com.example.utils.BlockchainHashUtil;
+import com.example.utils.Const;
 import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
@@ -63,9 +64,7 @@ public class NFTAddRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> imple
             // 请求发送给 Redis等待管理员确认
             infoToRedisUtils.InfoToRedis(nftRuleDto.getRuleId(),userId,"add","nft_rule");
             /**
-             * 这里要执行上链操作 ----->  blockChainEvidenceService
-             * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
-             *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
+             * 管理员同意了才进行上链操作， 所以上链操作在adminHandleService里面
              */
             return true;
         }

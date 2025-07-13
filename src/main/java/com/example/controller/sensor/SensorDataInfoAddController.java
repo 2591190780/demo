@@ -29,7 +29,7 @@ public class SensorDataInfoAddController {
             captureAfter = true
     )
     @PutMapping("/addDataSingle")
-    public RestBean<Void> addSensorDataInfoSingle(HttpServletRequest request, @RequestBody @Valid SensorDataInfoDto dto){
+    public RestBean<Void> addSensorDataInfoSingle(HttpServletRequest request, @RequestBody @Valid SensorDataInfoDto dto) throws Exception {
         return service.addSensorDataInfoSingle(request,dto);
 
     }

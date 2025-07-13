@@ -391,7 +391,7 @@ public class AlipayController {
                  *
                  * ver2 NFT触发机制不再由支付完成后自动触发，改为当NFT拥有者发布NFT后，手动检索满足的用户按照时间来发放NFT
                  */
-                //补充hash上链操作
+                //补充hash上链操作 （已完成）
                 /**
                  * 首先根据hash获取的订单交易信息-->获取sellerID 跟 buyerID
                  *    --> 获取userinfo中的wallet地址作为操作用户 --> 获取智能合约地址 --> 将交易hash以及相关信息上传至这两个账户的区块上
