@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.NFTPendingApplication;
 import com.example.entity.dto.NFTTransactionDto;
 import com.example.mapper.NFT.NFTTransactionMapper;
+import com.example.service.AccountService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTTransactionService;
 import com.example.service.NFT.UserNFTService;
+import com.example.service.blockchain.MessageReportService;
 import com.example.utils.BlockchainHashUtil;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -41,6 +44,12 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
 
     @Resource
     NFTInfoService nftInfoService;
+
+    @Resource
+    AccountService accountService;
+
+    @Resource
+    MessageReportService messageReportService;
 
     @Override
     public List<NFTTransactionDto> selectNFTTransactionByNFTId(Integer nftId){
@@ -140,7 +149,7 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
 
 
     @Override
-    public boolean addNFTTransaction(NFTTransactionDto nftTransactionDto){
+    public boolean addNFTTransaction(NFTTransactionDto nftTransactionDto) throws Exception {
         /**
          *        当用户在购买农产品时 支付完成 触发智能合约 发放NFT  --> nft_type 为 赠送 2
          *         用户之间也可以交易NFT、赠送 -->type 交易 1
@@ -159,6 +168,17 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         String hash = this.blockchainHashUtil.generateNFTTransactionRuleHash(nftTransactionDto);
         nftTransactionDto.setTxHash(hash);
         if(this.save(nftTransactionDto)){
+            String fromAddress = accountService.findAccountById(nftTransactionDto.getFromUser()).getWalletAddress();
+            String toAddress = accountService.findAccountById(nftTransactionDto.getToUser()).getWalletAddress();
+            String contractAddress  = Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE;
+            String methodName = Const.CONTRACT_FOR_MESSAGE_REPORT;
+            List<Object> parameters = new ArrayList<>();
+            parameters.add(0,4);
+            parameters.add(1,nftTransactionDto.getTxId());
+            parameters.add(2,hash);
+            String result1 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,fromAddress,contractAddress);
+            String result2 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,toAddress,contractAddress);
+            System.out.println("买家购买信息上链结果:"+result1+"  "+"卖家购买信息上链结果:"+result2);
             /**
              * 这里要执行上链操作 ----->  blockChainEvidenceService
              * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作

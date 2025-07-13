@@ -36,6 +36,7 @@ public class MessageReportService {
             String blockNumber = (String) result.get("blockNumber");
             String submitHash = (String) params.get(2);
             this.blockChainEvidenceService.updateInfoBySubmitHash(blockNumber,txHash,submitHash);
+            return "上链成功";
         }
         return null;
     }

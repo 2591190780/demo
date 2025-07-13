@@ -14,6 +14,7 @@ import com.example.utils.*;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -122,6 +124,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
             amqpTemplate.convertAndSend("mail", data);
 
     }
+
     @Override
     public String registerEmailAccount(EmailRegisterVO emailRegisterVO){
         String email = emailRegisterVO.getEmail();
@@ -140,10 +143,9 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
         LocalDateTime sqlDate = LocalDateTime.now();
         /**
-         * 后续需要由前端生成私钥和地址，传回地址
-         * String address = emailRegisterVO.getWalletAddress();
+         * 此处生成了密钥对并传给webase的密钥管理，注册了用户，回传给前端私钥以及地址信息。不对私钥进行存储。
          */
-        Map<String,String> mapList =  walletBlockChainUtil.generateUserWallet();
+        Map<String,String> mapList =  walletBlockChainUtil.generateAndImportWallet(username);
         String key = mapList.get("privateKey");
         String address = mapList.get("address");
 
@@ -164,6 +166,8 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         }
 
     }
+
+
 
     @Override
     public  String resetEmailAccountPassword(EmailResetVO emailResetVO) {

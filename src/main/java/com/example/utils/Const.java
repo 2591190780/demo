@@ -6,6 +6,10 @@ public class Const {
     /**
      * 一些常用的智能合约地址
      */
+    public static final  String CONTRACT_FOR_USERINFO_REPORT_METHOD_ACTIVATEUSER ="activateUser";
+    public static final  String CONTRACT_FOR_USERINFO_REPORT_METHOD_GETUSERWALLET = "getUserWallet";
+    public static final  String CONTRACT_FOR_USERINFO_REPORT_METHOD_SETUSERWALLET = "setUserWallet";
+    public static final  String CONTRACT_FOR_USERINFO_REPORT = "0xee84f9b553b536c16c5f0c352ad2b4c249a175d3";
     public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE = "addEvidence";
     public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x1b4a3748ffc1f3d43d255a3c7eec0d9f4c7dec55";
     /**

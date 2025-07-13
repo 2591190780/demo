@@ -227,7 +227,7 @@ public class NFTController {
             captureAfter = true
     )
     @PutMapping("/transaction/pay")
-    public <T> RestBean<T> addTransaction( @RequestBody NFTTransactionDto dto){
+    public <T> RestBean<T> addTransaction( @RequestBody NFTTransactionDto dto) throws Exception {
           return this.nftTransactionService.addNFTTransaction(dto)?RestBean.success()
                   :RestBean.failure(401,"交易失败");
     }

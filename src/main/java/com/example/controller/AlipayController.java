@@ -13,6 +13,8 @@ import com.example.entity.RestBean;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
 import com.example.entity.vo.response.ProductVO;
+import com.example.service.AccountService;
+import com.example.service.blockchain.MessageReportService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.service.transaction.TransactionProcessService;
@@ -60,7 +62,10 @@ public class AlipayController {
     ProductInfoUpdateAccountService productInfoUpdateAccountService;
 
     @Resource
-    WeBaseUtils weBaseUtils;
+    MessageReportService messageReportService;
+
+    @Resource
+    AccountService accountService;
 
     private static final String GATEWAY_URL ="https://openapi-sandbox.dl.alipaydev.com/gateway.do";
     private static final String FORMAT ="JSON";
@@ -372,6 +377,8 @@ public class AlipayController {
             for (String hash : hashes) {
                 //从redis中获取待付款信息
                 String counts = stringRedisTemplate.opsForValue().get(hash);
+                //从数据库中查到单个记录。
+                TransactionAccountDto transactionAccountDto = this.transactionProcessService.getOrderByHash(hash);
                 //获取单笔交易的金额。
                 BigDecimal count = BigDecimal.valueOf(Float.parseFloat(counts));
                 TransactionAccountDto dto = new TransactionAccountDto();
@@ -379,17 +386,29 @@ public class AlipayController {
                 dto.setCertificationHash(hash);
                 dto.setAlipayOrder(tradeNo);
                 /**
-                 * 这里要 执行 只能合约，NFT触发机制，hash上链等操作  对相应的表格进行操作 user_nft ......
+                 * ver1 这里要 执行 只能合约，NFT触发机制，hash上链等操作  对相应的表格进行操作 user_nft ......
                  * 还没写。
+                 *
+                 * ver2 NFT触发机制不再由支付完成后自动触发，改为当NFT拥有者发布NFT后，手动检索满足的用户按照时间来发放NFT
                  */
                 //补充hash上链操作
                 /**
                  * 首先根据hash获取的订单交易信息-->获取sellerID 跟 buyerID
                  *    --> 获取userinfo中的wallet地址作为操作用户 --> 获取智能合约地址 --> 将交易hash以及相关信息上传至这两个账户的区块上
                  *    --> 更新数据库中区块链上联信息操作。
-                 *  weBaseUtils.callContractMethod()
+                 *  weBaseUtils.callContractMethod() 替换为 messageReportService.blockChainEvidenceReport
                  */
-
+                String sellerAddress = this.accountService.findAccountById(transactionAccountDto.getSellerId()).getWalletAddress();
+                String buyerAddress = this.accountService.findAccountById(transactionAccountDto.getBuyerId()).getWalletAddress();
+                String contractAddress  = Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE;
+                String methodName = Const.CONTRACT_FOR_MESSAGE_REPORT;
+                List<Object> parameters = new ArrayList<>();
+                parameters.add(0,2);
+                parameters.add(1,transactionAccountDto.getOrderId());
+                parameters.add(2,hash);
+                String result1 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,sellerAddress,contractAddress);
+                String result2 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,buyerAddress,contractAddress);
+                System.out.println("买家购买信息上链结果:"+result1+"  "+"卖家购买信息上链结果:"+result2);
                 //更新交易订单的状态为已支付
                 if( transactionProcessService.transactionStatusUpdate(dto,"2")){
                     //清楚redis中的信息缓存。
@@ -401,6 +420,7 @@ public class AlipayController {
                 if(this.productInfoUpdateAccountService.updateStock(dto.getProductId(),dto.getSellerId(),dto.getQuantity())){
                     System.out.println("商品库存信息更新成功。");
                 }
+
             }
             // TODO: 这里添加您的订单状态更新逻辑
             // 例如: orderService.updateOrderStatus(outTradeNo, "PAID");
