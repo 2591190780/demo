@@ -260,7 +260,7 @@ public class NFTController {
             captureBefore = true,
             captureAfter = true
     )
-    @PutMapping("/rule/addSingle")
+    @PutMapping("/rule/addSingle") //此处只提交NFT发布规则给管理员查看。
     public <T> RestBean<T> addSingleRule(HttpServletRequest request,
                                          @RequestBody NFTRuleDto dto) {
         return this.nftAddRuleService.NFTRuleAddSingle(request,dto)?

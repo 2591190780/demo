@@ -34,6 +34,7 @@ public class MessageReportService {
                     = weBaseUtils.callContractMethod(userWalletAddress,contractAddress,operationName,params);
             String txHash = (String) result.get("transactionHash");
             String blockNumber = (String) result.get("blockNumber");
+
             String submitHash = (String) params.get(2);
             this.blockChainEvidenceService.updateInfoBySubmitHash(blockNumber,txHash,submitHash);
             return "上链成功";

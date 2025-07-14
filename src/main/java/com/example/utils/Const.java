@@ -6,7 +6,8 @@ public class Const {
     /**
      * 一些常用的智能合约地址
      */
-    public static final  String CONTRACT_FOR_NFT_RULE = "0xe5230cbde1b55da997a2454dd3db0a2460e76ab4";
+    public static final  String CONTRACT_FOR_NFT_RULE_METHOD_ADDORUODATERULE = "addOrUpdateRule";
+    public static final  String CONTRACT_FOR_NFT_RULE = "0x2d8a117da4e25c74304a8f1514af0db36296568d";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO = "storeNFTInfo";
     public static final  String CONTRACT_FOR_NFT_INFO = "0x4b624e5ef0920fbf037b17ff6f3d8e099bd115f6";
 

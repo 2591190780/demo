@@ -40,8 +40,8 @@ public class BlockChainEvidenceImpl extends ServiceImpl<BlockChainEvidenceMapper
         if (params.getTxHash() != null) {
             queryWrapper.eq("tx_hash", params.getTxHash());
         }
-        if (params.getBolckNumber() != null) {
-            queryWrapper.eq("block_number", params.getBolckNumber());
+        if (params.getBlockNumber() != null) {
+            queryWrapper.eq("block_number", params.getBlockNumber());
         }
         return this.list(queryWrapper);
     }

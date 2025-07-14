@@ -81,7 +81,7 @@ public class WeBaseUtils {
                 String.class
         );
 
-        // 4. 处理响应 - 适配实际返回的交易回执格式
+// 4. 处理响应 - 适配实际返回的交易回执格式
         if (response.getStatusCode() != HttpStatus.OK) {
             String responseBody = response.getBody() != null ? response.getBody() : "无响应体";
             log.error("WeBase请求失败: 状态码={}, 响应体={}", response.getStatusCode(), responseBody);
@@ -93,43 +93,71 @@ public class WeBaseUtils {
             throw new RuntimeException("WeBase响应体为空");
         }
 
-        // 记录完整响应以便调试
         log.debug("WeBase完整响应: {}", responseBody);
 
         try {
-            // 解析响应为Map
-            Map<String, Object> result = objectMapper.readValue(
-                    responseBody,
+            // 先 parse 整个响应为 JsonNode
+            JsonNode rootNode = objectMapper.readTree(responseBody.trim());
+            Map<String, Object> result;
+            boolean topArray = rootNode.isArray();
+
+            // 1) 顶层就是数组，直接包装到 data 并返回
+            if (topArray) {
+                List<Object> dataList = objectMapper.convertValue(
+                        rootNode,
+                        new TypeReference<List<Object>>() {}
+                );
+                result = new HashMap<>();
+                result.put("data", dataList);
+                return result;
+            }
+
+            // 2) 顶层是对象，先转成 Map
+            result = objectMapper.convertValue(
+                    rootNode,
                     new TypeReference<Map<String, Object>>() {}
             );
 
-            // 检查交易状态
+            // 3) 如果 data 字段是字符串（嵌套了 JSON 数组），再解析一次
+            Object dataObj = result.get("data");
+            if (dataObj instanceof String) {
+                String dataText = (String) dataObj;
+                JsonNode dataNode = objectMapper.readTree(dataText);
+                if (dataNode.isArray()) {
+                    List<Object> unwrapped = objectMapper.convertValue(
+                            dataNode,
+                            new TypeReference<List<Object>>() {}
+                    );
+                    result.put("data", unwrapped);
+                }
+            }
+
+            // —— 以下原有状态检查逻辑不变 —— //
             if (result.containsKey("statusOK") && Boolean.TRUE.equals(result.get("statusOK"))) {
-                // 交易成功
                 return result;
             } else if (result.containsKey("status") && "0x0".equals(result.get("status"))) {
-                // 另一种成功标识
                 return result;
             } else if (result.containsKey("errorMessage") || result.containsKey("errorCode")) {
-                // 错误格式1: {"errorCode":201001,"errorMessage":"contract not exists","data":null}
                 int errorCode = result.containsKey("errorCode") ? (Integer) result.get("errorCode") : -1;
-                String errorMessage = result.containsKey("errorMessage") ?
-                        (String) result.get("errorMessage") : "未知错误";
+                String errorMessage = result.containsKey("errorMessage")
+                        ? (String) result.get("errorMessage")
+                        : "未知错误";
                 throw new RuntimeException("WeBase错误: " + errorCode + " - " + errorMessage);
             } else if (result.containsKey("code")) {
-                // 错误格式2: {"code":201001,"message":"contract not exists","data":null}
                 int code = (Integer) result.get("code");
-                String message = result.containsKey("message") ?
-                        (String) result.get("message") : "无错误信息";
+                String message = result.containsKey("message")
+                        ? (String) result.get("message")
+                        : "无错误信息";
                 throw new RuntimeException("WeBase错误: " + code + " - " + message);
             } else {
-                // 无法识别的响应格式
                 throw new RuntimeException("无法识别的WeBase响应格式: " + responseBody);
             }
+
         } catch (Exception e) {
             log.error("解析WeBase响应失败: {}", responseBody, e);
-            throw new RuntimeException("解析WeBase响应失败: " + e.getMessage());
+            throw new RuntimeException("解析WeBase响应失败: " + e.getMessage(), e);
         }
+
     }
 
     @PostConstruct

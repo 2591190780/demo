@@ -3,16 +3,26 @@ package com.example.controller.blockchain;
 import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.vo.request.ContractCallRequest;
+import com.example.service.AccountService;
+import com.example.service.blockchain.ConditionNFTRule;
+import com.example.utils.Const;
+import com.example.utils.JwtUtils;
 import com.example.utils.WeBaseUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/contract")
@@ -21,6 +31,10 @@ import java.util.Map;
 public class ContractController {
 
     private final WeBaseUtils weBaseUtils;
+    @Resource
+    ConditionNFTRule conditionNFTRule;
+    @Resource
+    JwtUtils jwtUtils;
 
     // 获取所有简化合约信息
     @Auditable(
@@ -106,4 +120,51 @@ public class ContractController {
             return ResponseEntity.internalServerError().body("调用失败: " + e.getMessage());
         }
     }
+
+    @Resource
+    AccountService accountService;
+    @Auditable(
+            operationType = "CONTRACT_RULE_REPORT",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @PutMapping("/nft/rule/report")
+    public <T> RestBean<T> ruleReport(HttpServletRequest request,
+                                      @RequestBody @Valid Map<String, Object> body) throws Exception {
+
+        String nftID = (String) body.get("nftID");
+        ObjectMapper objectMapper = new ObjectMapper();
+        List<Map<String, Object>> ruleList = objectMapper.convertValue(
+                body.get("ruleList"),
+                new TypeReference<List<Map<String, Object>>>() {});
+        Integer id = this.jwtUtils.getRequesetId(request);
+        //智能合约只能由管理员上传。
+        if(!Objects.equals(accountService.findAccountById(id).getRole(), "3"))
+            return RestBean.failure(401,"权限不足");
+        if (
+        this.conditionNFTRule.NFTRuleReport(accountService.findAccountById(id).getWalletAddress(),
+                jwtUtils.convertToInteger(nftID),ruleList))
+            return  RestBean.success();
+        return RestBean.failure(500,"请检查参数");
+    }
+
+    @GetMapping("/nft/rule/bc/select")
+    public <T>RestBean<T> findRuleInBC(HttpServletRequest request,HttpServletResponse response,
+                                       @RequestParam("nftID") String nftID) throws Exception {
+        String userCA = accountService.findAccountById(jwtUtils.getRequesetId(request)).getWalletAddress();
+        if (userCA==null) return RestBean.failure(401,"错误的账户");
+        List<Object> param = new ArrayList<>();
+        param.add(0,jwtUtils.convertToInteger(nftID));
+        Map<String, Object> result
+                = weBaseUtils.callContractMethod(userCA,
+                Const.CONTRACT_FOR_NFT_RULE,
+                "getRulesByTokenId"
+                ,param);
+        System.out.println(result);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(RestBean.success(result.get("data")).asJsonString());
+        return  null;
+
+    }
+
 }

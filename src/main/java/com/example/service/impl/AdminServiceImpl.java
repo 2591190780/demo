@@ -304,20 +304,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 }
                 yield this.nftInfoService.NFTInfoUpdateAdmin(this.convertToInteger(targetId), ans);
             }
-            case "nft_rule" ->
-            //只有在添加的时候才会触发上链，否则不会上链。
-            {
-            if(ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)){
-                String hash = this.nftRuleService.nftRuleSelectByID(convertToInteger(targetId)).getApplyHash();
-                params.add(0,6);
-                params.add(1,convertToInteger(targetId));
-                params.add(2,hash);
-                messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE
-                        ,params
-                        ,userAddress,Const.CONTRACT_FOR_MESSAGE_REPORT);
-            }
-            yield this.nftRuleService.nftRuleUpdateAdmin(convertToInteger(targetId),ans);
-            }
+            case "nft_rule" ->//管理员同意了此规则，需要是上传规则至区块链合约上方法在ConditionNFTRule.XXXreport.
+                    this.nftRuleService.nftRuleUpdateAdmin(convertToInteger(targetId),ans);
             case "sensor" -> this.sensorInfoUpdateService.updateSensorInfoDtoadmin(
                     new SensorInfoDto(
                                     this.convertToInteger(targetId),
