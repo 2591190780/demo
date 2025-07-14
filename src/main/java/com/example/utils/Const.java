@@ -6,10 +6,10 @@ public class Const {
     /**
      * 一些常用的智能合约地址
      */
-    public static final  String CONTRACT_FOR_USERINFO_REPORT_METHOD_ACTIVATEUSER ="activateUser";
-    public static final  String CONTRACT_FOR_USERINFO_REPORT_METHOD_GETUSERWALLET = "getUserWallet";
-    public static final  String CONTRACT_FOR_USERINFO_REPORT_METHOD_SETUSERWALLET = "setUserWallet";
-    public static final  String CONTRACT_FOR_USERINFO_REPORT = "0xee84f9b553b536c16c5f0c352ad2b4c249a175d3";
+    public static final  String CONTRACT_FOR_NFT_RULE = "0xe5230cbde1b55da997a2454dd3db0a2460e76ab4";
+    public static final  String CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO = "storeNFTInfo";
+    public static final  String CONTRACT_FOR_NFT_INFO = "0x4b624e5ef0920fbf037b17ff6f3d8e099bd115f6";
+
     public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE = "addEvidence";
     public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x1b4a3748ffc1f3d43d255a3c7eec0d9f4c7dec55";
     /**

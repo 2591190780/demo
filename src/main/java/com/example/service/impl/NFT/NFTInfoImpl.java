@@ -98,6 +98,14 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
     }
 
     @Override
+    public  boolean nftUpdateContractAdmin(String contractAddress,Integer id){
+        return  this.update().eq("template_id",id)
+                .set("contract_address",contractAddress)
+                .set("update_time",LocalDateTime.now())
+                .update();
+    }
+
+    @Override
     public boolean NFTaddImg(HttpServletRequest request,NFTInfoDto dto){
         if (ObjectUtils.isEmpty(dto)){
             return false;

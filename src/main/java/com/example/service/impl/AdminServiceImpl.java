@@ -2,16 +2,14 @@ package com.example.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.RestBean;
-import com.example.entity.dto.Account;
-import com.example.entity.dto.NFTInfoDto;
-import com.example.entity.dto.NFTRuleDto;
-import com.example.entity.dto.SensorInfoDto;
+import com.example.entity.dto.*;
 import com.example.entity.vo.response.PendingApplicationVO;
 import com.example.mapper.AdminMapper;
 import com.example.service.AccountService;
 import com.example.service.AdminService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
+import com.example.service.NFT.NFTTransactionService;
 import com.example.service.blockchain.MessageReportService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
@@ -19,10 +17,13 @@ import com.example.service.sensor.SensorInfoUpdateService;
 import com.example.utils.Const;
 import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
+import com.example.utils.WeBaseUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,32 +36,28 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
 
     @Resource
     AccountService accountService;
-
     @Resource
     StringRedisTemplate template;
-
     @Resource
     InfoToRedisUtils redisUtils;
-
     @Resource
     JwtUtils utils;
-
     @Resource
     ProductInfoUpdateAccountService productInfoUpdateAccountService;
     @Resource
     ProductInfoSelectAccountService productInfoSelectAccountService;
     @Resource
     SensorInfoUpdateService sensorInfoUpdateService;
-
     @Resource
     NFTInfoService nftInfoService;
-
     @Resource
     NFTRuleService nftRuleService;
-
     @Resource
     MessageReportService messageReportService;
-
+    @Resource
+    WeBaseUtils weBaseUtils;
+    @Resource
+    NFTTransactionService nftTransactionService;
 
     private static final Duration EXPIRE_DURATION = Duration.ofHours(24);
 
@@ -248,7 +245,6 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         };
     }
 
-
     private Object objectConfirm (PendingApplicationVO vo,byte ans) throws Exception {
         if (vo == null) return null;
         String operation = vo.getOperation();
@@ -279,9 +275,35 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                         this.convertToInteger(farmerId),  ans);
             }
             case "userInfo" -> this.accountService.updateRoleAdmin(convertToInteger(farmerId),targetId);
-            case "nft_info" ->
-                this.nftInfoService.NFTInfoUpdateAdmin(
-                        this.convertToInteger(targetId), ans);
+            case "nft_info" ->{
+                if(ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)){
+                    //检查图片信息是否已经存在CID值了
+                    NFTInfoDto nftInfoDto = this.nftInfoService.NFTInfoSelectByTemplateId(convertToInteger(targetId));
+                    Integer publicID = nftInfoDto.getPublicBy();
+                    Integer nftID = nftInfoDto.getTemplateId();
+                    String cid = nftInfoDto.getImageUrl();
+                    if (cid ==null) yield null;
+                    String nftContractAddress = Const.CONTRACT_FOR_NFT_INFO;
+                    String ipfs = "ipfs/"+cid;
+                    String metadata = nftInfoDto.getMetadataUrl();
+                    BigDecimal price = this.theLatestNFTPrice(nftID);
+
+                    List<Object> param = new ArrayList<>();
+                    param.add(0,nftID);
+                    param.add(1,nftContractAddress);
+                    param.add(2,ipfs);
+                    param.add(3,metadata);
+                    param.add(4,price);
+                    String ownerAddress = this.accountService.findAccountById(publicID).getWalletAddress();
+                    String methodName = Const.CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO;
+                    //service的update操作已经做了权限验证
+                    /**
+                     * 这里要对NFT信息进行上链。
+                     */
+                    weBaseUtils.callContractMethod(ownerAddress,nftContractAddress,methodName,param);
+                }
+                yield this.nftInfoService.NFTInfoUpdateAdmin(this.convertToInteger(targetId), ans);
+            }
             case "nft_rule" ->
             //只有在添加的时候才会触发上链，否则不会上链。
             {
@@ -317,5 +339,10 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         } catch (NumberFormatException e) {
             return null; // 或者记录日志
         }
+    }
+    private BigDecimal theLatestNFTPrice(Integer nftID){
+        NFTTransactionDto dto = this.nftTransactionService.selectOrderByTime(nftID);
+        if (dto == null) return BigDecimal.ZERO;
+        return  dto.getPrice();
     }
 }

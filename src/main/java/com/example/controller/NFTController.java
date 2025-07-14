@@ -7,6 +7,7 @@ import com.example.entity.dto.NFTInfoDto;
 import com.example.entity.dto.NFTRuleDto;
 import com.example.entity.dto.NFTTransactionDto;
 import com.example.entity.dto.UserNFTDto;
+import com.example.service.AccountService;
 import com.example.service.NFT.*;
 import com.example.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 
 @RestController
@@ -438,8 +440,24 @@ public class NFTController {
     }
 
 
+    @Resource
+    AccountService accountService;
 
-
+    @Auditable(
+            operationType = "NFT_CONTRACT_ADD",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/nft/contract/")
+    public  <T> RestBean<T> nftContractAdd (@RequestParam String id,
+                                         @RequestParam String contractAddress,
+                                         HttpServletRequest request)  {
+        Integer uid = jwtUtils.getRequesetId(request);
+        if (!Objects.equals(accountService.findAccountById(uid).getRole(), "3"))
+            return RestBean.failure(401,"权限不足。");
+        boolean flag = this.nftInfoService.nftUpdateContractAdmin(contractAddress,jwtUtils.convertToInteger(id));
+        return flag ? RestBean.success():RestBean.failure(401,"请检查参数。");
+    }
 
 
 }

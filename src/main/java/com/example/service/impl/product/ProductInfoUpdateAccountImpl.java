@@ -65,7 +65,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
 
         return this.update().eq("farmer_id", fid).eq("product_id", account.getProductId())
-                    .set("active",(byte) 0).update() ?
+                    .set("is_active",(byte) 0).update() ?
                 RestBean.success() : RestBean.failure(401,"参数有误");
         }
 

@@ -14,4 +14,5 @@ public interface NFTRuleService extends IService<NFTRuleDto> {
     List<NFTRuleDto> nftRuleSelectCondition(NFTRuleDto params);
     boolean nftRuleUpdateAdmin(Integer id,byte answer);
     NFTRuleDto nftRuleSelectByActId (Integer id);
+
 }

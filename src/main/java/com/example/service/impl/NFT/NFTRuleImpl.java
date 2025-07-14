@@ -74,6 +74,15 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
      */
     @Override
     public  boolean nftRuleUpdateAdmin(Integer id,byte answer){
+        //一个nft只允许一个规则生效。
+        if(answer == 1){
+            List<NFTRuleDto> dtoList = this.nftRuleSelectByTemplateID(id);
+            for (NFTRuleDto dto : dtoList) {
+                if (dto.getIsActive() == 1) {
+                    dto.setIsActive(0);
+                }
+            }
+        }
         return  this.update().eq("rule_id",id)
                 .set("is_active",answer)
                 .set("update_time",LocalDateTime.now())

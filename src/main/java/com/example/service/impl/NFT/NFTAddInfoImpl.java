@@ -5,6 +5,7 @@ import com.example.entity.dto.NFTInfoDto;
 import com.example.mapper.NFT.NFTInfoMapper;
 import com.example.service.NFT.NFTAddInfoService;
 
+import com.example.utils.Const;
 import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
@@ -34,6 +35,7 @@ public class NFTAddInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> imple
         nftInfoDto.setCreatedAt(createTime);
         nftInfoDto.setRemainCount(nftInfoDto.getIssuanceLimit());
         nftInfoDto.setIsActive(0);
+        nftInfoDto.setContractAddress(Const.CONTRACT_FOR_NFT_INFO);
         if (this.save(nftInfoDto)){
             // 请求发送给 Redis等待管理员确认
             infoToRedisUtils.InfoToRedis(nftInfoDto.getTemplateId(),userId,"add","nft_info");
