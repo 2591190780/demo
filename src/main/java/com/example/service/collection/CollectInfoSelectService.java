@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface CollectInfoSelectService extends IService<CollectionInfoDto> {
      List<CollectionInfoDto> selectAllProduct(HttpServletRequest request, String type);
+     CollectionInfoDto selectByHash(Integer uid ,String hash,String type);
 }

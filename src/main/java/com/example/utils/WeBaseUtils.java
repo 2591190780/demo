@@ -96,29 +96,26 @@ public class WeBaseUtils {
         log.debug("WeBase完整响应: {}", responseBody);
 
         try {
-            // 先 parse 整个响应为 JsonNode
             JsonNode rootNode = objectMapper.readTree(responseBody.trim());
             Map<String, Object> result;
             boolean topArray = rootNode.isArray();
 
-            // 1) 顶层就是数组，直接包装到 data 并返回
             if (topArray) {
                 List<Object> dataList = objectMapper.convertValue(
                         rootNode,
                         new TypeReference<List<Object>>() {}
                 );
                 result = new HashMap<>();
+                result.put("success", true);
                 result.put("data", dataList);
                 return result;
             }
 
-            // 2) 顶层是对象，先转成 Map
             result = objectMapper.convertValue(
                     rootNode,
                     new TypeReference<Map<String, Object>>() {}
             );
 
-            // 3) 如果 data 字段是字符串（嵌套了 JSON 数组），再解析一次
             Object dataObj = result.get("data");
             if (dataObj instanceof String) {
                 String dataText = (String) dataObj;
@@ -132,30 +129,34 @@ public class WeBaseUtils {
                 }
             }
 
-            // —— 以下原有状态检查逻辑不变 —— //
+            // 状态判断：成功或失败标记
             if (result.containsKey("statusOK") && Boolean.TRUE.equals(result.get("statusOK"))) {
+                result.put("success", true);
                 return result;
             } else if (result.containsKey("status") && "0x0".equals(result.get("status"))) {
+                result.put("success", true);
                 return result;
-            } else if (result.containsKey("errorMessage") || result.containsKey("errorCode")) {
-                int errorCode = result.containsKey("errorCode") ? (Integer) result.get("errorCode") : -1;
-                String errorMessage = result.containsKey("errorMessage")
-                        ? (String) result.get("errorMessage")
-                        : "未知错误";
-                throw new RuntimeException("WeBase错误: " + errorCode + " - " + errorMessage);
-            } else if (result.containsKey("code")) {
-                int code = (Integer) result.get("code");
-                String message = result.containsKey("message")
-                        ? (String) result.get("message")
-                        : "无错误信息";
-                throw new RuntimeException("WeBase错误: " + code + " - " + message);
             } else {
-                throw new RuntimeException("无法识别的WeBase响应格式: " + responseBody);
+                String msg = "未知错误";
+                if (result.containsKey("errorMessage")) {
+                    msg = (String) result.get("errorMessage");
+                } else if (result.containsKey("message")) {
+                    msg = (String) result.get("message");
+                } else if (result.containsKey("statusMsg")) {
+                    msg = (String) result.get("statusMsg");
+                }
+
+                result.put("success", false);
+                result.put("message", msg);
+                return result;
             }
 
         } catch (Exception e) {
             log.error("解析WeBase响应失败: {}", responseBody, e);
-            throw new RuntimeException("解析WeBase响应失败: " + e.getMessage(), e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "解析WeBase响应失败: " + e.getMessage());
+            return errorResult;
         }
 
     }

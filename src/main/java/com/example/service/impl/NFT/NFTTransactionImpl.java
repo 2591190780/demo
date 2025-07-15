@@ -3,7 +3,9 @@ package com.example.service.impl.NFT;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.NFTPendingApplication;
+import com.example.entity.dto.BlockChainEvidenceDto;
 import com.example.entity.dto.NFTTransactionDto;
+import com.example.mapper.BlockChainEvidenceMapper;
 import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.service.AccountService;
 import com.example.service.NFT.NFTInfoService;
@@ -13,6 +15,7 @@ import com.example.service.blockchain.MessageReportService;
 import com.example.utils.BlockchainHashUtil;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
+import com.example.utils.WeBaseUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.PartialUpdate;
@@ -23,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -50,6 +54,10 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
 
     @Resource
     MessageReportService messageReportService;
+    @Resource
+    WeBaseUtils weBaseUtils;
+    @Resource
+    BlockChainEvidenceMapper blockChainEvidenceMapper;
 
     @Override
     public List<NFTTransactionDto> selectNFTTransactionByNFTId(Integer nftId){
@@ -149,7 +157,7 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
 
 
     @Override
-    public boolean addNFTTransaction(NFTTransactionDto nftTransactionDto) throws Exception {
+    public boolean addAgreeNFTTransaction(NFTTransactionDto nftTransactionDto) throws Exception {
         /**
          *        当用户在购买农产品时 支付完成 触发智能合约 发放NFT  --> nft_type 为 赠送 2
          *         用户之间也可以交易NFT、赠送 -->type 交易 1
@@ -170,27 +178,48 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         if(this.save(nftTransactionDto)){
             String fromAddress = accountService.findAccountById(nftTransactionDto.getFromUser()).getWalletAddress();
             String toAddress = accountService.findAccountById(nftTransactionDto.getToUser()).getWalletAddress();
-            String contractAddress  = Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE;
-            String methodName = Const.CONTRACT_FOR_MESSAGE_REPORT;
+            String contractAddress  = Const.CONTRACT_FOR_MESSAGE_REPORT;
+            String methodName = Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE;
             List<Object> parameters = new ArrayList<>();
             parameters.add(0,4);
-            parameters.add(1,nftTransactionDto.getTxId());
+            parameters.add(1,nftTransactionDto.getTxId().intValue());
             parameters.add(2,hash);
-            String result1 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,fromAddress,contractAddress);
-            String result2 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,toAddress,contractAddress);
-            System.out.println("买家购买信息上链结果:"+result1+"  "+"卖家购买信息上链结果:"+result2);
             /** （已完成）
              * 这里要执行上链操作 ----->  blockChainEvidenceService
              * 如果信息存储成功--->生成区块链凭证初始信息--->调用合约进行上链操作
              *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
              */
+            List<Object> para = new ArrayList<>();
+            para.add(0, nftTransactionDto.getNftId());
+            para.add(1,toAddress);
+            para.add(2,nftTransactionDto.getPrice());
+
+            //对链上NFT归属进行操作//这里是对NFT转移的发生记录
+            Map<String, Object> result = this.weBaseUtils.callContractMethod(fromAddress,Const.CONTRACT_FOR_NFT_INFO,
+                    Const.CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT,para);
+
+            if (result.get("statusOK") == Boolean.FALSE) return false;
+            //返回错误代码链上链下信息有误，不予执行。
+            //这里是记录了交易的发生。
+            String result1 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,fromAddress,contractAddress);
+            String result2 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,toAddress,contractAddress);
+            System.out.println("买家购买信息上链结果:"+result1+"  "+"卖家购买信息上链结果:"+result2);
+
             //对user_nft表格执行操作
             if (this.userNFTService.UserNFT(nftTransactionDto)){
-                this.update().eq("tx_hash", hash)
-                        .set("active",1).update();
                 stringRedisTemplate.delete(saveKey);
                 stringRedisTemplate.opsForSet().remove(Const.NFT_TRANSACTION+":"+
                         nftTransactionDto.getToUser(),saveKey);
+
+                String txHash = (String) result.get("transactionHash");
+                String blockNumber = (String) result.get("blockNumber");
+                BlockChainEvidenceDto evidenceDto = new BlockChainEvidenceDto(
+                        null,8, nftTransactionDto.getTxId().intValue()
+                        ,txHash,hash,blockNumber, LocalDateTime.now()
+                );
+                this.blockChainEvidenceMapper.insert(evidenceDto);
+                this.update().eq("tx_hash", hash)
+                        .set("active",1).update();
                 return true;
             }
             return false;

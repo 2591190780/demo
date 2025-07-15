@@ -11,6 +11,8 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 @Service
 public class CollectInfoDeleteImpl extends ServiceImpl<CollectionInfoMapper, CollectionInfoDto>
         implements CollectInfoDeleteService {
@@ -26,7 +28,7 @@ public class CollectInfoDeleteImpl extends ServiceImpl<CollectionInfoMapper, Col
     public <T>RestBean<T> CollectInfoDelete(HttpServletRequest request, CollectionInfoDto vo) {
         Integer id = jwtUtils.getRequesetId(request);
         Integer cid = vo.getUserId();
-        if(!jwtUtils.getUserIdVerify(request,cid)) return RestBean.forbidden("请不要删除他人产品信息");
+        if(!Objects.equals(id, cid)) return RestBean.forbidden("请不要删除他人产品信息");
         QueryWrapper<CollectionInfoDto> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", vo.getUserId())
                 .eq("product_id", vo.getProductId());

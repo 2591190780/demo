@@ -5,6 +5,7 @@ import com.example.entity.RestBean;
 import com.example.entity.dto.CollectionInfoDto;
 import com.example.mapper.collection.CollectionInfoMapper;
 import com.example.service.collection.CollectInfoAddService;
+import com.example.service.collection.CollectInfoSelectService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.utils.BlockchainHashUtil;
 import com.example.utils.JwtUtils;
@@ -26,15 +27,19 @@ public class CollectInfoAddImpl extends ServiceImpl<CollectionInfoMapper, Collec
 
     @Resource
     ProductInfoSelectAccountService productInfoSelectAccountService;
+    @Resource
+    CollectInfoSelectService collectInfoSelectService;
 
     @Override
     public <T>RestBean<T> addCollectInfoSingle(HttpServletRequest request, CollectionInfoDto vo) {
         Integer id = jwtUtils.getRequesetId(request);
         Integer cid = vo.getUserId();
         if(!jwtUtils.getUserIdVerify(request,cid)) return RestBean.forbidden("请不要给别人的购物车添加产品");
+        String hash = productInfoSelectAccountService.getProductInfoAccountByProductId(vo.getProductId()).getCertificationHash();
+        if(collectInfoSelectService.selectByHash(id,hash, vo.getOperation_type())!=null)
+            return RestBean.failure(401,"商品已经存在了");
         vo.setUserId(id);
         vo.setCreate_time(LocalDateTime.now());
-        String hash = productInfoSelectAccountService.getProductInfoAccountByProductId(vo.getProductId()).getCertificationHash();
         vo.setProduct_hash(hash);
         this.save(vo);
     return RestBean.success();

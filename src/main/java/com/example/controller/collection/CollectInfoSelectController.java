@@ -1,15 +1,18 @@
 package com.example.controller.collection;
 
 import com.example.annotation.Auditable;
+import com.example.entity.RestBean;
 import com.example.entity.dto.CollectionInfoDto;
 
 import com.example.service.collection.CollectInfoSelectService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -25,8 +28,10 @@ public class CollectInfoSelectController {
             captureAfter = true
     )
     @GetMapping("/select")
-    public List <CollectionInfoDto> SelectProduct(HttpServletRequest request, @RequestParam  @Valid String type){
-        return Service.selectAllProduct(request,type);
-
+    public void SelectProduct(HttpServletRequest request, @RequestParam  @Valid String type
+            , HttpServletResponse response) throws IOException {
+        List<CollectionInfoDto> dtoList = Service.selectAllProduct(request,type);
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(RestBean.success(dtoList).asJsonString());
     }
 }

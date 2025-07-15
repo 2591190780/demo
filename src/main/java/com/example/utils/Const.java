@@ -6,10 +6,14 @@ public class Const {
     /**
      * 一些常用的智能合约地址
      */
+    public static final  String CONTRACT_FOR_NFT_RULE_METHOD_GETRULE = "GETRule";
+    public static final  String CONTRACT_FOR_NFT_RULE_METHOD_DELETERULEGROUP = "deleteRulesByTokenId";
+    public static final  String CONTRACT_FOR_NFT_RULE_METHOD_GETRULEBYTOKENID = "getRulesByTokenIdFormatted";
     public static final  String CONTRACT_FOR_NFT_RULE_METHOD_ADDORUODATERULE = "addOrUpdateRule";
-    public static final  String CONTRACT_FOR_NFT_RULE = "0x2d8a117da4e25c74304a8f1514af0db36296568d";
+    public static final  String CONTRACT_FOR_NFT_RULE = "0x7319fcb2694c68632d93aedf3ac0d7547704cb46";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO = "storeNFTInfo";
-    public static final  String CONTRACT_FOR_NFT_INFO = "0x4b624e5ef0920fbf037b17ff6f3d8e099bd115f6";
+    public static final  String CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT = "tradeNFT";
+    public static final  String CONTRACT_FOR_NFT_INFO = "0xd5efc5e8eb6436ae0d368021727a3647d94bcd00";
 
     public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE = "addEvidence";
     public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x1b4a3748ffc1f3d43d255a3c7eec0d9f4c7dec55";

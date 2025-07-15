@@ -228,9 +228,12 @@ public class NFTController {
             captureBefore = true,
             captureAfter = true
     )
-    @PutMapping("/transaction/pay")
-    public <T> RestBean<T> addTransaction( @RequestBody NFTTransactionDto dto) throws Exception {
-          return this.nftTransactionService.addNFTTransaction(dto)?RestBean.success()
+    @PutMapping("/transaction/pay") //同意交易申请
+    public <T> RestBean<T> addTransaction( HttpServletRequest request,
+            @RequestBody NFTTransactionDto dto) throws Exception {
+        Integer uid = jwtUtils.getRequesetId(request);
+        if(!Objects.equals(uid, dto.getFromUser())){return RestBean.failure(401,"权限不足");}
+        return this.nftTransactionService.addAgreeNFTTransaction(dto)?RestBean.success()
                   :RestBean.failure(401,"交易失败");
     }
 

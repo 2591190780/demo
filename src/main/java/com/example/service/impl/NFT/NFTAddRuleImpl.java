@@ -48,14 +48,14 @@ public class NFTAddRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> imple
         if (!Objects.equals(nftInfoService.NFTInfoSelectByTemplateId(templateId).getPublicBy(), userId)){
             return false;
         }
-        //如果新添加的规则对应的NFT 还存在 生效的 规则 则不允许添加
-        if(nftRuleService.nftRuleSelectByActId(templateId)!=null) return false;
+        //添加相关信息
         LocalDateTime createTime = LocalDateTime.now();
         nftRuleDto.setCreatedAt(createTime);
         LocalDateTime endTime = null ;
         if(nftRuleDto.getValidityPeriod()!=-1 && nftRuleDto.getValidityPeriod()!=0){
             endTime =  createTime.plusDays(nftRuleDto.getValidityPeriod());
         }
+        //设置NFT过期时间如果不是永久生效的话。过期NFT是不允许再交易的。
         nftRuleDto.setPassActive(endTime);
         nftRuleDto.setIsActive(0);
         nftRuleDto.setTemplateId(templateId);

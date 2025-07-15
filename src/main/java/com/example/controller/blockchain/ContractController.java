@@ -1,8 +1,10 @@
 package com.example.controller.blockchain;
 
+import com.alipay.api.domain.AccountDTO;
 import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.vo.request.ContractCallRequest;
+import com.example.entity.vo.response.AuthorizeVO;
 import com.example.service.AccountService;
 import com.example.service.blockchain.ConditionNFTRule;
 import com.example.utils.Const;
@@ -35,6 +37,8 @@ public class ContractController {
     ConditionNFTRule conditionNFTRule;
     @Resource
     JwtUtils jwtUtils;
+    @Resource
+    AccountService accountService;
 
     // 获取所有简化合约信息
     @Auditable(
@@ -121,10 +125,9 @@ public class ContractController {
         }
     }
 
-    @Resource
-    AccountService accountService;
+
     @Auditable(
-            operationType = "CONTRACT_RULE_REPORT",
+            operationType = "CONTRACT_RULE_SELECT",
             captureBefore = true,
             captureAfter = true
     )
@@ -148,6 +151,12 @@ public class ContractController {
         return RestBean.failure(500,"请检查参数");
     }
 
+
+    @Auditable(
+            operationType = "CONTRACT_RULE_REPORT",
+            captureBefore = true,
+            captureAfter = true
+    )
     @GetMapping("/nft/rule/bc/select")
     public <T>RestBean<T> findRuleInBC(HttpServletRequest request,HttpServletResponse response,
                                        @RequestParam("nftID") String nftID) throws Exception {
@@ -158,7 +167,7 @@ public class ContractController {
         Map<String, Object> result
                 = weBaseUtils.callContractMethod(userCA,
                 Const.CONTRACT_FOR_NFT_RULE,
-                "getRulesByTokenId"
+                Const.CONTRACT_FOR_NFT_RULE_METHOD_GETRULEBYTOKENID
                 ,param);
         System.out.println(result);
         response.setContentType("application/json;charset=UTF-8");
@@ -166,5 +175,28 @@ public class ContractController {
         return  null;
 
     }
+
+
+    @Auditable(
+            operationType = "CONTRACT_FIND_SATISFIED_USER",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/nft/satisfied/rule")
+    public <T>RestBean<T> selectSatisfiedRuleUser(HttpServletRequest request,HttpServletResponse response,
+                                       @RequestParam("nftID") String nftID,
+                                                  @RequestParam("conditionList") List<String> conditionList) throws Exception {
+
+        List<AuthorizeVO> dtoList  = this.conditionNFTRule.selectSatisfyCondition(request
+                ,jwtUtils.convertToInteger(nftID),conditionList);
+        if(dtoList != null && !dtoList.isEmpty()){
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            return null;
+        }
+        return RestBean.failure(401,"未查询到满足条件的用户。");
+    }
+
+
 
 }

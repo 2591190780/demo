@@ -22,11 +22,20 @@ public class CollectInfoSelectImpl extends ServiceImpl<CollectionInfoMapper, Col
         @Override
         public List<CollectionInfoDto> selectAllProduct(HttpServletRequest request, String type){
             Integer id = jwtUtils.getRequesetId(request);
-            return query()
+            return this.query()
                     .eq("user_id", id)
                     .eq("operation_type",type)
                     .list();
 
+        }
+
+        @Override
+        public  CollectionInfoDto selectByHash(Integer uid ,String hash,String type){
+            return this.query()
+                    .eq("user_id", uid)
+                    .eq("product_hash",hash)
+                    .eq("operation_type",type)
+                    .one();
         }
 
 }
