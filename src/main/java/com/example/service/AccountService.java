@@ -20,5 +20,5 @@ public interface AccountService extends IService<Account> , UserDetailsService {
      boolean updateRoleByApply(HttpServletRequest request,Account account);
      boolean updateImg(HttpServletRequest request ,Account account);
      boolean updateRoleAdmin(Integer id,String role);
-
+     boolean updateName(HttpServletRequest request ,String name);
 }

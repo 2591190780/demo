@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -73,6 +74,7 @@ public class AddressController {
                                      @Parameter String id ) throws IOException {
         AddressDto dto = this.addressService.findById(jwtUtils.convertToInteger(id));
         if(this.addressService.userIdEqRequestId(request,dto)){
+            response.setContentType("application/json;Charset=utf-8");
             response.getWriter().write(RestBean.success(dto).asJsonString());
             return null;
         }
@@ -84,8 +86,11 @@ public class AddressController {
             captureBefore = true,
             captureAfter = true
     )
+
     @PutMapping("/add")
-    public <T>RestBean<T> addAddress(@RequestBody AddressDto dto, HttpServletRequest request) throws IOException {
+    public <T>RestBean<T> addAddress(@RequestBody @Valid AddressDto dto, HttpServletRequest request) throws IOException {
+        if(dto==null) return RestBean.failure(401,"请不要传入空的参数。");
+        if(dto.getUserId() == null) dto.setUserId(jwtUtils.getRequesetId(request));
         if(this.addressService.userIdEqRequestId(request,dto)){
             this.addressService.addAddress(dto);
             return RestBean.success();

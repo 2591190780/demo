@@ -56,7 +56,14 @@ public class SecurityConfiguration {
                             //    ,"/api/selectProducts/**"
                              //   ,"api/nft/**" //测试阶段的图片上传功能。
                         ).permitAll() //knife4j相关接口
-                        .requestMatchers("api/auth/**","/error").permitAll()
+                        .requestMatchers("api/auth/ask-code"
+                                ,"api/auth/register"
+                                ,"api/auth/reset-confirm"
+                                ,"api/auth/resetPassword"
+                                ,"api/auth/reset-password"
+                                ,"/api/auth/login"
+                                ,"/api/auth/logout"
+                                ,"/error").permitAll()
                         .anyRequest().authenticated()
                 )  //login请求放行
                 .formLogin(conf -> conf

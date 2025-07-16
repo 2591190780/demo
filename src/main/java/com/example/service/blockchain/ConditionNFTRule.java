@@ -394,7 +394,7 @@ public class ConditionNFTRule {
     }
 
 
-    
+
     public boolean NFTRuleReport(String userAddress, Integer nftID,
                                  List<Map<String,Object>> ruleList) throws Exception {
         //先检查该NFT是不是已经有规则了，有的话要删除。

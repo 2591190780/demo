@@ -51,7 +51,7 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
     @Override
     public  boolean updateAddress(AddressDto dto){
         return this.update().eq("id",dto.getId()).eq("user_id",dto.getUserAddress())
-                .set("user_address",dto.getUserAddress()).update();
+                .set("user_address",dto.getUserAddress()).set("receive_name",dto.getReceiveName()).update();
     }
     @Override
     public  boolean deleteAddress(AddressDto dto){

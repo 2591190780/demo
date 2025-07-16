@@ -21,8 +21,10 @@ public class AddressDto {
 
     private Integer defaultAddress;
 
-    @Length(min = 11, max = 11)
+    @Length(min = 11, max = 11,message = "手机号长度必须为11位")
     private String phoneNumber;
+
+    private String receiveName;
 
     public AddressDto() {
 

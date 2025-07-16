@@ -8,6 +8,7 @@ import com.example.entity.vo.request.EmailRegisterVO;
 import com.example.entity.vo.request.EmailResetVO;
 import com.example.entity.vo.request.ResetPasswordByPasswordVO;
 import com.example.service.AccountService;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +30,20 @@ public class AuthorizeController {
 
     @Resource
     AccountService accountService;
+
+    @Auditable(
+            operationType = "UPDATE_USER_NAME",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/update/username") //得在登录状态下
+    public  RestBean<String>  updateUserName(HttpServletRequest request
+            , @Parameter(ref = "newName") String name){
+        if (accountService.findAccountByNameOrEmail(name)!=null) return RestBean.failure(401,"用户名已存在。");
+
+        return this.accountService.updateName(request,name)? RestBean.success("请等待管理员处理。")
+                : RestBean.failure(401,"请求失败。");
+    }
 
     @Auditable(
             operationType = "UPDATE_ROLE_API_AUTH",

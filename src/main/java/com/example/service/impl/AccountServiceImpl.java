@@ -250,12 +250,19 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
         return this.baseMapper.exists(Wrappers.<Account>query().eq("phone_number",phone));
     }
 
+    @Override
     public Account findAccountByNameOrEmail(String text){
         return this.query()
                 .eq("username",text).or()
                 .eq("email",text).or()
                 .eq("phone_number",text)
                 .one();
+    }
+
+    @Override
+    public boolean updateName(HttpServletRequest request ,String name){
+        return this.update().eq("id",jwtUtils.getRequesetId(request))
+                .set("username",name).update();
     }
 
     private boolean verifyLimit(String ip){
