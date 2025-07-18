@@ -47,7 +47,7 @@ public class AuditAspect {
         LogInfoDto logInfo = new LogInfoDto();
         logInfo.setOperationType(auditable.operationType());
         logInfo.setCreateTime(LocalDateTime.now());
-        logInfo.setStatus("0"); // 默认成功
+        logInfo.setStatus("1"); // 默认成功
 
         // 2. 获取HTTP请求
         try {
@@ -64,7 +64,9 @@ public class AuditAspect {
                     logInfo.setUserId(-1); // 设置为未知用户
                 }
                 // 4. 设置客户端IP
-                logInfo.setClientIp(request.getRemoteAddr());
+                logInfo.setClientIp(
+                        getClientIp(request)
+                );
             }
         } catch (Exception e) {
             log.warn("获取请求上下文失败: {}", e.getMessage());
@@ -210,7 +212,6 @@ public class AuditAspect {
                     logInfo.getUserId(),
                     logInfo.getStatus().equals("0") ? "SUCCESS" : "FAILURE",
                     logInfo.getResponseContent());
-
             // 实际项目中应使用正式日志系统或文件写入
             log.warn("本地备份日志: {}", logEntry);
         } catch (Exception e) {

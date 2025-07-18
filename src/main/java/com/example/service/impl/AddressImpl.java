@@ -27,7 +27,7 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
     @Override
     public boolean setDefaultAddress(Integer id, Integer ans){
         this.defaultSetting(id);
-        return this.update().eq("user_id",id)
+        return this.update().eq("id",id)
                 .set("default_address",ans).update();
     }
 
@@ -50,9 +50,13 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
 
     @Override
     public  boolean updateAddress(AddressDto dto){
-        return this.update().eq("id",dto.getId()).eq("user_id",dto.getUserAddress())
-                .set("user_address",dto.getUserAddress()).set("receive_name",dto.getReceiveName()).update();
+        return this.update().eq("id",dto.getId())
+                .eq("user_id",dto.getUserId())
+                .set("user_address",dto.getUserAddress())
+                .set("receive_name",dto.getReceiveName())
+                .update();
     }
+
     @Override
     public  boolean deleteAddress(AddressDto dto){
         QueryWrapper<AddressDto> wrapper = new QueryWrapper<>();
@@ -62,7 +66,7 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
     }
     @Override
     public  boolean updatePhone(AddressDto dto){
-        return this.update().eq("id",dto).eq("user_id",dto.getUserId())
+        return this.update().eq("id",dto.getId()).eq("user_id",dto.getUserId())
                 .set("phone_number",dto.getPhoneNumber()).update();
     }
 

@@ -36,7 +36,7 @@ public class WeBaseUtils {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
-    // 在WeBaseUtils类中添加以下方法
+    // 在类中添加以下方法
     public Map<String, Object> callContractMethod(
             String userAddress,
             String contractAddress,
@@ -61,7 +61,7 @@ public class WeBaseUtils {
         requestBody.put("contractAddress", contractAddress);
         requestBody.put("funcName", methodName);
 
-        // 关键修改：直接使用参数列表，不要序列化为字符串
+        // 直接使用参数列表，不要序列化为字符串
         requestBody.put("funcParam", params);
 
         // 将ABI字符串转换为JSON数组
@@ -81,20 +81,18 @@ public class WeBaseUtils {
                 String.class
         );
 
-// 4. 处理响应 - 适配实际返回的交易回执格式
+        // 4. 处理响应 - 适配实际返回的交易回执格式
         if (response.getStatusCode() != HttpStatus.OK) {
             String responseBody = response.getBody() != null ? response.getBody() : "无响应体";
             log.error("WeBase请求失败: 状态码={}, 响应体={}", response.getStatusCode(), responseBody);
             throw new RuntimeException("WeBase请求失败: " + response.getStatusCode());
         }
-
         String responseBody = response.getBody();
+        // 后续省略
         if (responseBody == null) {
             throw new RuntimeException("WeBase响应体为空");
         }
-
         log.debug("WeBase完整响应: {}", responseBody);
-
         try {
             JsonNode rootNode = objectMapper.readTree(responseBody.trim());
             Map<String, Object> result;

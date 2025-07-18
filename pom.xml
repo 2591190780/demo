@@ -166,13 +166,13 @@
 		<dependency>
 			<groupId>org.fisco-bcos.java-sdk</groupId>
 			<artifactId>fisco-bcos-java-sdk</artifactId>
-			<version>3.4.0</version> <!-- 最新稳定版 -->
+			<version>3.4.0</version> <!-- 稳定版 -->
 			<exclusions>
 				<exclusion>
 					<groupId>org.slf4j</groupId>
 					<artifactId>slf4j-log4j12</artifactId>
 				</exclusion>
-				<!-- 新增排除冲突的密码学库 -->
+				<!-- 排除冲突的密码学库 -->
 				<exclusion>
 					<groupId>org.bouncycastle</groupId>
 					<artifactId>bcprov-jdk15on</artifactId>

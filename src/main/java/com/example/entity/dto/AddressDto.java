@@ -8,10 +8,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 @Data
 @TableName("user_address")
 @AllArgsConstructor
-public class AddressDto {
+public class AddressDto  {
+
     @TableId(type = IdType.AUTO)
     private Integer id;
 

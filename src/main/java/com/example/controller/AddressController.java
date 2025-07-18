@@ -37,7 +37,7 @@ public class AddressController {
     public  <T> RestBean<T> setDefault(HttpServletRequest request,
                                        @Parameter String id,
                                        @Parameter String flag){
-
+        if(!(flag.equals("1") || flag.equals("0"))){return RestBean.failure(401,"参数错误");}
         AddressDto dto = this.addressService.findById(jwtUtils.convertToInteger(id));
         if(!Objects.equals(jwtUtils.getRequesetId(request),dto.getUserId()))
         {return RestBean.failure(401,"未授权的操作");}
@@ -86,7 +86,6 @@ public class AddressController {
             captureBefore = true,
             captureAfter = true
     )
-
     @PutMapping("/add")
     public <T>RestBean<T> addAddress(@RequestBody @Valid AddressDto dto, HttpServletRequest request) throws IOException {
         if(dto==null) return RestBean.failure(401,"请不要传入空的参数。");
@@ -104,7 +103,7 @@ public class AddressController {
             captureAfter = true
     )
     @PutMapping("/update")
-    public <T>RestBean<T> updateAddress(@RequestBody AddressDto dto, HttpServletRequest request) throws IOException {
+    public <T>RestBean<T> updateAddress(@RequestBody @Valid  AddressDto dto, HttpServletRequest request) throws IOException {
         if(this.addressService.userIdEqRequestId(request,dto)){
             this.addressService.updateAddress(dto);
             return RestBean.success();
@@ -118,7 +117,7 @@ public class AddressController {
             captureAfter = true
     )
     @PutMapping("/update/phone")
-    public <T>RestBean<T> updatePhone(@RequestBody AddressDto dto, HttpServletRequest request) throws IOException {
+    public <T>RestBean<T> updatePhone(@RequestBody @Valid AddressDto dto, HttpServletRequest request) throws IOException {
         if(this.addressService.userIdEqRequestId(request,dto)){
             this.addressService.updatePhone(dto);
             return RestBean.success();
