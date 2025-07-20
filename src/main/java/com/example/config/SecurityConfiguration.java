@@ -51,8 +51,9 @@ public class SecurityConfiguration {
                                 "/doc.html",
                                 "/webjars/**",
                                 "/v3/api-docs/**",
-                                "/swagger-resources/**"
-                                ,"/alipay/notify"   //测试阶段的alipay需要开放安全权限
+                                "/swagger-resources/**",
+                                "/alipay/notify",
+                                "/alipay/alipay/return"//测试阶段的alipay需要开放安全权限
                             //    ,"/api/selectProducts/**"
                              //   ,"api/nft/**" //测试阶段的图片上传功能。
                         ).permitAll() //knife4j相关接口

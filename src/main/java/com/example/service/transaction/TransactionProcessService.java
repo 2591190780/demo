@@ -21,4 +21,6 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     boolean transactionUpdateDeliveryTime(String alipayOrder);
     boolean upDateStatusOrHash(String text,String status);
     boolean completeTransaction(String OrderID);
+    List<TransactionAccountDto> paySelectForSeller(Integer FarmerID);
+    List<TransactionAccountDto> paySelectForBuyer(Integer BuyerID);
 }

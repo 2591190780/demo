@@ -47,7 +47,7 @@ public class AuditAspect {
         LogInfoDto logInfo = new LogInfoDto();
         logInfo.setOperationType(auditable.operationType());
         logInfo.setCreateTime(LocalDateTime.now());
-        logInfo.setStatus("1"); // 默认成功
+        logInfo.setStatus("1");
 
         // 2. 获取HTTP请求
         try {

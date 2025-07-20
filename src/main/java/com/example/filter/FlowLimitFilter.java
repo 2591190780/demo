@@ -59,7 +59,7 @@ public class FlowLimitFilter extends HttpFilter {
             long increment= Optional.ofNullable(
                     redisTemplate.opsForValue().increment(Const.FLOW_LIMIT_COUNT+ip)
             ).orElse(0L);
-            if (increment>100){
+            if (increment>200){
                 redisTemplate.opsForValue().set(Const.FLOW_LIMIT_BLOCK+ip,""
                         ,30,TimeUnit.SECONDS);
                 return false;

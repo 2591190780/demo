@@ -2,6 +2,7 @@ package com.example.service.blockchain;
 
 
 import com.example.service.BlockChainEvidenceService;
+import com.example.utils.JwtUtils;
 import com.example.utils.WeBaseUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,9 @@ public class MessageReportService {
     @Resource
     BlockChainEvidenceService blockChainEvidenceService;
 
+    @Resource
+    JwtUtils jwtUtils;
+
     /**
      * params严格按照合约输入的顺序 dataType(int) relatedId(int) submitHash(hash)
      */
@@ -28,8 +32,9 @@ public class MessageReportService {
         List<WeBaseUtils.ContractMethod> methodList  = info.getMethods();
         for (WeBaseUtils.ContractMethod method : methodList ){
             if(!Objects.equals(method.getName(), operationName)) continue;
-            if (!this.blockChainEvidenceService.addInfo((Integer) params.get(0)
-                    , (Integer) params.get(1), (String) params.get(2))) continue;
+            if (!this.blockChainEvidenceService.addInfo( Integer.parseInt(params.get(0).toString())
+                    , Integer.parseInt(params.get(1).toString())
+                    ,  params.get(2).toString())) continue;
             Map<String, Object> result
                     = weBaseUtils.callContractMethod(userWalletAddress,contractAddress,operationName,params);
             String txHash = (String) result.get("transactionHash");

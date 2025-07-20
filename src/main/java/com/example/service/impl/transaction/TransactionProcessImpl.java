@@ -39,6 +39,33 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     @Resource
     ProductInfoSelectAccountService productInfoSelectAccountService;
 
+    @Override
+    public  List<TransactionAccountDto> paySelectForSeller(Integer FarmerID){
+        //检查订单状态。
+        List<TransactionAccountDto> dtoList = this.query()
+                .eq("seller_id",FarmerID).eq("status",1).list();
+        this.updateStatusListener(dtoList);
+        return this.query().eq("seller_id",FarmerID).list();
+    }
+
+    private void updateStatusListener(List<TransactionAccountDto> dtoList){
+        for (TransactionAccountDto dto : dtoList) {
+            if (LocalDateTime.now().isAfter(dto.getOrderTime().plusMinutes(15))){
+                this.update().eq("id",dto.getId())
+                        .set("status",6).update();
+            }
+        }
+    }
+
+    @Override
+    public  List<TransactionAccountDto> paySelectForBuyer(Integer BuyerID){
+        //检查订单状态。
+        List<TransactionAccountDto> dtoList = this.query()
+                .eq("buyer_id",BuyerID).eq("status",1).list();
+        this.updateStatusListener(dtoList);
+        return this.query().eq("buyer_id",BuyerID).list();
+    }
+
     //添加单个交易信息
     @Override
     //服了，这里为毛线返回整个类，无语，写昏头了。
@@ -186,9 +213,15 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         }
         hashes = stringRedisTemplate.opsForSet().members(userId.toString());
         if(hashes == null || hashes.isEmpty()) return null;
-        String hash = hashes.iterator().next();
-        TransactionAccountDto dto = this.getOrderByHash(hash);
-        return dto;
+        List<TransactionAccountDto> dtoList = this.query().eq("buyer_id", id).eq("status", "1")
+                .orderByDesc("order_time").list();
+        this.updateStatusListener(dtoList);
+        for (TransactionAccountDto dto : dtoList) {
+            if (hashes.contains(dto.getCertificationHash())) {
+                return dto;
+            }
+        }
+    return null;
     }
 
     @Override

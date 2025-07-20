@@ -72,6 +72,45 @@ public class AlipayController {
     private static final String CHARSET ="utf-8";
     private static final String SIGN_TYPE ="RSA2";
 
+    @Auditable(
+            operationType = "PAY_INFO_SELECT_FOR_BUYER",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/pay/select/buyer")
+    public  <T> RestBean<T> payInfoSelectBuyer(HttpServletRequest request,
+                                                HttpServletResponse response, @Parameter String BuyerID) throws IOException {
+        Integer id = jwtUtils.getRequesetId(request);
+        if(Objects.equals(id, jwtUtils.convertToInteger(BuyerID))) {
+            List<TransactionAccountDto> dtoList = this.transactionProcessService.paySelectForBuyer(id);
+            if(dtoList.isEmpty()) { return RestBean.failure(401,"暂无订单信息。");}
+            response.setContentType("application/json;Charset=utf-8");
+            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            return null;
+        }
+        return RestBean.failure(401,"无权限的操作。");
+    }
+
+
+    @Auditable(
+            operationType = "PAY_INFO_SELECT_FOR_SELLER",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/pay/select/seller")
+    public  <T> RestBean<T> payInfoSelectSeller(HttpServletRequest request,
+            HttpServletResponse response, @Parameter String FarmerID) throws IOException {
+        Integer id = jwtUtils.getRequesetId(request);
+        if(Objects.equals(id, jwtUtils.convertToInteger(FarmerID))) {
+            List<TransactionAccountDto> dtoList = this.transactionProcessService.paySelectForSeller(id);
+            if(dtoList.isEmpty()) { return RestBean.failure(401,"暂无订单信息。");}
+            response.setContentType("application/json;Charset=utf-8");
+            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            return null;
+        }
+        return RestBean.failure(401,"无权限的操作。");
+    }
+
     //生成订单信息并返回给前端
     @Auditable(
             operationType = "PAY_INFO_SINGLE_ALIPAY",
@@ -94,7 +133,12 @@ public class AlipayController {
                 .compareTo(BigDecimal.valueOf(0)) < 0){
             return RestBean.failure(401,"商家库存不足。");
         }
-        if(pdto.getIsActive() == 0) return  RestBean.failure(401,"产品还未上架。");
+        if(pdto.getIsActive() == 0)   return  RestBean.failure(401,"产品还未上架。");
+        Set<String> hashes = stringRedisTemplate.opsForSet()
+                .members(jwtUtils.getRequesetId(request).toString());
+//        if (hashes != null && !hashes.isEmpty()) {
+//            return  RestBean.failure(401,"还有未支付的订单。");
+//        }
         TransactionAccountDto dto = this.transactionProcessService
                 .TransactionInfoAdd(transactionAccountDto,request);
         if (dto != null){
@@ -134,9 +178,9 @@ public class AlipayController {
             captureBefore = true,
             captureAfter = true
     )
-    @GetMapping("/pay") // 前端路径参数格式?subject=xxx&traceNo=xxx&totalAmount=xxx
+    @PutMapping("/pay") // 前端路径参数格式?subject=xxx&traceNo=xxx&totalAmount=xxx
     public void pay(HttpServletRequest httpRequest
-            , HttpServletResponse  response) throws Exception {
+            , HttpServletResponse  response,@RequestBody Map<String,List<String>> oList) throws Exception {
         response.setContentType("application/json;Charset=utf-8");
         /**
          * 1. 用户先提交订单，执行transaction.add函数 添加交易信息等待用户支付
@@ -146,12 +190,10 @@ public class AlipayController {
          *
          * 3. 支付后，等待alipay回执信息。
          */
-        String authorization = httpRequest.getHeader("Authorization");
-        DecodedJWT jwt = jwtUtils.resolveJWT(authorization);
-        Integer userId = jwtUtils.toId(jwt);
-
+        List<String> orderList = oList.get("orderList");
+        Integer userId = jwtUtils.getRequesetId(httpRequest);
         // 从Redis获取待支付订单哈希集
-        String userKey = userId.toString();
+        String userKey =  userId.toString();
         Set<String> hashes = stringRedisTemplate.opsForSet().members(userKey);
 
         // 清理过期订单哈希
@@ -166,10 +208,23 @@ public class AlipayController {
         }
         // 检查有效订单
         if (hashes == null || hashes.isEmpty()) {
-
             response.getWriter().write(RestBean.failure(401, "没有待支付的订单").asJsonString());
             return;
         }
+        //前端传入了想要支付的orderidList，hash里面存在很多提交的订单需要进行处理
+        Set<String> payHashList = new HashSet<>(hashes);
+        for (String hash : hashes) {
+            String hashOrderId = this.transactionProcessService.getOrderByHash(hash).getOrderId();
+            if (hashOrderId == null || payHashList.isEmpty()) {
+                response.getWriter().write(
+                        RestBean.failure(401, "创建订单失败，请稍后再试。").toString());
+                return;
+            }
+            if (!orderList.contains(hashOrderId)) {
+                    payHashList.remove(hash);  //提供的orderid里面不存在这个hash对应的orderid，就不提交消息。
+            }
+        }
+
         BigDecimal totalAmount = BigDecimal.ZERO;
         StringBuilder productNames = new StringBuilder();
 
@@ -179,8 +234,8 @@ public class AlipayController {
                 ThreadLocalRandom.current().nextInt(1000, 9999);
 
         //将发送给支付宝的订单号和列表集合存储到redis中
-        for (String hash : hashes) {
-            //存入  订单号 : hash  的redis中
+        for (String hash : payHashList) {
+            //存入  订单号 : hash  的 redis中
             stringRedisTemplate.opsForSet().add(combinedOrderId,hash);
             stringRedisTemplate.expire(combinedOrderId,15,TimeUnit.MINUTES);
             //删除原有的redis hash 缓存
@@ -188,7 +243,7 @@ public class AlipayController {
         }
 
         int productCount = 0;
-        for (String hash : hashes) {
+        for (String hash : payHashList) {
             TransactionAccountDto order = transactionProcessService.getOrderByHash(hash);
             if (order == null || !"1".equals(order.getStatus())) {
                 sendJsonResponse(response, 401, "订单状态无效或已过期"); return;
@@ -221,8 +276,8 @@ public class AlipayController {
         String subject = productNames.toString();
         if (subject.isEmpty()) {
             subject = "商品订单";
-        } else if (hashes.size() > 3) {
-            subject += "等" + hashes.size() + "件商品";
+        } else if (payHashList.size() > 3) {
+            subject += "等" + payHashList.size() + "件商品";
         }
         // 确保标题长度合规（支付宝要求<=256字符）
         if (subject.length() > 128) {
@@ -302,15 +357,15 @@ public class AlipayController {
                 System.out.println("同步回调支付成功: 订单号=" + outTradeNo + ", 金额=" + totalAmount);
 
                 // 5. 重定向到前端支付成功页面
-                return "redirect:http://your-frontend-domain/payment-success.html";
+                return "redirect:http://demotestccit.natapp1.cc/payment-success.html";
             } else {
                 System.err.println("同步回调验签失败");
                 // 验签失败重定向到失败页面
-                return "redirect:http://your-frontend-domain/payment-failed.html";
+                return "redirect:http://demotestccit.natapp1.cc/payment-failed.html";
             }
         } catch (AlipayApiException e) {
             System.err.println("同步回调验签异常: " + e.getMessage());
-            return "redirect:http://your-frontend-domain/payment-error.html";
+            return "redirect:http://demotestccit.natapp1.cc/payment-error.html";
         }
     }
 
@@ -400,15 +455,20 @@ public class AlipayController {
                  */
                 String sellerAddress = this.accountService.findAccountById(transactionAccountDto.getSellerId()).getWalletAddress();
                 String buyerAddress = this.accountService.findAccountById(transactionAccountDto.getBuyerId()).getWalletAddress();
-                String contractAddress  = Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE;
-                String methodName = Const.CONTRACT_FOR_MESSAGE_REPORT;
+                String contractAddress  =Const.CONTRACT_FOR_MESSAGE_REPORT ;
+                String methodName = Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE;
                 List<Object> parameters = new ArrayList<>();
                 parameters.add(0,2);
-                parameters.add(1,transactionAccountDto.getOrderId());
+                parameters.add(1,transactionAccountDto.getId());
                 parameters.add(2,hash);
                 String result1 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,sellerAddress,contractAddress);
                 String result2 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,buyerAddress,contractAddress);
                 System.out.println("买家购买信息上链结果:"+result1+"  "+"卖家购买信息上链结果:"+result2);
+
+                //更新商家商品库存信息。
+                if(this.productInfoUpdateAccountService.updateStock(transactionAccountDto.getProductId(),transactionAccountDto.getSellerId(),transactionAccountDto.getQuantity())){
+                    System.out.println("商品库存信息更新成功。");
+                }
                 //更新交易订单的状态为已支付
                 if( transactionProcessService.transactionStatusUpdate(dto,"2")){
                     //清楚redis中的信息缓存。
@@ -416,11 +476,6 @@ public class AlipayController {
                     stringRedisTemplate.opsForSet().remove(outTradeNo,hash);
                 }
                 System.out.println("等待支付的交易订单数量还剩余: "+stringRedisTemplate.opsForSet().size(outTradeNo));
-                //更新商家商品库存信息。
-                if(this.productInfoUpdateAccountService.updateStock(dto.getProductId(),dto.getSellerId(),dto.getQuantity())){
-                    System.out.println("商品库存信息更新成功。");
-                }
-
             }
             // TODO: 这里添加您的订单状态更新逻辑
             // 例如: orderService.updateOrderStatus(outTradeNo, "PAID");

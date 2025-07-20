@@ -147,7 +147,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
 
     @Override
     public  boolean updateStock(Integer productId,Integer farmerId, BigDecimal count){
-        BigDecimal remain = this.selectAccount.getProductInfoAccountByProductId(productId).getStock()
+        BigDecimal remain = this.selectAccount.getProductInfoAccountByProductId(productId).getStockRemain()
                 .subtract(count);
         if(remain.compareTo(new BigDecimal(0)) <0) return  false;
         return  this.update().eq("product_id",productId).eq("farmer_id",farmerId)
