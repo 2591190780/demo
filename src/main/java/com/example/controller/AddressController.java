@@ -4,6 +4,7 @@ import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.AddressDto;
 import com.example.service.AddressService;
+import com.example.service.transaction.TransactionProcessService;
 import com.example.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +29,9 @@ public class AddressController {
     @Resource
     JwtUtils jwtUtils;
 
+    @Resource
+    TransactionProcessService transactionProcessService;
+
     @Auditable(
             operationType = "USER_SET_DEFAULT_ADDRESS",
             captureBefore = true,
@@ -43,7 +47,6 @@ public class AddressController {
         {return RestBean.failure(401,"未授权的操作");}
             return this.addressService.setDefaultAddress(jwtUtils.convertToInteger(id),
                     jwtUtils.convertToInteger(flag))? RestBean.success():RestBean.failure(401,"设置失败。");
-
     }
 
     @Auditable(
@@ -55,6 +58,7 @@ public class AddressController {
     public <T>RestBean<T> selectByUserId(HttpServletRequest request, HttpServletResponse response,
                                          @Parameter String userid ) throws IOException {
         List<AddressDto> dtoList = this.addressService.findByUserId(jwtUtils.convertToInteger(userid));
+        if(dtoList.isEmpty()){ return RestBean.failure(401,"您还没有添加地址。");}
         AddressDto addressDto = dtoList.get(0);
         if(this.addressService.userIdEqRequestId(request,addressDto)){
             response.setContentType("application/json;Charset=utf-8");
@@ -82,6 +86,26 @@ public class AddressController {
     }
 
     @Auditable(
+            operationType = "ID_SELECT_ADDRESS_FOR_FARMER",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/id/select/farmer")
+    public <T>RestBean<T> selectByIdForFarmer(HttpServletRequest request, HttpServletResponse response,
+                                     @Parameter String id, @Parameter String transactionId ) throws IOException {
+        AddressDto dto = this.addressService.findById(jwtUtils.convertToInteger(id));
+        if (Objects.equals(
+                this.transactionProcessService.getOrderByTransactionID(jwtUtils.convertToInteger(transactionId))
+                .getSellerId(), jwtUtils.getRequesetId(request))){
+            response.setContentType("application/json;Charset=utf-8");
+            response.getWriter().write(RestBean.success(dto).asJsonString());
+            return null;
+        }
+
+        return RestBean.failure(401,"未查询到该地址。");
+    }
+
+    @Auditable(
             operationType = "ADD_ADDRESS",
             captureBefore = true,
             captureAfter = true
@@ -94,6 +118,7 @@ public class AddressController {
             this.addressService.addAddress(dto);
             return RestBean.success();
         }
+
         return RestBean.failure(401,"添加失败,请检查参数。");
     }
 
@@ -126,7 +151,6 @@ public class AddressController {
     }
 
 
-
     @Auditable(
             operationType = "DELETE_ADDRESS",
             captureBefore = true,
@@ -140,5 +164,4 @@ public class AddressController {
         }
         return RestBean.failure(401,"添加失败,请检查参数。");
     }
-
 }

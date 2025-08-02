@@ -23,4 +23,6 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     boolean completeTransaction(String OrderID);
     List<TransactionAccountDto> paySelectForSeller(Integer FarmerID);
     List<TransactionAccountDto> paySelectForBuyer(Integer BuyerID);
+
+    TransactionAccountDto getOrderByTransactionID(Integer transactionID);
 }

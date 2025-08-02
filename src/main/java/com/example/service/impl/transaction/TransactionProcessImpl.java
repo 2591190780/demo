@@ -129,6 +129,10 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         return this.update().eq("alipay_order",alipayOrder)
                 .set("delivery_time",LocalDateTime.now()).update();
     }
+    @Override
+    public TransactionAccountDto getOrderByTransactionID(Integer transactionID){
+        return query().eq("id", transactionID).one();
+    }
 
     //更新订单状态
     @Override
