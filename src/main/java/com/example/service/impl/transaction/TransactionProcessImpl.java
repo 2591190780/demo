@@ -40,6 +40,15 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     ProductInfoSelectAccountService productInfoSelectAccountService;
 
     @Override
+    public boolean updateStatusByAlipayOrder(String alipayOrder,Integer sellerId,String status){
+        TransactionAccountDto dto = this.getOrderByAlipayOrder(alipayOrder);
+        if(!Objects.equals(dto.getSellerId(), sellerId)) {return false;}
+        dto.setStatus(status);
+        this.updateById(dto);
+        return true;
+    }
+
+    @Override
     public  List<TransactionAccountDto> paySelectForSeller(Integer FarmerID){
         //检查订单状态。
         List<TransactionAccountDto> dtoList = this.query()

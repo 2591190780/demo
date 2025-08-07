@@ -51,7 +51,6 @@ public class DeliveryInfoImpl extends ServiceImpl<DeliveryInfoMapper, DeliveryIn
         return  this.query().eq("order_id", alipayOrderId).one();
     }
 
-
     @Override
     public  boolean updateDeliveryInfo(HttpServletRequest request, String alipayOrderId
             , String newAddress,String time ){

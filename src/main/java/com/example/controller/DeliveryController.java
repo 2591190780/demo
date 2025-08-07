@@ -15,6 +15,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ public class DeliveryController {
             captureAfter = true
     )
     @PutMapping("/add/info")
-    public <T>RestBean<T> addInfo(HttpServletRequest request , @RequestBody DeliveryInfoDto dto){
+    public <T>RestBean<T> addInfo(HttpServletRequest request , @RequestBody @Valid DeliveryInfoDto dto){
        return this.deliveryInfoService.addDeliveryInfo(request,dto)?
                RestBean.success():RestBean.failure(401,"添加失败，请勿重复添加同时检查参数。");
     }
