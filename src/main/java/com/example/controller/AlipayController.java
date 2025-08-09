@@ -198,8 +198,9 @@ public class AlipayController {
             AddressDto addressDto = addressService.findById(dto.getAddressInfo());
             transactionInfoVO.setListId(id);
             transactionInfoVO.setOrderId(dto.getOrderId());
+            transactionInfoVO.setId(dto.getId());
             transactionInfoVO.setAlipayOrder(dto.getAlipayOrder());
-            transactionInfoVO.setPrice(dto.getTotalPrice());
+            transactionInfoVO.setTotalPrice(dto.getTotalPrice());
             transactionInfoVO.setQuantity(dto.getQuantity());
             transactionInfoVO.setBuyerId(dto.getBuyerId());
             transactionInfoVO.setStatus(dto.getStatus());
@@ -208,6 +209,8 @@ public class AlipayController {
             transactionInfoVO.setAddressInfo(addressDto.getId());
             transactionInfoVO.setOrderTime(dto.getOrderTime());
             transactionInfoVOList.add(transactionInfoVO);
+            transactionInfoVO.setCertificationHash(dto.getCertificationHash());
+            transactionInfoVO.setProductId(productInfoAccountVO.getProductId());
         }
         return transactionInfoVOList;
     }
