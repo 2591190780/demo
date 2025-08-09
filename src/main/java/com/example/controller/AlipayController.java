@@ -10,10 +10,13 @@ import com.example.annotation.Auditable;
 import com.example.config.AliPayConfig;
 import com.example.entity.AliPay;
 import com.example.entity.RestBean;
+import com.example.entity.dto.AddressDto;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
 import com.example.entity.vo.response.ProductVO;
+import com.example.entity.vo.response.TransactionInfoVO;
 import com.example.service.AccountService;
+import com.example.service.AddressService;
 import com.example.service.blockchain.MessageReportService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
@@ -63,6 +66,8 @@ public class AlipayController {
 
     @Resource
     MessageReportService messageReportService;
+    @Resource
+    AddressService addressService;
 
     @Resource
     AccountService accountService;
@@ -84,8 +89,9 @@ public class AlipayController {
         if(Objects.equals(id, jwtUtils.convertToInteger(BuyerID))) {
             List<TransactionAccountDto> dtoList = this.transactionProcessService.paySelectForBuyer(id);
             if(dtoList.isEmpty()) { return RestBean.failure(401,"暂无订单信息。");}
+            List<TransactionInfoVO> voList = this.selectWholeInfoToFront(dtoList);
             response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            response.getWriter().write(RestBean.success(voList).asJsonString());
             return null;
         }
         return RestBean.failure(401,"无权限的操作。");
@@ -104,13 +110,31 @@ public class AlipayController {
         if(Objects.equals(id, jwtUtils.convertToInteger(FarmerID))) {
             List<TransactionAccountDto> dtoList = this.transactionProcessService.paySelectForSeller(id);
             if(dtoList.isEmpty()) { return RestBean.failure(401,"暂无订单信息。");}
+            List<TransactionInfoVO> voList = this.selectWholeInfoToFront(dtoList);
             response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            response.getWriter().write(RestBean.success(voList).asJsonString());
             return null;
         }
         return RestBean.failure(401,"无权限的操作。");
     }
 
+    private List<TransactionInfoVO> selectWholeInfoToFront(List<TransactionAccountDto> dtoList){
+        List<TransactionInfoVO> transactionInfoVOList = new ArrayList<>();
+        for (TransactionAccountDto dto : dtoList) {
+            TransactionInfoVO transactionInfoVO = new TransactionInfoVO();
+
+            ProductVO productInfoAccountVO = productInfoSelectAccountService.getProductInfoAccountByProductId(
+                    dto.getProductId()
+            );
+            AddressDto addressDto = addressService.findById(dto.getAddressInfo());
+            transactionInfoVO.setTransactionAccount(dto);
+            transactionInfoVO.setProductInfo(productInfoAccountVO);
+            transactionInfoVO.setAddressInfo(addressDto);
+
+            transactionInfoVOList.add(transactionInfoVO);
+        }
+        return transactionInfoVOList;
+    }
     //生成订单信息并返回给前端
     @Auditable(
             operationType = "PAY_INFO_SINGLE_ALIPAY",

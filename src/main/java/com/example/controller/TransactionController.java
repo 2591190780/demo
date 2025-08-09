@@ -3,13 +3,18 @@ package com.example.controller;
 import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.vo.request.ResetPasswordByPasswordVO;
+import com.example.entity.vo.response.TransactionInfoVO;
+import com.example.service.AddressService;
 import com.example.service.transaction.TransactionProcessService;
 import com.example.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @RestController
@@ -18,6 +23,8 @@ import java.util.Objects;
 public class TransactionController {
     @Resource
     TransactionProcessService transactionProcessService;
+    @Resource
+    AddressService addressService;
 
     @Resource
     JwtUtils jwtUtils;
@@ -38,5 +45,6 @@ public class TransactionController {
         return this.transactionProcessService.updateStatusByAlipayOrder(alipayOrder, sellerId, status)?
                 RestBean.success():RestBean.failure(401,"请检查订单信息。");
     }
+
 
 }
