@@ -45,7 +45,6 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping("/alipay")
 @Tag(name = "支付",description = "支付宝支付操作")
 public class AlipayController {
-
     @Resource
     AliPayConfig aliPayConfig;
 
@@ -120,17 +119,25 @@ public class AlipayController {
 
     private List<TransactionInfoVO> selectWholeInfoToFront(List<TransactionAccountDto> dtoList){
         List<TransactionInfoVO> transactionInfoVOList = new ArrayList<>();
+        Integer id = 0;
         for (TransactionAccountDto dto : dtoList) {
+            id++;
             TransactionInfoVO transactionInfoVO = new TransactionInfoVO();
 
             ProductVO productInfoAccountVO = productInfoSelectAccountService.getProductInfoAccountByProductId(
                     dto.getProductId()
             );
             AddressDto addressDto = addressService.findById(dto.getAddressInfo());
-            transactionInfoVO.setTransactionAccount(dto);
-            transactionInfoVO.setProductInfo(productInfoAccountVO);
-            transactionInfoVO.setAddressInfo(addressDto);
-
+            transactionInfoVO.setId(id);
+            transactionInfoVO.setAlipayOrder(dto.getAlipayOrder());
+            transactionInfoVO.setPrice(dto.getTotalPrice());
+            transactionInfoVO.setQuantity(dto.getQuantity());
+            transactionInfoVO.setBuyerId(dto.getBuyerId());
+            transactionInfoVO.setStatus(dto.getStatus());
+            transactionInfoVO.setProductName(productInfoAccountVO.getName());
+            transactionInfoVO.setSellerId(dto.getSellerId());
+            transactionInfoVO.setAddressInfo(addressDto.getId());
+            transactionInfoVO.setOrderTime(dto.getOrderTime());
             transactionInfoVOList.add(transactionInfoVO);
         }
         return transactionInfoVOList;

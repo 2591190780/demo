@@ -14,7 +14,17 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 public class TransactionInfoVO {
-    private TransactionAccountDto transactionAccount;
-    private ProductVO productInfo;
-    private AddressDto addressInfo;
+
+
+    private Integer id ;
+    private String alipayOrder;
+    private String productName;
+    private BigDecimal quantity;
+    private BigDecimal price;
+    private String status;
+    private LocalDateTime orderTime;
+    private Integer sellerId;
+    private Integer buyerId;
+    private Integer addressInfo;
+
 }
