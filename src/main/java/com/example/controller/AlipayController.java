@@ -192,12 +192,12 @@ public class AlipayController {
         for (TransactionAccountDto dto : dtoList) {
             id++;
             TransactionInfoVO transactionInfoVO = new TransactionInfoVO();
-
             ProductVO productInfoAccountVO = productInfoSelectAccountService.getProductInfoAccountByProductId(
                     dto.getProductId()
             );
             AddressDto addressDto = addressService.findById(dto.getAddressInfo());
-            transactionInfoVO.setId(id);
+            transactionInfoVO.setListId(id);
+            transactionInfoVO.setOrderId(dto.getOrderId());
             transactionInfoVO.setAlipayOrder(dto.getAlipayOrder());
             transactionInfoVO.setPrice(dto.getTotalPrice());
             transactionInfoVO.setQuantity(dto.getQuantity());

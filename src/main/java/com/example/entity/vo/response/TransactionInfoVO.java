@@ -1,13 +1,11 @@
 package com.example.entity.vo.response;
 
-import com.example.entity.dto.AddressDto;
-import com.example.entity.dto.ProductInfoAccountDto;
-import com.example.entity.dto.TransactionAccountDto;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 
 @Data
@@ -16,7 +14,8 @@ import java.time.LocalDateTime;
 public class TransactionInfoVO {
 
 
-    private Integer id ;
+    private Integer listId ;
+    private String orderId;
     private String alipayOrder;
     private String productName;
     private BigDecimal quantity;
