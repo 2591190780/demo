@@ -1,5 +1,6 @@
 package com.example.entity;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,10 @@ public class PageParam {
 
     // 多字段排序支持
     private List<OrderItem> orders = new ArrayList<>();
+
+    public <T> Page<T> toPage() {
+        return new Page<>(pageNum, pageSize);
+    }
 
     @Data
     @NoArgsConstructor

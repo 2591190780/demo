@@ -11,23 +11,13 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PageResult<T> {
-    // 总记录数
     private Long total;
+    private List<T> records;
+    private Integer current;
+    private Integer pages;
+    private Integer size;
 
-    // 当前页数据列表
-    private List<T> list;
-
-    // 当前页码
-    private Integer currentPage;
-
-    // 总页数
-    private Integer totalPages;
-
-    // 每页数量
-    private Integer pageSize;
-
-    // 从MyBatis Plus分页对象转换
-    public static <T> PageResult<T> build(IPage<T> page) {
+    public static <T> PageResult<T> of(IPage<T> page) {
         return new PageResult<>(
                 page.getTotal(),
                 page.getRecords(),

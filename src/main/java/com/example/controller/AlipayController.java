@@ -6,15 +6,19 @@ import com.alipay.api.DefaultAlipayClient;
 import com.alipay.api.internal.util.AlipaySignature;
 import com.alipay.api.request.AlipayTradePagePayRequest;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.annotation.Auditable;
 import com.example.config.AliPayConfig;
 import com.example.entity.AliPay;
+import com.example.entity.PageParam;
+import com.example.entity.PageResult;
 import com.example.entity.RestBean;
 import com.example.entity.dto.AddressDto;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.entity.vo.response.TransactionInfoVO;
+import com.example.mapper.transaction.TransactionProcessMapper;
 import com.example.service.AccountService;
 import com.example.service.AddressService;
 import com.example.service.blockchain.MessageReportService;
@@ -32,6 +36,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
@@ -40,6 +45,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/alipay")
@@ -75,6 +81,8 @@ public class AlipayController {
     private static final String FORMAT ="JSON";
     private static final String CHARSET ="utf-8";
     private static final String SIGN_TYPE ="RSA2";
+    @Autowired
+    private TransactionProcessMapper transactionProcessMapper;
 
     @Auditable(
             operationType = "PAY_INFO_SELECT_FOR_BUYER",
@@ -115,6 +123,67 @@ public class AlipayController {
             return null;
         }
         return RestBean.failure(401,"无权限的操作。");
+    }
+
+
+    /**
+     * 方案1：使用Service原始方法 + 内存分页
+     * 适用于数据量较小的场景
+     */
+    @GetMapping("/select/seller/memory")
+    public RestBean<PageResult<TransactionInfoVO>> payInfoSelectSellerMemory(
+            HttpServletRequest request,
+            @RequestParam String FarmerID,
+            @ModelAttribute PageParam pageParam) {
+        Integer id = jwtUtils.getRequesetId(request);
+        if (!Objects.equals(id, jwtUtils.convertToInteger(FarmerID))) {
+            return RestBean.failure(401, "无权限的操作。");
+        }
+        // 调用原始Service方法（非分页）
+        List<TransactionAccountDto> dtoList = transactionProcessService.paySelectForSeller(id);
+        if (dtoList.isEmpty()) {
+            return RestBean.failure(401, "暂无订单信息。");
+        }
+        // 转换为VO
+        List<TransactionInfoVO> voList = selectWholeInfoToFront(dtoList);
+        // 在Controller层进行内存分页
+        PageResult<TransactionInfoVO> pageResult = ControllerPageHelper.paginateList(
+                voList, pageParam
+        );
+        return RestBean.success(pageResult);
+    }
+    /**
+     * 方案2：直接调用Mapper分页方法
+     * 适用于数据量大的场景
+     */
+    @GetMapping("/select/seller/db")
+    public RestBean<PageResult<TransactionInfoVO>> payInfoSelectSellerDb(
+            HttpServletRequest request,
+            @RequestParam String FarmerID,
+            @ModelAttribute PageParam pageParam) {
+        Integer id = jwtUtils.getRequesetId(request);
+        if (!Objects.equals(id, jwtUtils.convertToInteger(FarmerID))) {
+            return RestBean.failure(401, "无权限的操作。");
+        }
+        // 直接调用Mapper的分页方法
+        Page<TransactionAccountDto> page = transactionProcessMapper.selectBySellerIdPage(
+                pageParam.toPage(), id
+        );
+        if (page.getTotal() == 0) {
+            return RestBean.failure(401, "暂无订单信息。");
+        }
+        List<TransactionAccountDto> dtoList = page.getRecords();
+        // DTO转VO
+        List<TransactionInfoVO> voList = selectWholeInfoToFront(dtoList);
+        // 构建分页结果
+        PageResult<TransactionInfoVO> pageResult = new PageResult<>(
+                page.getTotal(),
+                voList,
+                (int) page.getCurrent(),
+                (int) page.getPages(),
+                (int) page.getSize()
+        );
+        return RestBean.success(pageResult);
     }
 
     private List<TransactionInfoVO> selectWholeInfoToFront(List<TransactionAccountDto> dtoList){
