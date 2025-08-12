@@ -13,8 +13,6 @@ import java.time.LocalDateTime;
 @Setter
 @Getter
 public class TransactionInfoVO {
-
-
     private Integer listId ;
     private BigInteger id;
     private String orderId;

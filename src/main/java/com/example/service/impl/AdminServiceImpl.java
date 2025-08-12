@@ -301,9 +301,11 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                      * 这里要对NFT信息进行上链。
                      */
                     weBaseUtils.callContractMethod(ownerAddress,nftContractAddress,methodName,param);
+                    this.nftInfoService.nftUpdateContractAdmin(nftContractAddress,nftID);
                 }
                 yield this.nftInfoService.NFTInfoUpdateAdmin(this.convertToInteger(targetId), ans);
             }
+
             case "nft_rule" ->//管理员同意了此规则，需要是上传规则至区块链合约上方法在ConditionNFTRule.XXXreport.
                     this.nftRuleService.nftRuleUpdateAdmin(convertToInteger(targetId),ans);
             case "sensor" -> this.sensorInfoUpdateService.updateSensorInfoDtoadmin(
