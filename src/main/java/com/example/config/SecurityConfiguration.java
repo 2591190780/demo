@@ -112,6 +112,7 @@ public class SecurityConfiguration {
         String address = account.getWalletAddress();
         vo.setWalletAddress(address);
         String role = account.getRole();
+        vo.setImg_url(account.getUserImgurl());
         //数据库传入"1","2","3"，后端判断
         switch (role) {
             case "1":

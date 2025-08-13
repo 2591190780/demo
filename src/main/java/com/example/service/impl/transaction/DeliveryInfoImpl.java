@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Service
@@ -32,18 +33,21 @@ public class DeliveryInfoImpl extends ServiceImpl<DeliveryInfoMapper, DeliveryIn
          * 前端传入 orderID startAddress endAddress startTime sellerPhone buyerphone
          *  先检查orderID的交易信息是否正确。
          */
-        if (!this.verifyByAlipayOrder(request, deliveryInfoDto.getOrderId())){
+        if (!this.verifyByAlipayOrder(request, deliveryInfoDto.getOrderId(),deliveryInfoDto.getRelateId())){
             return false;
         }
         if(this.selectDeliveryInfoByAlipayOrder(deliveryInfoDto.getOrderId()) != null) return false;
         String string = "time:"+ LocalDateTime.now()+ "|"
                 + "address:" + deliveryInfoDto.getStartAddress();
+
         deliveryInfoDto.setDeliveryProcess(string);
+        deliveryInfoDto.setStartTime(String.valueOf(LocalDateTime.now()));
 
         this.transactionProcessService.transactionUpdateDeliveryTime(deliveryInfoDto.getOrderId());
         return this.save(deliveryInfoDto) &&
-                this.transactionProcessService.upDateStatusOrHash(deliveryInfoDto.getOrderId()
-                , "3");
+                this.transactionProcessService.updateStatusByAlipayOrder(deliveryInfoDto.getOrderId()
+                , deliveryInfoDto.getRelateId(),
+                        jwtUtils.getRequesetId(request),"3");
     }
 
     @Override
@@ -53,8 +57,8 @@ public class DeliveryInfoImpl extends ServiceImpl<DeliveryInfoMapper, DeliveryIn
 
     @Override
     public  boolean updateDeliveryInfo(HttpServletRequest request, String alipayOrderId
-            , String newAddress,String time ){
-        if (!this.verifyByAlipayOrder(request,alipayOrderId)){
+            , String newAddress,String time,Integer transactionId ){
+        if (!this.verifyByAlipayOrder(request,alipayOrderId,transactionId)){
             return false;
         }
         //通过alipay的订单号获取交易记录
@@ -65,15 +69,17 @@ public class DeliveryInfoImpl extends ServiceImpl<DeliveryInfoMapper, DeliveryIn
                 "time:"+ time + "|" +
                 "address:" + newAddress ;
 
-        return this.update().eq("order_id",alipayOrderId).set("delivery_process",message).update();
+        return this.update().eq("order_id",alipayOrderId)
+                .eq("relate_id",transactionId)
+                .set("delivery_process",message).update();
     }
 
-    private boolean verifyByAlipayOrder(HttpServletRequest request,String alipayOrderId){
-        TransactionAccountDto dto = this.transactionProcessService.getOrderByAlipayOrder(
-                alipayOrderId); //通过alipay的订单号获取交易记录
+    private boolean verifyByAlipayOrder(HttpServletRequest request,String alipayOrderId,Integer transactionId){
+        TransactionAccountDto dtoList = this.transactionProcessService.getOrderByAlipayOrderAndTrasactionId(
+                alipayOrderId,transactionId); //通过alipay的订单号获取交易记录
         Integer uid = jwtUtils.getRequesetId(request); //当前登录状态下的ID
-        if(dto==null){return false;}  //查询不到交易信息 返回错误
-        if(!Objects.equals(uid,dto.getSellerId())){ return false;} //卖家与当前登陆账号不符合，不能添加运送信息。
+        if(dtoList==null){return false;}  //查询不到交易信息 返回错误
+        if(!Objects.equals(uid,dtoList.getSellerId())){ return false;} //卖家与当前登陆账号不符合，不能添加运送信息。
         return true;
     }
 

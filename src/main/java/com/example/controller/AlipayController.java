@@ -644,16 +644,14 @@ public class AlipayController {
     @PutMapping("/paySelect/alipayOrder")
     public  <T> RestBean<T> paySelectByAlipayOrder(HttpServletRequest request
             ,HttpServletResponse response, @Parameter @Valid String alipayOrder) throws IOException {
-        TransactionAccountDto dto = this.transactionProcessService.getOrderByAlipayOrder(alipayOrder);
-        if (dto == null) {
-            return RestBean.failure(401,"未查询到您的订单");
-        }
-        if(!Objects.equals(jwtUtils.getRequesetId(request), dto.getBuyerId())
+        List<TransactionAccountDto> dtoList = this.transactionProcessService.getOrderByAlipayOrder(alipayOrder);
+        if (dtoList.isEmpty()) return RestBean.failure(401,"未查询到您的订单");
+        if(!Objects.equals(jwtUtils.getRequesetId(request), dtoList.get(0).getBuyerId())
                 &&
-                !Objects.equals(jwtUtils.getRequesetId(request), dto.getSellerId()))
+                !Objects.equals(jwtUtils.getRequesetId(request), dtoList.get(0).getSellerId()))
         {return RestBean.failure(401,"暂无权限查看。");}
         response.setContentType("application/json;Charset=utf-8");
-        response.getWriter().write(RestBean.success(dto).asJsonString());
+        response.getWriter().write(RestBean.success(dtoList).asJsonString());
         return null;
     }
 

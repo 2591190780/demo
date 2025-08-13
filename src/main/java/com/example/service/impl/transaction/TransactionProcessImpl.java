@@ -3,10 +3,7 @@ package com.example.service.impl.transaction;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.entity.RestBean;
-import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
-import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.transaction.TransactionProcessService;
@@ -15,9 +12,7 @@ import com.example.utils.Const;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.aspectj.weaver.ast.Or;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -40,11 +35,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     ProductInfoSelectAccountService productInfoSelectAccountService;
 
     @Override
-    public boolean updateStatusByAlipayOrder(String alipayOrder,Integer sellerId,String status){
-        TransactionAccountDto dto = this.getOrderByAlipayOrder(alipayOrder);
+    public boolean updateStatusByAlipayOrder(String alipayOrder,Integer transactionId,Integer sellerId,String status){
+        TransactionAccountDto dto = this.getOrderByAlipayOrderAndTrasactionId(alipayOrder,transactionId);
         if(!Objects.equals(dto.getSellerId(), sellerId)) {return false;}
-        dto.setStatus(status);
-        this.updateById(dto);
+            dto.setStatus(status);
+            this.updateById(dto);
         return true;
     }
 
@@ -164,17 +159,28 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     }
 
     @Override
-    public  TransactionAccountDto getOrderByAlipayOrder(String alipayOrder){
-        TransactionAccountDto dto = this.query().eq("alipay_order", alipayOrder).one();
-        if (dto != null) {
-            return dto;
+    public List<TransactionAccountDto> getOrderByAlipayOrder(String alipayOrder){
+        List<TransactionAccountDto> dtoList = this.query().eq("alipay_order", alipayOrder).list();
+        if (!dtoList.isEmpty()) {
+            return dtoList;
+        }
+        return null;
+    }
+
+    @Override
+    public TransactionAccountDto getOrderByAlipayOrderAndTrasactionId(String alipayOrder,Integer transactionId){
+        TransactionAccountDto dtoList = this.query().eq("alipay_order", alipayOrder)
+                .eq("id",transactionId).one();
+        if (dtoList!=null) {
+            return dtoList;
         }
         return null;
     }
 
     @Override
     public  boolean upDateStatusOrHash(String text,String status){
-        return this.update().eq("alipay_order", text).or()
+        return this.update().eq("alipay_order", text)
+                .or()
                 .eq("certification_hash", text)
                 .set("status",status).update();
     }

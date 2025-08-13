@@ -301,7 +301,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                      * 这里要对NFT信息进行上链。
                      */
                     weBaseUtils.callContractMethod(ownerAddress,nftContractAddress,methodName,param);
-                    this.nftInfoService.nftUpdateContractAdmin(nftContractAddress,nftID);
+                    //this.nftInfoService.nftUpdateContractAdmin(nftContractAddress,nftID);
                 }
                 yield this.nftInfoService.NFTInfoUpdateAdmin(this.convertToInteger(targetId), ans);
             }

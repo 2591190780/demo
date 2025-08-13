@@ -29,4 +29,5 @@ public class DeliveryInfoDto {
     @Length(min = 11, max = 11)
     String buyerPhonenumber;
 
+    Integer relateId;
 }

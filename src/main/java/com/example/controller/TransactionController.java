@@ -38,11 +38,12 @@ public class TransactionController {
     public RestBean<Void> updateStatus(HttpServletRequest request ,
                                        String alipayOrder,
                                        Integer sellerId,
-                                       String status){
+                                       String status,
+                                       Integer transactionId){
         if (!Objects.equals(jwtUtils.getRequesetId(request), sellerId)) {
             return RestBean.failure(401,"权限不足。");
         }
-        return this.transactionProcessService.updateStatusByAlipayOrder(alipayOrder, sellerId, status)?
+        return this.transactionProcessService.updateStatusByAlipayOrder(alipayOrder,transactionId, sellerId, status)?
                 RestBean.success():RestBean.failure(401,"请检查订单信息。");
     }
 

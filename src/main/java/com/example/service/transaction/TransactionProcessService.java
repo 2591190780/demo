@@ -17,13 +17,13 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     boolean cancelTransactionMulti(HttpServletRequest request,List<String> hashList);
     List<TransactionAccountDto> transactionSelectMulti(HttpServletRequest request,Integer id);
     TransactionAccountDto transactionSelect(HttpServletRequest request,Integer id);
-    TransactionAccountDto getOrderByAlipayOrder(String alipayOrder);
+    List<TransactionAccountDto> getOrderByAlipayOrder(String alipayOrder);
     boolean transactionUpdateDeliveryTime(String alipayOrder);
     boolean upDateStatusOrHash(String text,String status);
     boolean completeTransaction(String OrderID);
     List<TransactionAccountDto> paySelectForSeller(Integer FarmerID);
     List<TransactionAccountDto> paySelectForBuyer(Integer BuyerID);
     TransactionAccountDto getOrderByTransactionID(Integer transactionID);
-
-    boolean updateStatusByAlipayOrder(String alipayOrder,Integer sellerId,String status);
+    TransactionAccountDto getOrderByAlipayOrderAndTrasactionId(String alipayOrder,Integer transactionId);
+    boolean updateStatusByAlipayOrder(String alipayOrder,Integer trasactionId,Integer sellerId,String status);
 }

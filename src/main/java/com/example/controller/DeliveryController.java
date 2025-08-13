@@ -57,7 +57,7 @@ public class DeliveryController {
                                       @Parameter String order,
                                       HttpServletResponse response ) throws IOException {
         Integer uid = this.jwtUtils.getRequesetId(request);
-        Integer buyerId = this.transactionProcessService.getOrderByAlipayOrder(order).getBuyerId();
+        Integer buyerId = this.transactionProcessService.getOrderByAlipayOrder(order).get(0).getBuyerId();
         if(Objects.equals(uid, buyerId))return RestBean.failure(401,"暂无权限。");
         DeliveryInfoDto dto = this.deliveryInfoService.selectDeliveryInfoByAlipayOrder(order);
         if(dto==null){return RestBean.failure(401,"查询失败。");}
@@ -76,8 +76,9 @@ public class DeliveryController {
     public <T>RestBean<T> updateInfo(HttpServletRequest request ,
                                      @Parameter String alipayOrder,
                                      @Parameter String time,
-                                     @Parameter String data){
-      return this.deliveryInfoService.updateDeliveryInfo(request,alipayOrder,data,time) ?
+                                     @Parameter String data,
+                                     @Parameter Integer relateId){
+      return this.deliveryInfoService.updateDeliveryInfo(request,alipayOrder,data,time,relateId) ?
               RestBean.success():RestBean.failure(401,"修改失败，请检查参数。");
     }
 
