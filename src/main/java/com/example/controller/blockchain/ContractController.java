@@ -186,7 +186,7 @@ public class ContractController {
     public <T>RestBean<T> selectSatisfiedRuleUser(HttpServletRequest request,HttpServletResponse response,
                                        @RequestParam("nftID") String nftID,
                                                   @RequestParam("conditionList") List<String> conditionList) throws Exception {
-
+//*  conditionList
         List<AuthorizeVO> dtoList  = this.conditionNFTRule.selectSatisfyCondition(request
                 ,jwtUtils.convertToInteger(nftID),conditionList);
         if(dtoList != null && !dtoList.isEmpty()){

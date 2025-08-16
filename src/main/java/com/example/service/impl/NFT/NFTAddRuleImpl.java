@@ -52,8 +52,10 @@ public class NFTAddRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> imple
         LocalDateTime createTime = LocalDateTime.now();
         nftRuleDto.setCreatedAt(createTime);
         LocalDateTime endTime = null ;
-        if(nftRuleDto.getValidityPeriod()!=-1 && nftRuleDto.getValidityPeriod()!=0){
-            endTime =  createTime.plusDays(nftRuleDto.getValidityPeriod());
+        if(!Objects.equals(nftRuleDto.getValidityPeriod(), "-1")
+                &&
+                !Objects.equals(nftRuleDto.getValidityPeriod(), "0")){
+            endTime =  createTime.plusDays(Long.parseLong(nftRuleDto.getValidityPeriod()));
         }
         //设置NFT过期时间如果不是永久生效的话。过期NFT是不允许再交易的。
         nftRuleDto.setPassActive(endTime);

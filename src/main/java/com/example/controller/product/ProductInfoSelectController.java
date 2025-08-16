@@ -72,6 +72,22 @@ public class ProductInfoSelectController {
             response.getWriter().write(RestBean.success(productVO).asJsonString());
             return null;
     }
+
+    @Auditable(
+            operationType = "SEARCH_CATEGORY",
+            captureBefore = true,
+            captureAfter = true
+    )
+    public RestBean<Void> getCate(@RequestParam @Valid  String id,
+                                                   HttpServletResponse response) throws IOException {
+
+        List<ProductVO> productVO = paService.getProductInfoAccountByFarmerID(this.convertToInteger(id));
+
+        response.setContentType("application/json;Charset=utf-8");
+        response.getWriter().write(RestBean.success(productVO).asJsonString());
+        return null;
+    }
+
     /**
      *
      * @param text select

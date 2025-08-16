@@ -1,12 +1,16 @@
 package com.example.controller;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.annotation.Auditable;
 import com.example.entity.NFTPendingApplication;
+import com.example.entity.PageParam;
+import com.example.entity.PageResult;
 import com.example.entity.RestBean;
-import com.example.entity.dto.NFTInfoDto;
-import com.example.entity.dto.NFTRuleDto;
-import com.example.entity.dto.NFTTransactionDto;
-import com.example.entity.dto.UserNFTDto;
+import com.example.entity.dto.*;
+import com.example.entity.vo.response.NFTCollectionVO;
+import com.example.entity.vo.response.TransactionInfoVO;
+import com.example.mapper.NFT.NFTInfoMapper;
+import com.example.mapper.NFT.UserNFTMapper;
 import com.example.service.AccountService;
 import com.example.service.NFT.*;
 import com.example.utils.JwtUtils;
@@ -17,6 +21,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -42,6 +48,9 @@ public class NFTController {
 
     @Resource
     JwtUtils  jwtUtils;
+    @Resource
+    UserNFTMapper userNFTMapper;
+
 
     @Auditable(
             operationType = "USER_NFT_NFTID_API_NFT",
@@ -61,6 +70,7 @@ public class NFTController {
         return null;
     }
 
+
     @Auditable(
             operationType = "USER_NFT_SELECT_USERID",
             captureBefore = true,
@@ -69,14 +79,75 @@ public class NFTController {
     @GetMapping("/user/nft/selectUserID")
     public <T> RestBean<T> userNFTSelectUserID(HttpServletResponse response,
                                          HttpServletRequest request,
-                                         @RequestParam("userID") String id) throws IOException {
-        List<UserNFTDto> dtoList = this.userNFTService.selectNFTByUid(jwtUtils.convertToInteger(id));
+                                         @RequestParam("userID") String id,@ModelAttribute PageParam pageParam
+        ) throws IOException {
+        // 直接调用Mapper的分页方法
+        Page<UserNFTDto> page = this.userNFTMapper.selectByOwnerId(
+                pageParam.toPage(),jwtUtils.convertToInteger(id)
+        );
+        if (page.getTotal() == 0) {
+            return RestBean.failure(401, "暂时没有NFT。");
+        }
+        List<UserNFTDto> dtoList = page.getRecords();
         if(dtoList == null){
             return RestBean.failure(401,"暂时没有NFT");
         }
+        List<NFTCollectionVO> nftInfoDtoList = new ArrayList<>();
+        for(UserNFTDto dto : dtoList){
+            NFTCollectionVO nftCollectionVO = this.UserNFTCollectionConvert(
+                    request,
+                    dto,
+                    this.nftInfoService.NFTInfoSelectByTemplateId(dto.getNftId()),
+                    this.nftRuleService.nftRuleSelectByActId(dto.getNftId())
+            );
+            if(nftCollectionVO != null){
+                nftInfoDtoList.add(nftCollectionVO);
+            }else {
+                return RestBean.failure(402,"请检查参数。");
+            }
+        }
+        PageResult<NFTCollectionVO> pageResult = new PageResult<>(
+                page.getTotal(),
+                nftInfoDtoList,
+                (int) page.getCurrent(),
+                (int) page.getPages(),
+                (int) page.getSize()
+        );
         response.setContentType("application/json;Charset=utf-8");
-        response.getWriter().write(RestBean.success(dtoList).asJsonString());
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
         return null;
+    }
+
+    private NFTCollectionVO UserNFTCollectionConvert(HttpServletRequest request,UserNFTDto dto,NFTInfoDto dto1,NFTRuleDto dto2){
+        Integer userId = jwtUtils.getRequesetId(request);
+        if (!Objects.equals(userId, dto.getUserId())) return null;
+        NFTCollectionVO vo = new NFTCollectionVO();
+        if (Objects.equals(dto2.getValidityPeriod(), "-1")){
+            dto2.setPassActive(null);
+        }else if (LocalDateTime.now().isAfter(dto2.getPassActive())){
+            if(!this.userNFTService.updateNFTStatus(userId,dto.getNftId(),0)){
+                return null;
+            }
+            vo.setStatus(0);
+        }
+        vo.setNftId(dto.getNftId());
+        vo.setOwnerId(dto.getUserId());
+        vo.setPublicBy(dto1.getPublicBy());
+        vo.setGetNFTTime(dto.getMintTime());
+        vo.setNftName(dto1.getName());
+        vo.setNftCid(dto1.getImageUrl());
+        vo.setTransactionHash(dto.getTxHash());
+        vo.setStatus(dto.getStatus());
+        vo.setNftContractAddress(dto1.getContractAddress());
+        vo.setNftIssuance(dto1.getIssuanceLimit());
+        vo.setMetadataUrl(dto1.getMetadataUrl());
+        if (dto2.getPassActive()!=null){
+            vo.setNftPassTime(dto2.getPassActive());
+        }
+        vo.setValidityPeriod(dto2.getValidityPeriod());
+        vo.setNftCreateTime(dto1.getCreatedAt());
+        vo.setDescription(dto1.getDescription());
+        return vo;
     }
 
     @Auditable(
@@ -379,7 +450,7 @@ public class NFTController {
             captureBefore = true,
             captureAfter = true
     )
-    @GetMapping("/info/select")
+    @GetMapping("/info/select/condition")
     public <T> RestBean<T> selectNFT (HttpServletResponse response,
                                       NFTInfoDto dto) throws IOException {
         List<NFTInfoDto> dtoList = this.nftInfoService.infoSelectByCondition(dto);
@@ -389,6 +460,38 @@ public class NFTController {
             return null;
         }
         return RestBean.failure(401,"暂无该NFT");
+    }
+
+    @Resource
+    NFTInfoMapper nftInfoMapper;
+
+    @Auditable(
+            operationType = "NFT_INFO_SELECT_ALL",
+            captureBefore = true,
+            captureAfter = true
+    )//分页
+    @GetMapping("/info/select/all")
+    public <T>RestBean<T> selectAllInfo(HttpServletResponse response,HttpServletRequest request,
+                                        @ModelAttribute PageParam pageParam) throws IOException {
+        // 直接调用Mapper的分页方法
+        Page<NFTInfoDto> page = this.nftInfoMapper.selectPage(
+                pageParam.toPage()
+        );
+        if (page.getTotal() == 0) {
+            return RestBean.failure(401, "暂无NFT。");
+        }
+        List<NFTInfoDto> dtoList = page.getRecords();
+        // 构建分页结果
+        PageResult<NFTInfoDto> pageResult = new PageResult<>(
+                page.getTotal(),
+                dtoList,
+                (int) page.getCurrent(),
+                (int) page.getPages(),
+                (int) page.getSize()
+        );
+        response.setContentType("application/json;Charset=utf-8");
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
+        return null;
     }
 
     @Auditable(

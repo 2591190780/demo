@@ -45,11 +45,16 @@ public class UserNFTImpl extends ServiceImpl<UserNFTMapper, UserNFTDto> implemen
     }
 
     @Override
-    public  boolean deleteUserNFT(Integer id,Integer nftid){
+    public  boolean deleteUserNFT(Integer id,Integer nftid){ //销毁NFT
         QueryWrapper<UserNFTDto> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id",id).eq("nft_id", nftid);
         this.userNFTMapper.delete(wrapper);
         return true;
+    }
+
+    @Override
+    public boolean updateNFTStatus(Integer uid,Integer nftId ,Integer status){
+        return this.update().eq("user_id",uid).eq("nft_id",nftId).set("status",status).update();
     }
 
 
@@ -64,7 +69,7 @@ public class UserNFTImpl extends ServiceImpl<UserNFTMapper, UserNFTDto> implemen
 
         //检查NFT是否已过期。
         LocalDateTime now = LocalDateTime.now();
-        if(nftRuleDto.getValidityPeriod()!=-1){
+        if(!Objects.equals(nftRuleDto.getValidityPeriod(), "-1")){
             if(now.isAfter(nftRuleDto.getPassActive())){return false;}
         }
         //如果是自动发布的话还需要查询NFT信息内的NFT剩余数量是否足够

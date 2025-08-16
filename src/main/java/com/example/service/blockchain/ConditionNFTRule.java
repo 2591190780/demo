@@ -68,6 +68,8 @@ public class ConditionNFTRule {
      *  "条件X" 的格式为 "名称:关系:值" 以冒号分割。
      *  由管理员上传该NFT智能合约地址。
      *  然后筛选满足规则的 所有用户（按时间排序）
+     *
+
      */
     //这里是最后一块了。/
     public List<AuthorizeVO> selectSatisfyCondition(HttpServletRequest request
@@ -137,6 +139,7 @@ public class ConditionNFTRule {
                     "buyer",   "buyer_id",
                     "seller",  "seller_id",
                     "product", "product_id"
+                    //这里添加聚合字段
             )
     );
 

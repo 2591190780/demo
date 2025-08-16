@@ -21,7 +21,7 @@ public class NFTRuleDto {
     private String ruleDescription;
     private Integer templateId;
     private String conditionValue;
-    private Integer validityPeriod;
+    private String validityPeriod;
     private int isActive;
     private LocalDateTime createdAt;
     private int tableName;

@@ -14,4 +14,5 @@ public interface UserNFTService extends IService<UserNFTDto> {
     UserNFTDto selectNFTByUNid(Integer userId,Integer nftId);
     boolean UserNFT(NFTTransactionDto dto);
     boolean deleteUserNFT(Integer id,Integer nftid);
+    boolean updateNFTStatus(Integer uid,Integer nftId ,Integer status);
 }
