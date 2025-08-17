@@ -69,7 +69,6 @@ public class ConditionNFTRule {
      *  由管理员上传该NFT智能合约地址。
      *  然后筛选满足规则的 所有用户（按时间排序）
      *
-
      */
     //这里是最后一块了。/
     public List<AuthorizeVO> selectSatisfyCondition(HttpServletRequest request

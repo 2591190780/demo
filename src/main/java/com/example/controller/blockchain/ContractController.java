@@ -3,13 +3,20 @@ package com.example.controller.blockchain;
 import com.alipay.api.domain.AccountDTO;
 import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
+import com.example.entity.dto.Account;
+import com.example.entity.dto.NFTInfoDto;
+import com.example.entity.dto.NFTRuleDto;
 import com.example.entity.vo.request.ContractCallRequest;
 import com.example.entity.vo.response.AuthorizeVO;
+import com.example.entity.vo.response.NFTRuleVO;
 import com.example.service.AccountService;
+import com.example.service.NFT.NFTInfoService;
+import com.example.service.NFT.NFTRuleService;
 import com.example.service.blockchain.ConditionNFTRule;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
 import com.example.utils.WeBaseUtils;
+import com.google.gson.Gson;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -39,6 +46,11 @@ public class ContractController {
     JwtUtils jwtUtils;
     @Resource
     AccountService accountService;
+    @Resource
+    NFTInfoService nftInfoService;
+    @Resource
+    NFTRuleService nftRuleService;
+
 
     // 获取所有简化合约信息
     @Auditable(
@@ -170,8 +182,38 @@ public class ContractController {
                 Const.CONTRACT_FOR_NFT_RULE_METHOD_GETRULEBYTOKENID
                 ,param);
         System.out.println(result);
+        NFTInfoDto nftInfoDto = this.nftInfoService.NFTInfoSelectByTemplateId(jwtUtils.convertToInteger(nftID));
+        NFTRuleDto nftRuleDto = this.nftRuleService.nftRuleSelectByActId(jwtUtils.convertToInteger(nftID));
+        Account account = this.accountService.findAccountById(nftInfoDto.getPublicBy());
+
+        //构建返回参数
+        NFTRuleVO nftRuleVO = new NFTRuleVO();
+        //NFT基本信息
+        nftRuleVO.setContractAddress(nftInfoDto.getContractAddress()); //NFT合约地址
+        nftRuleVO.setTemplateId(jwtUtils.convertToInteger(nftID)); //NFT id
+        nftRuleVO.setName(nftInfoDto.getName()); // NFT名称
+        nftRuleVO.setDescription(nftInfoDto.getDescription()); //NFT 描述
+        nftRuleVO.setImageUrl(nftInfoDto.getImageUrl()); // NFT 图像信息
+        nftRuleVO.setNftLevel(nftInfoDto.getNftLevel());  //NFT 等级
+        nftRuleVO.setIsActive(nftInfoDto.getIsActive()); // NFT 激活状态
+        nftRuleVO.setIssuanceLimit(nftInfoDto.getIssuanceLimit()); // NFT 发行限制数量
+        nftRuleVO.setRemainCount(nftInfoDto.getRemainCount()); //NFT 剩余数量
+        nftRuleVO.setCreatedAt(nftInfoDto.getCreatedAt()); //NFT 创建时间
+        nftRuleVO.setMetadataUrl(nftInfoDto.getMetadataUrl());  // NFT 元数据
+        //NFT发布者信息
+        nftRuleVO.setPublicBy(nftInfoDto.getPublicBy());  // NFT 发布者的ID
+        nftRuleVO.setPublicName(account.getUsername()); //NFT 发布者的昵称
+        nftRuleVO.setPublicEmail(account.getEmail()); // NFT 发布者的邮箱
+        nftRuleVO.setPublicWalletAddress(account.getWalletAddress()); //NFT发布者的钱包地址
+        nftRuleVO.setPublicImageUrl(account.getUserImgurl()); //NFT 发布者的头像CID
+        //NFT链上规则信息、链下描述信息
+        Gson gson = new Gson();
+        String dataStr = gson.toJson(result.get("data"));
+        nftRuleVO.setRules(dataStr);  // NFT 链上规则信息
+        nftRuleVO.setRuleDescription(nftRuleDto.getRuleDescription()); // NFT的规则描述
+
         response.setContentType("application/json;charset=UTF-8");
-        response.getWriter().write(RestBean.success(result.get("data")).asJsonString());
+        response.getWriter().write(RestBean.success(nftRuleVO).asJsonString());
         return  null;
 
     }

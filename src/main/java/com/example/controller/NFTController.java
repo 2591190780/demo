@@ -10,6 +10,7 @@ import com.example.entity.dto.*;
 import com.example.entity.vo.response.NFTCollectionVO;
 import com.example.entity.vo.response.TransactionInfoVO;
 import com.example.mapper.NFT.NFTInfoMapper;
+import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.mapper.NFT.UserNFTMapper;
 import com.example.service.AccountService;
 import com.example.service.NFT.*;
@@ -40,16 +41,45 @@ public class NFTController {
     NFTAddInfoService nftAddInfoService;
     @Resource
     NFTAddRuleService nftAddRuleService;
-
+    @Resource
+    AccountService accountService;
     @Resource
     NFTTransactionService nftTransactionService;
     @Resource
     UserNFTService userNFTService;
-
     @Resource
     JwtUtils  jwtUtils;
     @Resource
     UserNFTMapper userNFTMapper;
+    @Resource
+    NFTTransactionMapper nftTransactionMapper;
+
+    @Auditable(
+            operationType = "NFT_TRANSACTION_GET_ALL",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/transaction/get/all")
+    public <T> RestBean<T> getAllNFT(@ModelAttribute PageParam pageParam,HttpServletResponse response) throws IOException {
+        Page<NFTTransactionDto> page = this.nftTransactionMapper.selectPage(
+                pageParam.toPage()
+        );
+        if (page.getTotal() == 0) {
+            return RestBean.failure(401, "暂无NFT。");
+        }
+        List<NFTTransactionDto> dtoList = page.getRecords();
+        // 构建分页结果
+        PageResult<NFTTransactionDto> pageResult = new PageResult<>(
+                page.getTotal(),
+                dtoList,
+                (int) page.getCurrent(),
+                (int) page.getPages(),
+                (int) page.getSize()
+        );
+        response.setContentType("application/json;Charset=utf-8");
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
+        return null;
+    }
 
 
     @Auditable(
@@ -534,20 +564,21 @@ public class NFTController {
             captureAfter = true
     )
     @GetMapping("/info/select/publicid")
-    public <T> RestBean<T> selectPublicID(@RequestParam String id,
+    public <T> RestBean<T> selectPublicID(@RequestParam String id,@ModelAttribute PageParam pageParam,
                                           HttpServletResponse response) throws IOException {
         List<NFTInfoDto> dtoList = this.nftInfoService.NFTInfoSelectByPublic(jwtUtils.convertToInteger(id));
         if (!dtoList.isEmpty()){
+            PageResult<NFTInfoDto> pageResult = ControllerPageHelper.paginateList(
+                    dtoList, pageParam
+            );
             response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
         }
         return RestBean.failure(401,"暂无该NFT");
     }
 
 
-    @Resource
-    AccountService accountService;
 
     @Auditable(
             operationType = "NFT_CONTRACT_ADD",

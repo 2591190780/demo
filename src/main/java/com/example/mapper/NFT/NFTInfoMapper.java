@@ -14,4 +14,5 @@ public interface NFTInfoMapper extends BaseMapper<NFTInfoDto> {
     @Select("SELECT * FROM nft_template")
     Page<NFTInfoDto> selectPage(
             Page<NFTInfoDto> page);
+
 }
