@@ -37,7 +37,8 @@ public class NFTInfoDto {
     private Integer issuanceLimit;
     private Integer remainCount;
 
-    private int isActive;
+
+    private Integer isActive;
     private LocalDateTime createdAt;
 
 

@@ -106,7 +106,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                     targetInfo = redisUtils.getTargetInfo(targetType, targetId);
                 }
                 //redis缓存中 过期时间以ttl存储。需要反推。
-                long expireMillis  =  template.opsForValue().getOperations().getExpire(applyListKey);
+                long expireMillis  =  template.opsForValue().getOperations().getExpire(compositeKey);
                 long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;
                 LocalDateTime createTime = LocalDateTime.now().minusSeconds(livedMillis);
                 LocalDateTime deadTime = createTime.plusSeconds(EXPIRE_DURATION.toSeconds());
@@ -166,7 +166,7 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                         targetInfo = redisUtils.getTargetInfo(targetType, targetId);
                     }
                     //redis缓存中 过期时间以ttl存储。需要反推。
-                    long expireMillis  =  template.opsForValue().getOperations().getExpire(applyListKey);
+                    long expireMillis  =  template.opsForValue().getOperations().getExpire(compositeKey);
                     long livedMillis = EXPIRE_DURATION.toSeconds() - expireMillis ;
                     LocalDateTime createTime = LocalDateTime.now().minusSeconds(livedMillis);
                     LocalDateTime deadTime = createTime.plusSeconds(EXPIRE_DURATION.toSeconds());
@@ -310,6 +310,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
 
             case "nft_rule" ->//管理员同意了此规则，需要是上传规则至区块链合约上方法在ConditionNFTRule.XXXreport.
                     this.nftRuleService.nftRuleUpdateAdmin(convertToInteger(targetId),ans);
+
+
             case "sensor" -> this.sensorInfoUpdateService.updateSensorInfoDtoadmin(
                     new SensorInfoDto(
                                     this.convertToInteger(targetId),

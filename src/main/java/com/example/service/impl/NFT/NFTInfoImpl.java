@@ -51,28 +51,31 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
         if (params.getTemplateId() != null) {
             queryWrapper.eq("template_id", params.getTemplateId());
         }
+        if (params.getMetadataUrl() != null) {
+            queryWrapper.like("metadataUrl", params.getMetadataUrl());
+        }
         if (params.getPublicBy() != null) {
             queryWrapper.eq("public_by", params.getPublicBy());
         }
 
-        if (params.getIsActive() == 0 || params.getIsActive() == 1) {
+        if (params.getIsActive() !=null) {
             queryWrapper.eq("is_active", params.getIsActive());
         }
 
         // 模糊查询条件
-        if (StringUtils.isNotBlank(params.getName())) {
+        if ( params.getName() != null) {
             queryWrapper.like("name", params.getName());
         }
-        if (StringUtils.isNotBlank(params.getDescription())) {
+        if (params.getDescription()!=null) {
             queryWrapper.like("description", params.getDescription());
         }
 
         // URL精确查询
-        if (StringUtils.isNotBlank(params.getImageUrl())) {
+        if (params.getImageUrl()!=null) {
             queryWrapper.eq("img_url", params.getImageUrl());
         }
         // 等级匹配
-        if (StringUtils.isNotBlank(params.getNftLevel())) {
+        if (params.getNftLevel()!=null) {
             queryWrapper.eq("nft_level", params.getNftLevel());
         }
 

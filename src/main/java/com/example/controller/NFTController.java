@@ -482,16 +482,21 @@ public class NFTController {
     )
     @GetMapping("/info/select/condition")
     public <T> RestBean<T> selectNFT (HttpServletResponse response,
-                                      NFTInfoDto dto) throws IOException {
+                                       NFTInfoDto dto, @ModelAttribute PageParam pageParam) throws IOException {
+
+
         List<NFTInfoDto> dtoList = this.nftInfoService.infoSelectByCondition(dto);
         if (!dtoList.isEmpty()){
             response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+
+            PageResult<NFTInfoDto> pageResult = ControllerPageHelper.paginateList(
+                    dtoList, pageParam
+            );
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
         }
         return RestBean.failure(401,"暂无该NFT");
     }
-
     @Resource
     NFTInfoMapper nftInfoMapper;
 

@@ -40,6 +40,9 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
 
     @Override
     public NFTRuleDto nftRuleSelectByActId (Integer id){
+
+
+
         return this.query().eq("template_id", id)
                 .eq("is_active",1).one();
     }
@@ -75,11 +78,13 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
     @Override
     public  boolean nftRuleUpdateAdmin(Integer id,byte answer){
         //一个nft只允许一个规则生效。
+
+        Integer nftid = nftRuleSelectByID(id).getTemplateId();
         if(answer == 1){
-            List<NFTRuleDto> dtoList = this.nftRuleSelectByTemplateID(id);
+            List<NFTRuleDto> dtoList = this.nftRuleSelectByTemplateID(nftid);
             for (NFTRuleDto dto : dtoList) {
                 if (dto.getIsActive() == 1) {
-                    dto.setIsActive(0);
+                    this.update().eq("rule_id",dto.getRuleId()).set("is_active",0).update();
                 }
             }
         }

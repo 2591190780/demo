@@ -174,6 +174,10 @@ public class ContractController {
                                        @RequestParam("nftID") String nftID) throws Exception {
         String userCA = accountService.findAccountById(jwtUtils.getRequesetId(request)).getWalletAddress();
         if (userCA==null) return RestBean.failure(401,"错误的账户");
+        if(nftRuleService.nftRuleSelectByActId(jwtUtils.convertToInteger(nftID))==null){
+            return RestBean.failure(401,"查询不到该NFT规则。");
+        }
+
         List<Object> param = new ArrayList<>();
         param.add(0,jwtUtils.convertToInteger(nftID));
         Map<String, Object> result
