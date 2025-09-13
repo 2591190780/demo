@@ -21,5 +21,5 @@ public class AuthorizeVO {
     // 钱包地址字段
     String walletAddress;
     String phoneNumber;
-    String img_url;
+    String imgUrl;
 }

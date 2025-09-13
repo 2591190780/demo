@@ -88,7 +88,7 @@ public class IPFSController {
             //添加对象操作
         if (this.operationTypeImgAdd(request,operationType, String.valueOf(userId),id,cid)){
 
-            return RestBean.success("上传成功，图片的CID为"+cid);
+            return RestBean.success("上传成功，图片的CID为:"+cid);
         };
 
         // 上传到IPFS

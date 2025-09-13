@@ -48,9 +48,10 @@ public class SecurityConfiguration {
         return http
                 .authorizeHttpRequests(conf -> conf
                         .requestMatchers(
-                                "/doc.html",
+                                "/doc.html", "/doc.html/**",
                                 "/webjars/**",
-                                "/v3/api-docs/**",
+                                "/swagger-ui/**", "/swagger-ui.html",
+                                "/v3/api-docs", "/v3/api-docs/**",      // ← 包含 /v3/api-docs/default
                                 "/swagger-resources/**",
                                 "/alipay/notify",
                                 "/alipay/alipay/return"//测试阶段的alipay需要开放安全权限
@@ -112,7 +113,7 @@ public class SecurityConfiguration {
         String address = account.getWalletAddress();
         vo.setWalletAddress(address);
         String role = account.getRole();
-        vo.setImg_url(account.getUserImgurl());
+        vo.setImgUrl(account.getUserImgurl());
         //数据库传入"1","2","3"，后端判断
         switch (role) {
             case "1":

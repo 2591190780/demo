@@ -26,7 +26,7 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
 
     @Override
     public boolean setDefaultAddress(Integer id, Integer ans){
-        this.defaultSetting(id);
+        this.defaultSetting(id) ;
         return this.update().eq("id",id)
                 .set("default_address",ans).update();
     }
@@ -77,7 +77,7 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
     }
 
     private void defaultSetting(Integer id){
-        List<AddressDto> dtoList = this.findByUserId(id);
+        List<AddressDto> dtoList = this.findByUserId(this.findById(id).getUserId());
         for (AddressDto dto : dtoList) {
             if (dto.getDefaultAddress() == 1){
                 this.update().eq("id",dto.getId())
