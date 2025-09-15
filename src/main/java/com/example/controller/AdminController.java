@@ -131,9 +131,9 @@ public class AdminController {
 
     @GetMapping("/check/nftRule/in/bc")
     public void checkNFTRuleInBiosChain (
-            HttpServletRequest request,@RequestParam("nftId") String nftId,HttpServletResponse response
+            HttpServletRequest request,@RequestParam("nftRuleId") String nftRuleId,HttpServletResponse response
     ) throws IOException {
-        int NftId = jwtUtils.convertToInteger(nftId);
+        int NftId = jwtUtils.convertToInteger(nftRuleId);
         int uid = jwtUtils.getRequesetId(request);
 
         response.setContentType("application/json;Charset=utf-8");
@@ -141,7 +141,7 @@ public class AdminController {
             response.getWriter().write(RestBean.failure(401,"权限不足。").asJsonString());
             return;
         }
-        if (this.nftRuleService.nftRuleSelectByActId(NftId).getRuleInchainnode()==0){
+        if (this.nftRuleService.nftRuleSelectByID(NftId).getRuleInchainnode()==0){
             response.getWriter().write(RestBean.failure(401,"链上规则不存在。").asJsonString());
             return;
         }

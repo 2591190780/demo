@@ -144,23 +144,36 @@ public class ContractController {
             captureAfter = true
     )
     @PutMapping("/nft/rule/report")
-    public <T> RestBean<T> ruleReport(HttpServletRequest request,
+    public void ruleReport(HttpServletRequest request,HttpServletResponse response,
                                       @RequestBody @Valid Map<String, Object> body) throws Exception {
 
         String nftID = (String) body.get("nftID");
+        Integer rId = jwtUtils.convertToInteger((String) body.get("ruleID")) ;
+        Integer nId = jwtUtils.convertToInteger(nftID);
         ObjectMapper objectMapper = new ObjectMapper();
         List<Map<String, Object>> ruleList = objectMapper.convertValue(
                 body.get("ruleList"),
                 new TypeReference<List<Map<String, Object>>>() {});
         Integer id = this.jwtUtils.getRequesetId(request);
+
+        response.setContentType("application/json;charset=UTF-8");
         //智能合约只能由管理员上传。
-        if(!Objects.equals(accountService.findAccountById(id).getRole(), "3"))
-            return RestBean.failure(401,"权限不足");
+        if(!Objects.equals(accountService.findAccountById(id).getRole(), "3")){
+            response.getWriter().write(RestBean.failure(401,"权限不足").asJsonString());
+        return;
+        }
         if (
         this.conditionNFTRule.NFTRuleReport(accountService.findAccountById(id).getWalletAddress(),
-                jwtUtils.convertToInteger(nftID),ruleList))
-            return  RestBean.success();
-        return RestBean.failure(500,"请检查参数");
+                nId ,ruleList)){
+           if ( this.nftRuleService.updateStatusRuleInChainNode(rId , nId,1)) {
+               response.getWriter().write(RestBean.success().asJsonString());
+               return ;
+           }
+            response.getWriter().write(RestBean.failure(500,"该规则已上链，请勿重复提交。").asJsonString());
+            return ;
+        }
+        response.getWriter().write(RestBean.failure(500,"请检查参数").asJsonString());
+        return ;
     }
 
 

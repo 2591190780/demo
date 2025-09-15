@@ -92,6 +92,16 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
                 .update();
     }
 
+    @Override
+    public boolean updateStatusRuleInChainNode(Integer ruleId , Integer nftId,Integer status){
+       if (this.nftRuleSelectByID(ruleId).getRuleInchainnode()==0){
+           this.update().eq("rule_id",ruleId).
+                   eq("template_id",nftId).set("rule_inchainnode",status).update();
+           return true;
+       }
+       return false;
+    }
+
 
 
     private String tableChoose(int type){
