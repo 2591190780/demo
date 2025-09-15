@@ -233,6 +233,10 @@ public class ContractController {
                                        @RequestParam("nftID") String nftID,
                                                   @RequestParam("conditionList") List<String> conditionList) throws Exception {
 //*  conditionList
+        //检查nft的规则信息链上是否存在。
+        if (this.nftRuleService.nftRuleSelectByActId(jwtUtils.convertToInteger(nftID)).getRuleInchainnode()==0){
+            return RestBean.failure(401,"该规则链上信息不存在。");
+        }
         List<AuthorizeVO> dtoList  = this.conditionNFTRule.selectSatisfyCondition(request
                 ,jwtUtils.convertToInteger(nftID),conditionList);
         if(dtoList != null && !dtoList.isEmpty()){
@@ -244,5 +248,24 @@ public class ContractController {
     }
 
 
+    @Auditable(
+            operationType = "CONTRACT_SEND_NFT",
+            captureBefore = true,
+            captureAfter = true
+    )
+    @GetMapping("/nft/send/by/public")
+    public <T>RestBean<T> nftSendByPublic(HttpServletRequest request,HttpServletResponse response,
+                                                    @RequestParam("fromId") String fromId,
+                                                  @RequestParam("toIdList") String toIdList,
+                                          @RequestParam("nftId") String nftId
+                                                  ) throws Exception {
+            //前端传入了符合条件的对象IdList
+
+            //执行NFT交易函数 from_id --> to_id
+
+
+        return null;
+
+    }
 
 }

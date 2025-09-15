@@ -302,7 +302,7 @@ public class ConditionNFTRule {
                 moneyTh = Long.parseLong(c.split(":")[2]);
             } else if (c.startsWith("time:<>:")) {
                 String raw = c.substring("time:<>:".length());
-                String[] se = raw.split("!!");  // 用 | 分隔
+                String[] se = raw.split("!!");  // 用 ! 分隔
                 start = LocalDateTime.parse(se[0], fmt);
                 end   = LocalDateTime.parse(se[1], fmt);
             }

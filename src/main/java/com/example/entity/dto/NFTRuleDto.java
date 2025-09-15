@@ -32,5 +32,5 @@ public class NFTRuleDto {
     private String applyHash;
     private LocalDateTime updateTime;
     private LocalDateTime passActive;
-
+    private Integer ruleInchainnode;
 }

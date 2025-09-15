@@ -8,9 +8,12 @@ import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.request.ApplyHandlingRequestVO;
 import com.example.entity.vo.response.PendingApplicationVO;
 
+import com.example.service.AccountService;
 import com.example.service.AdminService;
+import com.example.service.NFT.NFTRuleService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 
+import com.example.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -18,10 +21,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 
 @RestController
@@ -34,6 +39,8 @@ public class AdminController {
 
     @Resource
     AdminService adminService;
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @Auditable(
             operationType = "UPDATE_ALL_ADMIN_OPERATE",
@@ -115,6 +122,30 @@ public class AdminController {
         }
         response.getWriter().write(RestBean.failure(401,"请检查权限或没有任何请求").asJsonString());
         return null;
+    }
+
+    @Resource
+    NFTRuleService nftRuleService;
+    @Resource
+    AccountService accountService;
+
+    @GetMapping("/check/nftRule/in/bc")
+    public void checkNFTRuleInBiosChain (
+            HttpServletRequest request,@RequestParam("nftId") String nftId,HttpServletResponse response
+    ) throws IOException {
+        int NftId = jwtUtils.convertToInteger(nftId);
+        int uid = jwtUtils.getRequesetId(request);
+
+        response.setContentType("application/json;Charset=utf-8");
+        if (!Objects.equals(this.accountService.findAccountById(uid).getRole(), "3")){
+            response.getWriter().write(RestBean.failure(401,"权限不足。").asJsonString());
+            return;
+        }
+        if (this.nftRuleService.nftRuleSelectByActId(NftId).getRuleInchainnode()==0){
+            response.getWriter().write(RestBean.failure(401,"链上规则不存在。").asJsonString());
+            return;
+        }
+        response.getWriter().write(RestBean.success().asJsonString());
     }
 
 }
