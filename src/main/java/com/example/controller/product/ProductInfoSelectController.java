@@ -1,12 +1,19 @@
 package com.example.controller.product;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.annotation.Auditable;
+import com.example.controller.ControllerPageHelper;
+import com.example.entity.PageParam;
+import com.example.entity.PageResult;
 import com.example.entity.RestBean;
 import com.example.entity.vo.response.ProductVO;
+import com.example.mapper.product.ProductInfoSelectAccountMapper;
 import com.example.service.product.ProductInfoSelectAccountService;
+import com.example.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +28,12 @@ public class ProductInfoSelectController {
 
     @Resource
     ProductInfoSelectAccountService paService;
+
+    @Resource
+    ProductInfoSelectAccountMapper  paMapper;
+
+    @Resource
+    JwtUtils jwtUtils;
 
     /**
      *
@@ -62,14 +75,24 @@ public class ProductInfoSelectController {
     )
         @GetMapping("/search/farmerId")
         public RestBean<Void> getProductInfoByFarmerID(@RequestParam @Valid  String id,
-                                                       HttpServletResponse response) throws IOException {
+                                                       HttpServletResponse response,
+                                                       @ModelAttribute PageParam pageParam) throws IOException {
 
-            List<ProductVO> productVO = paService.getProductInfoAccountByFarmerID(this.convertToInteger(id));
-            if (productVO.isEmpty()) {
+           // List<ProductVO> productVO = paService.getProductInfoAccountByFarmerID(this.convertToInteger(id));
+            Page<ProductVO> page = paMapper.selectBySellerIdPage(pageParam.toPage(),this.convertToInteger(id));
+            if (page.getTotal()==0) {
                 return RestBean.failure(404, "该农户暂无产品");
             }
+            List<ProductVO> voList= page.getRecords();
+            PageResult<ProductVO> pageResult = new PageResult<>(
+                    page.getTotal(),
+                    voList,
+                    (int) page.getCurrent(),
+                    (int) page.getPages(),
+                    (int) page.getSize()
+            );
             response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(productVO).asJsonString());
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
     }
 
@@ -78,6 +101,7 @@ public class ProductInfoSelectController {
             captureBefore = true,
             captureAfter = true
     )
+    @GetMapping("/search/category")
     public RestBean<Void> getCate(@RequestParam @Valid  String id,
                                                    HttpServletResponse response) throws IOException {
 
@@ -102,18 +126,23 @@ public class ProductInfoSelectController {
             captureAfter = true
     )
     @GetMapping("/search/text")
-    public RestBean<Void> getProductInfoByName(@RequestParam String text,
-                                                  HttpServletResponse response) throws IOException {
-
-        List<ProductVO> productVO = paService.getProductInfoAccountByName(text);
+    public RestBean<Void> getProductInfoByName(HttpServletRequest request,
+                                               @RequestParam String text, @ModelAttribute PageParam pageParam,
+                                               HttpServletResponse response) throws IOException {
+        Integer fid = jwtUtils.getRequesetId(request);
+        List<ProductVO> productVO = paService.getProductInfoAccountByName(text,fid);
         if (productVO.isEmpty()) {
             return RestBean.failure(404, "该农户暂无产品");
         }
+
+        PageResult<ProductVO> pageResult = ControllerPageHelper.paginateList(
+                productVO, pageParam
+        );
+
         response.setContentType("application/json;Charset=utf-8");
-        response.getWriter().write(RestBean.success(productVO).asJsonString());
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
         return null;
     }
-
     /**
      *  select
      * @param id
@@ -125,7 +154,6 @@ public class ProductInfoSelectController {
      * @return
      * @throws IOException
      */
-
     @Auditable(
             operationType = "SEARCH_MULTI_PRODUCT",
             captureBefore = true,

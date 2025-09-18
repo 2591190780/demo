@@ -36,8 +36,8 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     }
 
     @Override
-    public List<ProductVO> getProductInfoAccountByName(String text){  //字符模糊查询
-        List<ProductInfoAccountDto> productInfoAccountDto = this.findProductInfoAccountByName(text);
+    public List<ProductVO> getProductInfoAccountByName(String text,Integer fid){  //字符模糊查询
+        List<ProductInfoAccountDto> productInfoAccountDto = this.findProductInfoAccountByName(text,fid);
         return this.convertToProductVOList(productInfoAccountDto);
     }
 
@@ -96,18 +96,23 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
         if(farmerID==null)return Collections.emptyList();
         return query()
                 .eq("farmer_id", farmerID)
+                .orderByDesc("is_active")   // 先按激活状态排序（激活的在前）
+                .orderByDesc("create_time") // 再按时间倒序
                 .list();
     }
 
     /**
      * 根据字符串查询
      */
-    private List<ProductInfoAccountDto> findProductInfoAccountByName(String text) {
+    private List<ProductInfoAccountDto> findProductInfoAccountByName(String text,Integer fid) {
         if(text==null)return Collections.emptyList();
         return query()
+                .eq("farmer_id", fid)
                 .like("name", text).or()
                 .like("category", text).or()
                 .like("origin_location", text)
+                .orderByDesc("is_active")
+                .orderByDesc("create_time")
                 .list();
     }
 

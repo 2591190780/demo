@@ -129,6 +129,7 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
     @Override
     public List<NFTPendingApplication>  getApplyForNFT(HttpServletRequest request) {
         Integer id = jwtUtils.getRequesetId(request);
+
         Set<String> keys = stringRedisTemplate.opsForSet().members(Const.NFT_TRANSACTION+":"+id);
         if (keys != null && keys.isEmpty()) return null;
         for (String key : keys) {
