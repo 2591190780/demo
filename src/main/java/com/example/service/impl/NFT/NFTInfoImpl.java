@@ -4,8 +4,10 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.NFTInfoDto;
+import com.example.entity.dto.NFTRuleDto;
 import com.example.mapper.NFT.NFTInfoMapper;
 import com.example.service.NFT.NFTInfoService;
+import com.example.service.NFT.NFTRuleService;
 import com.example.utils.InfoToRedisUtils;
 import com.example.utils.JwtUtils;
 import jakarta.annotation.Resource;
@@ -21,7 +23,8 @@ import java.util.Objects;
 public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implements NFTInfoService {
 
     private final JwtUtils jwtUtils;
-
+    @Resource
+    NFTRuleService ruleService;
     public NFTInfoImpl(JwtUtils jwtUtils) {
         this.jwtUtils = jwtUtils;
     }
@@ -46,7 +49,6 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
     @Override
     public List<NFTInfoDto> infoSelectByCondition(NFTInfoDto params){
         QueryWrapper<NFTInfoDto> queryWrapper = new QueryWrapper<>();
-
         // 精确匹配条件
         if (params.getTemplateId() != null) {
             queryWrapper.eq("template_id", params.getTemplateId());
@@ -61,7 +63,6 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
         if (params.getIsActive() !=null) {
             queryWrapper.eq("is_active", params.getIsActive());
         }
-
         // 模糊查询条件
         if ( params.getName() != null) {
             queryWrapper.like("name", params.getName());
@@ -69,7 +70,6 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
         if (params.getDescription()!=null) {
             queryWrapper.like("description", params.getDescription());
         }
-
         // URL精确查询
         if (params.getImageUrl()!=null) {
             queryWrapper.eq("img_url", params.getImageUrl());
@@ -78,9 +78,25 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
         if (params.getNftLevel()!=null) {
             queryWrapper.eq("nft_level", params.getNftLevel());
         }
+        return this.checkNFTAndNFTRuleStatus(this.list(queryWrapper));
+    }
 
-        return this.list(queryWrapper);
+    private List<NFTInfoDto> checkNFTAndNFTRuleStatus(List<NFTInfoDto> nftInfoDtoList){
+        if (ObjectUtils.isEmpty(nftInfoDtoList)) {
+            return null;
         }
+        for (NFTInfoDto nftInfoDto : nftInfoDtoList) {
+            NFTRuleDto ruleDto = ruleService.nftRuleSelectByActId(nftInfoDto.getTemplateId());
+            if (ruleDto != null) {
+                if(Objects.equals(ruleDto.getValidityPeriod(), "-1")){continue;}
+                this.ruleService.updateActiveByPassiveTime(ruleDto);
+            }else{
+                this.update().eq("template_id",nftInfoDto.getTemplateId()).set("is_active", 0).update();
+            }
+        }
+        return nftInfoDtoList;
+    }
+
     /**
      * NFT在发行后需要上链，所以不能更改基本信息。
      */

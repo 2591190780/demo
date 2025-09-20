@@ -15,4 +15,5 @@ public interface NFTRuleService extends IService<NFTRuleDto> {
     boolean nftRuleUpdateAdmin(Integer id,byte answer);
     NFTRuleDto nftRuleSelectByActId (Integer id);
     boolean updateStatusRuleInChainNode(Integer ruleId , Integer nftId,Integer status);
+    boolean updateActiveByPassiveTime(NFTRuleDto params);
 }

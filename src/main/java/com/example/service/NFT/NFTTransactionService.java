@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface NFTTransactionService extends IService<NFTTransactionDto> {
 
-    boolean addAgreeNFTTransaction(NFTTransactionDto nftTransactionDto) throws Exception;
+    boolean replyNFTTransaction(NFTTransactionDto nftTransactionDto,Integer ans) throws Exception;
     List<NFTTransactionDto> selectNFTTransactionByNFTId(Integer nftId);
     NFTTransactionDto selectNFTTransactionById(Integer Id);
     List<NFTTransactionDto> selectNFTTransactionByFromId(Integer fromID);
@@ -17,7 +17,7 @@ public interface NFTTransactionService extends IService<NFTTransactionDto> {
     List<NFTTransactionDto> selectNFTCondition(NFTTransactionDto dto);
     NFTTransactionDto selectOrderByTime(Integer nftId);
     boolean buyApplyForNFT(NFTPendingApplication application);
-    List<NFTPendingApplication> getApplyForNFT(HttpServletRequest request);
+    List<NFTPendingApplication>  getApplyForNFT(Integer id);
 
 
 }

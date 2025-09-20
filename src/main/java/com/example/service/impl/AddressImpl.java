@@ -34,7 +34,7 @@ public class AddressImpl extends ServiceImpl<AddressMapper, AddressDto> implemen
 
     @Override
     public List<AddressDto> findByUserId(Integer id){
-        return this.query().eq("user_id", id).list();
+        return this.query().eq("user_id", id).orderByDesc("id").list();
     }
 
     @Override

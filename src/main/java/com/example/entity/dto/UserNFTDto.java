@@ -20,7 +20,6 @@ public class UserNFTDto {
     @TableId(type = IdType.AUTO)
     private BigInteger id;
     private Integer userId;
-
     private Integer nftId;
     @Length(min = 80, max = 80)
     private String tokenId;   //链上的token

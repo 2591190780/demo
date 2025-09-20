@@ -1,14 +1,14 @@
 package com.example.controller;
 
+import com.alipay.api.domain.AccountVO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.annotation.Auditable;
-import com.example.entity.NFTPendingApplication;
-import com.example.entity.PageParam;
-import com.example.entity.PageResult;
-import com.example.entity.RestBean;
+import com.example.entity.*;
 import com.example.entity.dto.*;
+import com.example.entity.vo.response.AuthorizeVO;
 import com.example.entity.vo.response.NFTCollectionVO;
 import com.example.entity.vo.response.TransactionInfoVO;
+import com.example.entity.vo.response.UserNFTVO;
 import com.example.mapper.NFT.NFTInfoMapper;
 import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.mapper.NFT.UserNFTMapper;
@@ -19,11 +19,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -54,13 +56,10 @@ public class NFTController {
     @Resource
     NFTTransactionMapper nftTransactionMapper;
 
-    @Auditable(
-            operationType = "NFT_TRANSACTION_GET_ALL",
-            captureBefore = true,
-            captureAfter = true
-    )
+
     @GetMapping("/transaction/get/all")
-    public <T> RestBean<T> getAllNFT(@ModelAttribute PageParam pageParam,HttpServletResponse response) throws IOException {
+    public <T> RestBean<T> getAllNFT(@ModelAttribute PageParam pageParam,HttpServletResponse response)
+            throws IOException {
         Page<NFTTransactionDto> page = this.nftTransactionMapper.selectPage(
                 pageParam.toPage()
         );
@@ -111,6 +110,9 @@ public class NFTController {
                                          HttpServletRequest request,
                                          @RequestParam("userID") String id,@ModelAttribute PageParam pageParam
         ) throws IOException {
+
+        Integer userId = jwtUtils.getRequesetId(request);
+        if(!Objects.equals(userId, jwtUtils.convertToInteger(id))) return RestBean.failure(401,"无权限的操作方式。");
         // 直接调用Mapper的分页方法
         Page<UserNFTDto> page = this.userNFTMapper.selectByOwnerId(
                 pageParam.toPage(),jwtUtils.convertToInteger(id)
@@ -122,10 +124,11 @@ public class NFTController {
         if(dtoList == null){
             return RestBean.failure(401,"暂时没有NFT");
         }
+
         List<NFTCollectionVO> nftInfoDtoList = new ArrayList<>();
         for(UserNFTDto dto : dtoList){
             NFTCollectionVO nftCollectionVO = this.UserNFTCollectionConvert(
-                    request,
+                    userId,
                     dto,
                     this.nftInfoService.NFTInfoSelectByTemplateId(dto.getNftId()),
                     this.nftRuleService.nftRuleSelectByActId(dto.getNftId())
@@ -148,9 +151,46 @@ public class NFTController {
         return null;
     }
 
-    private NFTCollectionVO UserNFTCollectionConvert(HttpServletRequest request,UserNFTDto dto,NFTInfoDto dto1,NFTRuleDto dto2){
-        Integer userId = jwtUtils.getRequesetId(request);
-        if (!Objects.equals(userId, dto.getUserId())) return null;
+
+    @GetMapping("/user/nft/all")
+    public void userNFTSelectAll(HttpServletResponse response,
+                                               HttpServletRequest request,
+                                               @ModelAttribute PageParam pageParam
+    ) throws IOException{
+        response.setContentType("application/json;Charset=utf-8");
+        Page<UserNFTDto> page = this.userNFTMapper.selectALL(
+                pageParam.toPage()
+        );
+        if (page.getTotal() == 0) {
+            response.getWriter().write(RestBean.failure(401, "暂无订单信息。").asJsonString());
+            return ;
+        }
+        List<UserNFTDto> dtoList = page.getRecords();
+        List<UserNFTVO> voList = new ArrayList<>();
+        for(UserNFTDto dto : dtoList){
+            Account account = this.accountService.findAccountById(dto.getUserId());
+            account.setPassword(null);
+             UserNFTVO vo = new UserNFTVO(
+                     dto,account
+             );
+            voList.add(vo);
+        }
+        // 构建分页结果
+        PageResult<UserNFTVO> pageResult = new PageResult<>(
+                page.getTotal(),
+                voList,
+                (int) page.getCurrent(),
+                (int) page.getPages(),
+                (int) page.getSize()
+        );
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
+        return;
+    }
+
+
+
+    private NFTCollectionVO UserNFTCollectionConvert(Integer userId,UserNFTDto dto,NFTInfoDto dto1,NFTRuleDto dto2){
+
         NFTCollectionVO vo = new NFTCollectionVO();
         if (Objects.equals(dto2.getValidityPeriod(), "-1")){
             dto2.setPassActive(null);
@@ -312,15 +352,19 @@ public class NFTController {
     @PutMapping("/transaction/apply")
     public <T> RestBean<T> applyNFTTransaction(HttpServletRequest request,
                                                @RequestBody NFTPendingApplication application){
-
         if(!jwtUtils.getRequesetId(request).equals(
-                jwtUtils.convertToInteger(application.getBuyerID())))
+                jwtUtils.convertToInteger(application.getBuyerID()))){
             return RestBean.failure(402,"申请人异常。");
+        }
+        if(jwtUtils.getRequesetId(request).equals(
+                jwtUtils.convertToInteger(application.getSellerID()))){
+            return RestBean.failure(402,"不可以向自己申请NFT交易。");
+        }
         if(
                 this.nftInfoService.NFTInfoSelectByTemplateId(
                         jwtUtils.convertToInteger(application.getNftID())).getIsActive()==0
         ){return RestBean.failure(401,"NFT暂未激活。");}
-        return this.nftTransactionService.buyApplyForNFT(application)?
+        return this.nftTransactionService.buyApplyForNFT(application) ?
                 RestBean.success():RestBean.failure(401,"请勿重复提交申请。");
     }
 
@@ -329,12 +373,15 @@ public class NFTController {
             captureBefore = true,
             captureAfter = true
     )
-    @PutMapping("/transaction/pay") //同意交易申请
-    public <T> RestBean<T> addTransaction( HttpServletRequest request,
-            @RequestBody NFTTransactionDto dto) throws Exception {
+    @PutMapping("/transaction/reply") //交易申请回复
+    public <T> RestBean<T> addTransaction(         HttpServletRequest request,
+                                                   @RequestBody AddTransactionRequest req
+    ) throws Exception {
+        Integer ans = req.getAns();
+        NFTTransactionDto dto = req.getDto();
         Integer uid = jwtUtils.getRequesetId(request);
         if(!Objects.equals(uid, dto.getFromUser())){return RestBean.failure(401,"权限不足");}
-        return this.nftTransactionService.addAgreeNFTTransaction(dto)?RestBean.success()
+        return this.nftTransactionService.replyNFTTransaction(dto,ans)?RestBean.success()
                   :RestBean.failure(401,"交易失败");
     }
 
@@ -344,19 +391,18 @@ public class NFTController {
             captureBefore = true,
             captureAfter = true
     )
-    @GetMapping("/transaction/get")
-    public <T> RestBean<T> getTransaction(HttpServletRequest request,
+    @GetMapping("/transaction/get/apply")
+    public <T> RestBean<T> getTransaction(HttpServletRequest request,@RequestParam String id,
                                           HttpServletResponse response) throws IOException {
-
-        if(this.nftTransactionService.getApplyForNFT(request)==null){
+        Integer uid = jwtUtils.convertToInteger(id);
+        if(this.nftTransactionService.getApplyForNFT(uid)==null){
             return RestBean.failure(401,"暂时没有交易信息。");
         }
-        List<NFTPendingApplication> applications = this.nftTransactionService.getApplyForNFT(request);
+        List<NFTPendingApplication> applications = this.nftTransactionService.getApplyForNFT(uid);
         response.setContentType("application/json;Charset=utf-8");
         response.getWriter().write(RestBean.success(applications).asJsonString());
         return null;
     }
-
 
 
     @Auditable(
@@ -484,11 +530,9 @@ public class NFTController {
     public <T> RestBean<T> selectNFT (HttpServletResponse response,
                                        NFTInfoDto dto, @ModelAttribute PageParam pageParam) throws IOException {
 
-
         List<NFTInfoDto> dtoList = this.nftInfoService.infoSelectByCondition(dto);
         if (!dtoList.isEmpty()){
             response.setContentType("application/json;Charset=utf-8");
-
             PageResult<NFTInfoDto> pageResult = ControllerPageHelper.paginateList(
                     dtoList, pageParam
             );

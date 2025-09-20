@@ -190,7 +190,6 @@ public class ContractController {
         if(nftRuleService.nftRuleSelectByActId(jwtUtils.convertToInteger(nftID))==null){
             return RestBean.failure(401,"查询不到该NFT规则。");
         }
-
         List<Object> param = new ArrayList<>();
         param.add(0,jwtUtils.convertToInteger(nftID));
         Map<String, Object> result

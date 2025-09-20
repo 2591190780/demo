@@ -23,7 +23,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -114,51 +116,101 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         String saveKey = Const.NFT_TRANSACTION + ":"
                 + application.getBuyerID() + ":" + application.getSellerID()
                 +":"+ application.getNftID() + ":" + application.getPrice().toString();
-
-        if(Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(Const.NFT_TRANSACTION, saveKey))){
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(saveKey))){
             return false;
         }
         stringRedisTemplate.opsForSet().add(Const.NFT_TRANSACTION+":"+application.getSellerID(),saveKey);
-        stringRedisTemplate.expire(Const.NFT_TRANSACTION+":"+application.getSellerID(),1,TimeUnit.DAYS);
-
+        stringRedisTemplate.expire(Const.NFT_TRANSACTION+":"+application.getSellerID()
+                ,1,TimeUnit.DAYS);
+        stringRedisTemplate.opsForSet().add(Const.NFT_TRANSACTION+":"+application.getBuyerID(),saveKey);
+        stringRedisTemplate.expire(Const.NFT_TRANSACTION+":"+application.getBuyerID()
+                ,1,TimeUnit.DAYS);
         stringRedisTemplate.opsForValue().set(saveKey,"",1, TimeUnit.DAYS);
         return true;
     }
 
+    public String checkApplyStatusInRedis(String saveKey){
+        String[] param = saveKey.split(":");
+        if (
+                Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(Const.NFT_TRANSACTION + ":" + param[1], saveKey))
+                        &&
+                        Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(Const.NFT_TRANSACTION + ":" + param[2], saveKey))
+        ){
+            return "待处理";
+        }else if(
+                Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(Const.NFT_TRANSACTION + ":" + param[1], saveKey))
+                        &&
+                        !Boolean.TRUE.equals(stringRedisTemplate.opsForSet().isMember(Const.NFT_TRANSACTION + ":" + param[2], saveKey))
+        ){
+            return "拒绝";
+        }
+        return null;
+    }
+
+
+    public boolean deleteApplyInRedis(String saveKey){
+        String[] param = saveKey.split(":");
+        stringRedisTemplate.opsForSet().remove(Const.NFT_TRANSACTION+":"+param[2],saveKey);
+        return true;
+    }
 
     @Override
-    public List<NFTPendingApplication>  getApplyForNFT(HttpServletRequest request) {
-        Integer id = jwtUtils.getRequesetId(request);
-
+    public List<NFTPendingApplication>  getApplyForNFT(Integer id) {
+        // NFT_TRANSACTION:1:2:3:700.00 买家id+卖家id+nftid+价格
+        // Const.NFT_TRANSACTION:sellerID
         Set<String> keys = stringRedisTemplate.opsForSet().members(Const.NFT_TRANSACTION+":"+id);
-        if (keys != null && keys.isEmpty()) return null;
+        if (keys != null && keys.isEmpty()) return null; //检查空
         for (String key : keys) {
             if(!Boolean.TRUE.equals(stringRedisTemplate.hasKey(key))) { //申请信息已过期，删除此信息。
                 stringRedisTemplate.opsForSet().remove(Const.NFT_TRANSACTION+":"+id,key);
             }
-        }
-        keys = stringRedisTemplate.opsForSet().members(Const.NFT_TRANSACTION+":"+id);
-
+        } //检查有效key
+        keys = stringRedisTemplate.opsForSet().members(Const.NFT_TRANSACTION+":"+id); //获取id的key = NFT_TRANSACTION:1:2:3:700.00
+        //创建对象列表。
         List<NFTPendingApplication> dtoList = new java.util.ArrayList<>(List.of());
+        //检查空
         if (keys == null || keys.isEmpty()) return null;
-        for (int i = 1;i<=keys.size();i++){
-            String key = keys.iterator().next();
-            String[] param = key.split(":");
-            //买家id+卖家id+nftid+价格
-            NFTPendingApplication dto = new NFTPendingApplication(
-                    param[1],param[2],param[3], BigDecimal.valueOf(Float.parseFloat(param[4]))
-                    ,nftInfoService.NFTInfoSelectByTemplateId(Integer.valueOf(param[3]))
-            );
-            dtoList.add(dto);
+        //赋值
+        for (String key : keys) {
+            try {
+                // key 格式示例: somePrefix:buyerId:sellerId:nftId:price
+                String[] param = key.split(":");
+                if (param.length < 5) continue; // 避免数组越界
+                String status = this.checkApplyStatusInRedis(key);
+                // 获取剩余存活时间
+                Long ttlSeconds = stringRedisTemplate.getExpire(key);
+                if (ttlSeconds != null && ttlSeconds > 0) {
+                    long expireTimeMillis = System.currentTimeMillis() + ttlSeconds * 1000;
+                    long startTimeMillis  = expireTimeMillis - TimeUnit.DAYS.toMillis(1);
+                    LocalDateTime start = LocalDateTime.ofInstant(
+                            Instant.ofEpochMilli(startTimeMillis), ZoneId.systemDefault());
+                    LocalDateTime end = LocalDateTime.ofInstant(
+                            Instant.ofEpochMilli(expireTimeMillis), ZoneId.systemDefault());
+                    // 构建 DTO
+                    NFTPendingApplication dto = new NFTPendingApplication(
+                            param[1],                          // buyerId
+                            param[2],                          // sellerId
+                            param[3],                          // nftId
+                            new BigDecimal(param[4]),          // price
+                            nftInfoService.NFTInfoSelectByTemplateId(Integer.parseInt(param[3])),
+                            start,
+                            end,
+                            status
+                    );
+                    dtoList.add(dto);
+                }
+            } catch (Exception e) {
+                // 记录异常，不影响其他 key
+                log.error("处理 key={} 出现异常");
+            }
         }
         return dtoList;
     }
 
 
 
-
     @Override
-    public boolean addAgreeNFTTransaction(NFTTransactionDto nftTransactionDto) throws Exception {
+    public boolean replyNFTTransaction(NFTTransactionDto nftTransactionDto,Integer ans) throws Exception {
         /**
          *        当用户在购买农产品时 支付完成 触发智能合约 发放NFT  --> nft_type 为 赠送 2
          *         用户之间也可以交易NFT、赠送 -->type 交易 1
@@ -169,12 +221,15 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         String saveKey = Const.NFT_TRANSACTION + ":"
                 + nftTransactionDto.getToUser() + ":" + nftTransactionDto.getFromUser()
                 +":"+ nftTransactionDto.getNftId()+ ":" + nftTransactionDto.getPrice().toString();
-
         if(!Boolean.TRUE.equals(stringRedisTemplate.hasKey(saveKey))) return false;
-
+        if (ans==0){
+            this.deleteApplyInRedis(saveKey);
+            return true;
+        }
         LocalDateTime createTime = LocalDateTime.now();
-        nftTransactionDto.setTxTime(createTime);
         String hash = this.blockchainHashUtil.generateNFTTransactionRuleHash(nftTransactionDto);
+
+        nftTransactionDto.setTxTime(createTime);
         nftTransactionDto.setTxHash(hash);
         if(this.save(nftTransactionDto)){
             String fromAddress = accountService.findAccountById(nftTransactionDto.getFromUser()).getWalletAddress();
@@ -205,17 +260,15 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
             String result1 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,fromAddress,contractAddress);
             String result2 = this.messageReportService.blockChainEvidenceReport(methodName,parameters,toAddress,contractAddress);
             System.out.println("买家购买信息上链结果:"+result1+"  "+"卖家购买信息上链结果:"+result2);
-
             //对user_nft表格执行操作
             if (this.userNFTService.UserNFT(nftTransactionDto)){
                 stringRedisTemplate.delete(saveKey);
                 stringRedisTemplate.opsForSet().remove(Const.NFT_TRANSACTION+":"+
                         nftTransactionDto.getToUser(),saveKey);
-
                 String txHash = (String) result.get("transactionHash");
                 String blockNumber = (String) result.get("blockNumber");
                 BlockChainEvidenceDto evidenceDto = new BlockChainEvidenceDto(
-                        null,8, nftTransactionDto.getTxId().intValue()
+                        null,4, nftTransactionDto.getTxId().intValue()
                         ,txHash,hash,blockNumber, LocalDateTime.now()
                 );
                 this.blockChainEvidenceMapper.insert(evidenceDto);

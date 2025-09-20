@@ -103,6 +103,14 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
     }
 
 
+    @Override
+    public boolean updateActiveByPassiveTime(NFTRuleDto params){
+        if(LocalDateTime.now().isAfter(params.getPassActive())){
+            this.update().eq("rule_id",params.getRuleId()).set("is_active",0).update();
+            return true;
+        }
+        return false;
+    }
 
     private String tableChoose(int type){
         return switch (type){

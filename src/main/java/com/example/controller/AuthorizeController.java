@@ -7,18 +7,27 @@ import com.example.entity.vo.request.ConfirmResetVO;
 import com.example.entity.vo.request.EmailRegisterVO;
 import com.example.entity.vo.request.EmailResetVO;
 import com.example.entity.vo.request.ResetPasswordByPasswordVO;
+import com.example.entity.vo.response.UserAccountAnalysisDataVO;
+import com.example.mapper.NFT.NFTTransactionMapper;
+import com.example.mapper.NFT.UserNFTMapper;
+import com.example.mapper.product.ProductInfoSelectAccountMapper;
+import com.example.mapper.transaction.TransactionProcessMapper;
 import com.example.service.AccountService;
+import com.example.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Pattern;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -30,6 +39,8 @@ public class AuthorizeController {
 
     @Resource
     AccountService accountService;
+    @Autowired
+    private JwtUtils jwtUtils;
 
     @Auditable(
             operationType = "UPDATE_USER_NAME",
@@ -123,6 +134,44 @@ public class AuthorizeController {
         String result = accountService.resetPasswordByPassword(dto, request);
         return result == null ? RestBean.success():RestBean.failure(401,result);
     }
+
+
+    @Resource
+    TransactionProcessMapper transactionProcessMapper;
+    @Resource
+    NFTTransactionMapper nftTransactionMapper;
+
+    @GetMapping("/find/account")
+    public void findAccount(HttpServletRequest request , HttpServletResponse response) throws IOException {
+        Integer id = jwtUtils.getRequesetId(request);
+
+        Account account = accountService. findAccountById(id);
+        account.setPassword(null);
+        //基本信息
+        UserAccountAnalysisDataVO analysisDataVO = new UserAccountAnalysisDataVO();
+        analysisDataVO.setId(id);
+        analysisDataVO.setEmail(account.getEmail());
+        analysisDataVO.setUsername(account.getUsername());
+        analysisDataVO.setRole(account.getRole());
+        analysisDataVO.setImgUrl(account.getUserImgurl());
+        analysisDataVO.setWalletAddress(account.getWalletAddress());
+        analysisDataVO.setPhoneNumber(account.getPhoneNumber());
+        //进阶信息
+        Integer countTransactionById = this.transactionProcessMapper.countNumTransactionByBuyerIdStatus(id);
+        analysisDataVO.setNumOfTransactions(countTransactionById);
+
+        Integer totalMoneyOfTransactions = this.transactionProcessMapper.sumTotalMoneyByBuyerIdStatus(id);
+        analysisDataVO.setTotalMoneyOfTransactions(totalMoneyOfTransactions);
+
+        Integer totalNFTTransactions = this.nftTransactionMapper.countNumByFromID(id);
+        analysisDataVO.setTotalNFTTransactions(totalNFTTransactions);
+
+        response.setContentType("application/json;Charset=utf-8");
+        response.getWriter().write(RestBean.success(analysisDataVO).asJsonString());
+    }
+
+
+
 
     private <T>RestBean<Void> messageHandle(T vo, Function<T, String> function) {
         return messageHandle(()->function.apply(vo));

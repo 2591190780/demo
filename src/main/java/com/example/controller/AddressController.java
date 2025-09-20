@@ -1,6 +1,8 @@
 package com.example.controller;
 
 import com.example.annotation.Auditable;
+import com.example.entity.PageParam;
+import com.example.entity.PageResult;
 import com.example.entity.RestBean;
 import com.example.entity.dto.AddressDto;
 import com.example.service.AddressService;
@@ -56,13 +58,16 @@ public class AddressController {
     )
     @GetMapping("/userid/select")
     public <T>RestBean<T> selectByUserId(HttpServletRequest request, HttpServletResponse response,
-                                         @Parameter String userid ) throws IOException {
+                                         @Parameter String userid ,@ModelAttribute PageParam pageParam) throws IOException {
         List<AddressDto> dtoList = this.addressService.findByUserId(jwtUtils.convertToInteger(userid));
         if(dtoList.isEmpty()){ return RestBean.failure(401,"您还没有添加地址。");}
         AddressDto addressDto = dtoList.get(0);
         if(this.addressService.userIdEqRequestId(request,addressDto)){
+            PageResult<AddressDto> pageResult = ControllerPageHelper.paginateList(
+                    dtoList, pageParam
+            );
             response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
         }
         return RestBean.failure(401,"您还没有添加地址。");

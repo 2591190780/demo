@@ -14,5 +14,7 @@ public interface UserNFTMapper extends BaseMapper<UserNFTDto> {
     Page<UserNFTDto> selectByOwnerId(
             Page<TransactionAccountDto> page, @Param("userID") Integer userID);
 
-
+    @Select("SELECT * FROM user_nft ")
+    Page<UserNFTDto> selectALL(
+            Page<TransactionAccountDto> page);
 }
