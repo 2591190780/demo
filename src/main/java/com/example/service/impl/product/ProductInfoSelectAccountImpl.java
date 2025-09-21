@@ -36,8 +36,8 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     }
 
     @Override
-    public List<ProductVO> getProductInfoAccountByName(String text,Integer fid){  //字符模糊查询
-        List<ProductInfoAccountDto> productInfoAccountDto = this.findProductInfoAccountByName(text,fid);
+    public List<ProductVO> getProductInfoAccountByName(String text){  //字符模糊查询
+        List<ProductInfoAccountDto> productInfoAccountDto = this.findProductInfoAccountByName(text);
         return this.convertToProductVOList(productInfoAccountDto);
     }
 
@@ -85,6 +85,17 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     /**
      * 根据农民ID查询产品信息账户（可能多个或者单个）
      */
+
+    @Override
+    public List<ProductInfoAccountDto> selectProductAccountForRecommendation() {
+        return this.query()
+                .eq("is_active", 1)              // 过滤有效数据
+                .orderByDesc("create_time")      // 按创建时间降序
+                .last("LIMIT 5")                 // MyBatis-Plus 使用 last() 添加 SQL 片段
+                .list();                         // 执行查询返回 List
+    }
+
+
     private ProductInfoAccountDto findProductInfoAccountByProductId(Integer Id) {
         if(Id==null)return null;
         return query()
@@ -104,10 +115,9 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
     /**
      * 根据字符串查询
      */
-    private List<ProductInfoAccountDto> findProductInfoAccountByName(String text,Integer fid) {
+    private List<ProductInfoAccountDto> findProductInfoAccountByName(String text) {
         if(text==null)return Collections.emptyList();
         return query()
-                .eq("farmer_id", fid)
                 .like("name", text).or()
                 .like("category", text).or()
                 .like("origin_location", text)

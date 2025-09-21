@@ -218,6 +218,7 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
          *         前端传入  nft_id from_user to_user  type  price
          */
         //  NFT_TRANSACTION:1:2:3:700.00 买家id+卖家id+nftid+价格
+
         String saveKey = Const.NFT_TRANSACTION + ":"
                 + nftTransactionDto.getToUser() + ":" + nftTransactionDto.getFromUser()
                 +":"+ nftTransactionDto.getNftId()+ ":" + nftTransactionDto.getPrice().toString();
@@ -228,7 +229,6 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         }
         LocalDateTime createTime = LocalDateTime.now();
         String hash = this.blockchainHashUtil.generateNFTTransactionRuleHash(nftTransactionDto);
-
         nftTransactionDto.setTxTime(createTime);
         nftTransactionDto.setTxHash(hash);
         if(this.save(nftTransactionDto)){

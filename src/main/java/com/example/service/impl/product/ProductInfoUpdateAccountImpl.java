@@ -49,7 +49,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         if(update(account)) {
             redisUtils.InfoToRedis(account.getProductId(), account.getFarmerId()
                     , "update","product");
-            return RestBean.success();
+            return null;
         }
         return  RestBean.failure(401,"参数有误");
     }

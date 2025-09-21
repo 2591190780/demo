@@ -13,7 +13,7 @@ public class Const {
     public static final  String CONTRACT_FOR_NFT_RULE = "0x7319fcb2694c68632d93aedf3ac0d7547704cb46";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO = "storeNFTInfo";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT = "tradeNFT";
-    public static final  String CONTRACT_FOR_NFT_INFO = "0xd5efc5e8eb6436ae0d368021727a3647d94bcd00";
+    public static final  String CONTRACT_FOR_NFT_INFO = "0x8aab865d03de821b53f975b3eaaa36acfd2c3ef6";
 
     public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE = "addEvidence";
     public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x1b4a3748ffc1f3d43d255a3c7eec0d9f4c7dec55";

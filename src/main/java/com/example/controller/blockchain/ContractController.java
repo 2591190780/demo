@@ -2,6 +2,9 @@ package com.example.controller.blockchain;
 
 import com.alipay.api.domain.AccountDTO;
 import com.example.annotation.Auditable;
+import com.example.controller.ControllerPageHelper;
+import com.example.entity.PageParam;
+import com.example.entity.PageResult;
 import com.example.entity.RestBean;
 import com.example.entity.dto.Account;
 import com.example.entity.dto.NFTInfoDto;
@@ -216,6 +219,7 @@ public class ContractController {
         nftRuleVO.setRemainCount(nftInfoDto.getRemainCount()); //NFT 剩余数量
         nftRuleVO.setCreatedAt(nftInfoDto.getCreatedAt()); //NFT 创建时间
         nftRuleVO.setMetadataUrl(nftInfoDto.getMetadataUrl());  // NFT 元数据
+        nftRuleVO.setObjectDimension(nftRuleDto.getObjectDimension());//聚合维度
         //NFT发布者信息
         nftRuleVO.setPublicBy(nftInfoDto.getPublicBy());  // NFT 发布者的ID
         nftRuleVO.setPublicName(account.getUsername()); //NFT 发布者的昵称
@@ -243,41 +247,37 @@ public class ContractController {
     @GetMapping("/nft/satisfied/rule")
     public <T>RestBean<T> selectSatisfiedRuleUser(HttpServletRequest request,HttpServletResponse response,
                                        @RequestParam("nftID") String nftID,
-                                                  @RequestParam("conditionList") List<String> conditionList) throws Exception {
+                                                  @RequestParam("conditionList") List<String> conditionList,
+                                                  @ModelAttribute PageParam pageParam) throws Exception {
 //*  conditionList
         //检查nft的规则信息链上是否存在。
         if (this.nftRuleService.nftRuleSelectByActId(jwtUtils.convertToInteger(nftID)).getRuleInchainnode()==0){
             return RestBean.failure(401,"该规则链上信息不存在。");
         }
-        List<AuthorizeVO> dtoList  = this.conditionNFTRule.selectSatisfyCondition(request
+        List<Account> dtoList  = this.conditionNFTRule.selectSatisfyCondition(request
                 ,jwtUtils.convertToInteger(nftID),conditionList);
         if(dtoList != null && !dtoList.isEmpty()){
+
+            PageResult<Account> pageResult = ControllerPageHelper.paginateList(
+                    dtoList, pageParam
+            );
+
             response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write(RestBean.success(dtoList).asJsonString());
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
         }
         return RestBean.failure(401,"未查询到满足条件的用户。");
     }
 
-
-    @Auditable(
-            operationType = "CONTRACT_SEND_NFT",
-            captureBefore = true,
-            captureAfter = true
-    )
-    @GetMapping("/nft/send/by/public")
-    public <T>RestBean<T> nftSendByPublic(HttpServletRequest request,HttpServletResponse response,
-                                                    @RequestParam("fromId") String fromId,
-                                                  @RequestParam("toIdList") String toIdList,
-                                          @RequestParam("nftId") String nftId
-                                                  ) throws Exception {
-            //前端传入了符合条件的对象IdList
-
-            //执行NFT交易函数 from_id --> to_id
-
-
-        return null;
-
+    @GetMapping("/nft/satisfied/rule/pre/check")
+    public <T>RestBean<T> selectSatisfiedRulePreCheck(HttpServletRequest request,HttpServletResponse response,
+                                                  @RequestParam("nftID") String nftID) throws Exception {
+        //检查nft的规则信息链上是否存在。
+        NFTRuleDto dto = this.nftRuleService.nftRuleSelectByActId(jwtUtils.convertToInteger(nftID));
+        if (dto.getRuleInchainnode() == 0) {
+            return RestBean.failure(401, "该规则链上信息不存在。");
+        }else{
+            return RestBean.success();
+        }
     }
-
 }

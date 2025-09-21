@@ -7,6 +7,7 @@ import com.example.controller.ControllerPageHelper;
 import com.example.entity.PageParam;
 import com.example.entity.PageResult;
 import com.example.entity.RestBean;
+import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.product.ProductInfoSelectAccountMapper;
 import com.example.service.product.ProductInfoSelectAccountService;
@@ -127,14 +128,13 @@ public class ProductInfoSelectController {
     )
     @GetMapping("/search/text")
     public RestBean<Void> getProductInfoByName(HttpServletRequest request,
-                                               @RequestParam String text, @ModelAttribute PageParam pageParam,
+                                               @RequestParam("text") String text, @ModelAttribute PageParam pageParam,
                                                HttpServletResponse response) throws IOException {
         Integer fid = jwtUtils.getRequesetId(request);
-        List<ProductVO> productVO = paService.getProductInfoAccountByName(text,fid);
+        List<ProductVO> productVO = paService.getProductInfoAccountByName(text);
         if (productVO.isEmpty()) {
             return RestBean.failure(404, "该农户暂无产品");
         }
-
         PageResult<ProductVO> pageResult = ControllerPageHelper.paginateList(
                 productVO, pageParam
         );
@@ -154,15 +154,10 @@ public class ProductInfoSelectController {
      * @return
      * @throws IOException
      */
-    @Auditable(
-            operationType = "SEARCH_MULTI_PRODUCT",
-            captureBefore = true,
-            captureAfter = true
-    )
     @GetMapping("/search/all")
     public RestBean<Void> getProductInfoAll(@RequestParam @Valid  String id, @RequestParam @Valid  String fid,
                                             @RequestParam String name, @RequestParam String category,
-                                            @RequestParam String location, HttpServletResponse response) throws IOException {
+                                            @RequestParam String location,@ModelAttribute PageParam pageParam, HttpServletResponse response) throws IOException {
 
         List<ProductVO> productVO = paService.selectProductAccByText(
                 this.convertToInteger(id)
@@ -171,8 +166,19 @@ public class ProductInfoSelectController {
         if (productVO.isEmpty()) {
             return RestBean.failure(404, "该农户暂无产品");
         }
+        PageResult<ProductVO> pageResult = ControllerPageHelper.paginateList(
+                productVO, pageParam
+        );
         response.setContentType("application/json;Charset=utf-8");
-        response.getWriter().write(RestBean.success(productVO).asJsonString());
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
+        return null;
+    }
+
+    @GetMapping("/search/latest/five")
+    public RestBean<Void> getProductInfoRandomFive(HttpServletRequest request,HttpServletResponse response) throws IOException {
+        List<ProductInfoAccountDto> productInfoAccountDto = paService.selectProductAccountForRecommendation();
+        response.setContentType("application/json;Charset=utf-8");
+        response.getWriter().write(RestBean.success(productInfoAccountDto).asJsonString());
         return null;
     }
 

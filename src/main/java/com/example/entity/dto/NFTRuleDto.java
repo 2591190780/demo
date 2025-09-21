@@ -33,4 +33,6 @@ public class NFTRuleDto {
     private LocalDateTime updateTime;
     private LocalDateTime passActive;
     private Integer ruleInchainnode;
+
+    private String objectDimension;
 }

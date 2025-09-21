@@ -14,20 +14,27 @@ import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.mapper.NFT.UserNFTMapper;
 import com.example.service.AccountService;
 import com.example.service.NFT.*;
+import com.example.utils.Const;
 import com.example.utils.JwtUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 
 @RestController
@@ -55,6 +62,8 @@ public class NFTController {
     UserNFTMapper userNFTMapper;
     @Resource
     NFTTransactionMapper nftTransactionMapper;
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
 
 
     @GetMapping("/transaction/get/all")
@@ -81,21 +90,31 @@ public class NFTController {
     }
 
 
-    @Auditable(
-            operationType = "USER_NFT_NFTID_API_NFT",
-            captureBefore = true,
-            captureAfter = true
-    )
+
     @GetMapping("/user/nft/NFTID")
     public <T> RestBean<T> userNFTSelectNFTID(HttpServletResponse response,
                                                HttpServletRequest request,
-                                               @RequestParam("userID") String id) throws IOException {
-        List<UserNFTDto> dtoList = this.userNFTService.selectNFTByNFTid(jwtUtils.convertToInteger(id));
-        if(dtoList == null){
-            return RestBean.failure(401,"暂时没有NFT");
+                                               @RequestParam("nftID") String id,
+                                              @ModelAttribute PageParam pageParam) throws IOException {
+        Integer nid = jwtUtils.convertToInteger(id);
+        List<UserNFTDto> dtoList = this.userNFTService.selectNFTByNFTid(nid);
+        if (dtoList == null) {
+            return RestBean.failure(401, "暂时没人拥有NFT");
         }
+        List<UserNFTVO> voList = new ArrayList<>();
+        for (UserNFTDto dto : dtoList) {
+            Account account = this.accountService.findAccountById(dto.getUserId());
+            account.setPassword(null);
+            UserNFTVO userNFTVO = new UserNFTVO(
+                    dto,account
+            );
+            voList.add(userNFTVO);
+        }
+        PageResult<UserNFTVO> pageResult = ControllerPageHelper.paginateList(
+                voList, pageParam
+        );
         response.setContentType("application/json;Charset=utf-8");
-        response.getWriter().write(RestBean.success(dtoList).asJsonString());
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
         return null;
     }
 
@@ -645,5 +664,31 @@ public class NFTController {
         return flag ? RestBean.success():RestBean.failure(401,"请检查参数。");
     }
 
-
+    @GetMapping("/transaction/send")
+    public <T> RestBean<T> nftTransactionSend(
+            HttpServletRequest request,@RequestParam List<Integer> toIDList,@RequestParam Integer nID
+    ) throws Exception {
+        //  NFT_TRANSACTION:1:2:3:700.00 买家id+卖家id+nftid+价格
+        //  构建交易对象
+        if(toIDList.isEmpty()) return RestBean.failure(401,"参数不合法。");
+        for(Integer toID : toIDList) {
+            Integer fromID = jwtUtils.getRequesetId(request);
+            NFTTransactionDto dto = new NFTTransactionDto(
+                    null, nID, fromID, toID, null, null, 2, BigDecimal.ZERO, 0
+            );
+            //  构建RedisKey
+            String saveKey = Const.NFT_TRANSACTION + ":"
+                    + toID + ":" + fromID
+                    + ":" + nID + ":" + 0;
+            stringRedisTemplate.opsForValue().set(saveKey, "", 1, TimeUnit.DAYS);
+            stringRedisTemplate.opsForSet().add(Const.NFT_TRANSACTION + ":" +
+                    toID, saveKey);
+            if(this.nftTransactionService.replyNFTTransaction(dto,1)){
+                continue;
+            }else{
+                return RestBean.failure(500,"发放失败，用户ID:%d, 请联系管理员。".formatted(toID));
+            }
+        }
+        return RestBean.success();
+    }
 }

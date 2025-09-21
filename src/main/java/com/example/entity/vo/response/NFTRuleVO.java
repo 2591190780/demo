@@ -22,6 +22,7 @@ public class NFTRuleVO {
     private Integer issuanceLimit;    // 总发行量
     private Integer remainCount;      // 剩余数量
     private LocalDateTime createdAt;         // 创建时间
+    private String objectDimension;
 
     private Integer publicBy;         // 发布者ID
     private String publicEmail;

@@ -17,6 +17,7 @@ import com.example.service.AccountService;
 import com.example.service.BlockChainEvidenceService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
+import com.example.service.NFT.UserNFTService;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.sensor.SensorDataInfoSelectService;
 import com.example.service.sensor.SensorInfoSelectService;
@@ -53,6 +54,7 @@ public class ConditionNFTRule {
         @Resource NFTInfoService nftInfoService;
         @Resource NFTRuleService nftRuleService;
         @Resource WeBaseUtils weBaseUtils;
+        @Resource UserNFTService userNFTService;
 
     /**
      *  NFT发放过程：
@@ -71,7 +73,7 @@ public class ConditionNFTRule {
      *
      */
     //这里是最后一块了。/
-    public List<AuthorizeVO> selectSatisfyCondition(HttpServletRequest request
+    public List<Account> selectSatisfyCondition(HttpServletRequest request
             ,Integer nftId,List<String> targetDims) throws Exception {
         //nft发布者可以进行nft发放。
         Integer rid = jwtUtils.getRequesetId(request);
@@ -97,32 +99,12 @@ public class ConditionNFTRule {
         for (Long l : longList) {
             intList.add(l.intValue());  // 或 l == null ? null : l.intValue()
         }
-        List<AuthorizeVO> voList = new ArrayList<>();
+        List<Account> voList = new ArrayList<>();
         for(Integer uid :  intList){
-            AuthorizeVO vo = new AuthorizeVO();
             Account account = accountService.findAccountById(uid);
-            vo.setId(account.getId());
-            vo.setUsername(account.getUsername());
-            String role = account.getRole();
-            //数据库传入"1","2","3"，后端判断
-            switch (role) {
-                case "1":
-                    vo.setRole(Const.ROLE_OF_USER_MERCHANT);
-                    break;
-                case "2":
-                    vo.setRole(Const.ROLE_OF_USER_ORDINARY);
-                    break;
-                case "3":
-                    vo.setRole(Const.ROLE_OF_USER_ADMINISTRATOR);
-                    break;
-                default:
-                    vo.setRole("WARRING:NO_ROLE");
-                    break;
-            }
-            vo.setEmail(account.getEmail());
-            vo.setWalletAddress(account.getWalletAddress());
-            vo.setPhoneNumber(account.getPhoneNumber());
-            voList.add(vo);
+            if(this.userNFTService.selectNFTByUNid(uid,nftId)!=null) continue;
+            account.setPassword(null);
+            voList.add(account);
         }
         return voList;
     }
@@ -131,13 +113,16 @@ public class ConditionNFTRule {
      * 真实表名与其支持的维度字段映射
      */
     private static final Map<String, Map<String, String>> DIMENSION_FIELD_MAP = Map.of(
-            "product_info", Map.of("farmer", "farmer_id"),
-            "sensor_info", Map.of("farmer", "farmer_id", "user", "user_id"),
-            "sensor_datainfo", Map.of("sensor", "sensor_id"),
+            "product_info", Map.of(
+                    "farmer", "farmer_id",
+                    "name","name"
+            ),
+            "sensor_info", Map.of(
+                    "farmer", "farmer_id"
+            ),
             "order_info", Map.of(
                     "buyer",   "buyer_id",
-                    "seller",  "seller_id",
-                    "product", "product_id"
+                    "seller",  "seller_id"
                     //这里添加聚合字段
             )
     );

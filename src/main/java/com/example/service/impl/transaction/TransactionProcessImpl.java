@@ -67,7 +67,10 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         List<TransactionAccountDto> dtoList = this.query()
                 .eq("buyer_id",BuyerID).eq("status",1).list();
         this.updateStatusListener(dtoList);
-        return this.query().eq("buyer_id",BuyerID).list();
+        return this.query().eq("buyer_id",BuyerID)
+                .orderByDesc("order_time")
+                .orderByAsc("status")
+                .list();
     }
 
     //添加单个交易信息

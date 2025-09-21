@@ -48,6 +48,8 @@ public class NFTInfoDto {
     private LocalDateTime updateTime;
     private Integer publicBy;
 
+
+
     public NFTInfoDto() {
 
     }

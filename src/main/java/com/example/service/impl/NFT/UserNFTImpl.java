@@ -73,7 +73,7 @@ public class UserNFTImpl extends ServiceImpl<UserNFTMapper, UserNFTDto> implemen
             if(now.isAfter(nftRuleDto.getPassActive())){return false;}
         }
         //如果是自动发布的话还需要查询NFT信息内的NFT剩余数量是否足够
-        if (fromUserDto == null ){
+        if (fromUserDto == null || dto.getType()==2){
             //NFT交易发货人与NFT发布者不是同一个人
             if(!Objects.equals(nftInfo.getPublicBy(), dto.getFromUser())){return false;}
             //检查发布的NFT是否有足够的剩余数量。

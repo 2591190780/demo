@@ -87,7 +87,6 @@ public class IPFSController {
 
             //添加对象操作
         if (this.operationTypeImgAdd(request,operationType, String.valueOf(userId),id,cid)){
-
             return RestBean.success("上传成功，图片的CID为:"+cid);
         };
 
@@ -116,7 +115,8 @@ public class IPFSController {
             BeanUtils.copyProperties(vo,dto);
             dto.setProductId(jwtUtils.convertToInteger(id));
             dto.setProductImgurl(cid);
-            this.productInfoUpdateAccountService.updateSingleProductInfo(request,dto);
+           RestBean<Object> result= this.productInfoUpdateAccountService.updateSingleProductInfo(request,dto) ;
+            if(result!=null){ return false ;}
             return true;
         } else if (operationType.equals("userInfo")) {
             Account account = this.accountService.findAccountById(uid);
