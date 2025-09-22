@@ -47,19 +47,15 @@ public class DeliveryController {
                RestBean.success():RestBean.failure(401,"添加失败，请勿重复添加同时检查参数。");
     }
 
-    @Auditable(
-            operationType = "SELECT_INFO_DELIVERY",
-            captureBefore = true,
-            captureAfter = true
-    )
+
     @GetMapping("/select/info")
     public <T> RestBean<T> selectInfo(HttpServletRequest request,
-                                      @Parameter String order,
+                                      @Parameter Integer id,
                                       HttpServletResponse response ) throws IOException {
         Integer uid = this.jwtUtils.getRequesetId(request);
-        Integer buyerId = this.transactionProcessService.getOrderByAlipayOrder(order).get(0).getBuyerId();
+        Integer buyerId = this.transactionProcessService.getOrderByTransactionID(id).getBuyerId();
         if(Objects.equals(uid, buyerId))return RestBean.failure(401,"暂无权限。");
-        DeliveryInfoDto dto = this.deliveryInfoService.selectDeliveryInfoByAlipayOrder(order);
+        DeliveryInfoDto dto = this.deliveryInfoService.selectDeliveryInfoByRelateId(id);
         if(dto==null){return RestBean.failure(401,"查询失败。");}
         response.setContentType("application/json;Charset=utf-8");
         response.getWriter().write(RestBean.success(dto).asJsonString());

@@ -16,6 +16,7 @@ import com.example.entity.RestBean;
 import com.example.entity.dto.AddressDto;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
+import com.example.entity.vo.response.OrderInfoVO;
 import com.example.entity.vo.response.ProductVO;
 import com.example.entity.vo.response.TransactionInfoVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
@@ -129,8 +130,17 @@ public class AlipayController {
             List<TransactionAccountDto> dtoList = this.transactionProcessService.paySelectForSeller(id);
             if(dtoList.isEmpty()) { return RestBean.failure(401,"暂无订单信息。");}
             List<TransactionInfoVO> voList = this.selectWholeInfoToFront(dtoList);
-            PageResult<TransactionInfoVO> pageResult = ControllerPageHelper.paginateList(
-                    voList, pageParam
+            List<OrderInfoVO> orderInfoVOList = new ArrayList<>();
+
+            for (TransactionInfoVO vo : voList) {
+                Integer addressId = vo.getAddressInfo();
+                OrderInfoVO orderInfoVO = new OrderInfoVO(
+                        vo,this.addressService.findById(addressId)
+                );
+                orderInfoVOList.add(orderInfoVO);
+            }
+            PageResult<OrderInfoVO> pageResult = ControllerPageHelper.paginateList(
+                    orderInfoVOList, pageParam
             );
             response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
@@ -634,7 +644,7 @@ public class AlipayController {
             captureBefore = true,
             captureAfter = true
     )
-    @GetMapping("/paySelect")
+    @GetMapping("/paySelect") //查询未支付的订单。
     public  <T> RestBean<T> paySelect(HttpServletRequest request
             ,HttpServletResponse response, @Parameter @Valid String Id) throws IOException {
         Integer userId = jwtUtils.convertToInteger(Id);

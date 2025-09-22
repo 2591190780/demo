@@ -56,6 +56,11 @@ public class DeliveryInfoImpl extends ServiceImpl<DeliveryInfoMapper, DeliveryIn
     }
 
     @Override
+    public  DeliveryInfoDto selectDeliveryInfoByRelateId(Integer relateId){
+        return this.query().eq("relate_id", relateId).one();
+    }
+
+    @Override
     public  boolean updateDeliveryInfo(HttpServletRequest request, String alipayOrderId
             , String newAddress,String time,Integer transactionId ){
         if (!this.verifyByAlipayOrder(request,alipayOrderId,transactionId)){
