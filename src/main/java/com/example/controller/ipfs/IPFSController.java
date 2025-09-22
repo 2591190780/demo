@@ -62,21 +62,8 @@ public class IPFSController {
                                        @RequestParam("id") String id,  //传入要修改的目标记录ID
                                        @RequestParam("file") MultipartFile file,
                                        @RequestParam("operationType") String operationType) throws Exception {
-        // 验证文件是否为空
-        if (file.isEmpty()) {
-            return RestBean.failure(401,"上传的文件为空");
-        }
-        // 验证文件类型（可选）
-        String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            return RestBean.failure(401,"仅支持图片文件上传");
-        }
-        Integer userId = jwtUtils.getRequesetId(request);
 
-        // 1. 生成CID值
-        IPFSUtils.IPFSResponse response = ipfsUtils.storeFile(file);  // 需要在 增添的操作对应的表上进行。
-        String cid = response.cid();
-        System.out.println("cid = " + cid);
+        Integer userId = jwtUtils.getRequesetId(request);
         // 2. 在目标对象进行操作
 
             /**
@@ -84,12 +71,10 @@ public class IPFSController {
              *     - 直接访问：`ipfs://QmXarR6rgkQ2fDSHjSY5nM2kuCXKYGViky5nohtwgF65Ec`
              *     - 通过网关：`https://ipfs.io/ipfs/QmXarR6rgkQ2fDSHjSY5nM2kuCXKYGViky5nohtwgF65Ec`
              */
-
             //添加对象操作
-        if (this.operationTypeImgAdd(request,operationType, String.valueOf(userId),id,cid)){
-            return RestBean.success("上传成功，图片的CID为:"+cid);
+        if (this.operationTypeImgAdd(request,operationType, String.valueOf(userId),id,file)){
+            return RestBean.success("上传成功，图片的CID为:");
         };
-
         // 上传到IPFS
         return RestBean.failure(401,"不支持的操作类型");
 
@@ -100,12 +85,16 @@ public class IPFSController {
      *                      提交修改-->isActive=0-->管理员通过
      */
 
-    private boolean operationTypeImgAdd(HttpServletRequest request,String operationType ,String userId
-            ,String id //修改产品传入的就是产品id 修改用户传的就是用户id
-            ,String cid) throws Exception {
 
+    private boolean operationTypeImgAdd(HttpServletRequest request
+            ,String operationType
+            ,String userId
+            ,String id //修改产品传入的就是产品id 修改用户传的就是用户id
+            , MultipartFile file
+    ) throws Exception {
         Integer uid = jwtUtils.convertToInteger(userId);
         Integer tid = jwtUtils.convertToInteger(id);
+        String cid = null;
         if (operationType.equals("product")) {
             ProductVO vo = this.productInfoSelectAccountService.getProductInfoAccountByProductId(
                     tid);
@@ -113,20 +102,29 @@ public class IPFSController {
             if (vo==null) return false;
             ProductInfoAccountDto dto = new ProductInfoAccountDto();
             BeanUtils.copyProperties(vo,dto);
-            dto.setProductId(jwtUtils.convertToInteger(id));
+            dto.setProductId(tid);
+            //生成CID
+            String ans = ipfsUtils.returnUpLoadSuccess(file);
+            if(ans!=null) {cid = ans;}else {return false;};
             dto.setProductImgurl(cid);
-           RestBean<Object> result= this.productInfoUpdateAccountService.updateSingleProductInfo(request,dto) ;
+            RestBean<Object> result= this.productInfoUpdateAccountService.updateSingleProductInfo(request,dto) ;
             if(result!=null){ return false ;}
             return true;
         } else if (operationType.equals("userInfo")) {
             Account account = this.accountService.findAccountById(uid);
             if (account==null) return false;
+            //生成CID
+            String ans = ipfsUtils.returnUpLoadSuccess(file);
+            if(ans!=null) {cid = ans;}else {return false;};
             account.setUserImgurl(cid);
             //service的update操作已经做了权限验证
             return this.accountService.updateImg(request,account) ;
         }else if (operationType.equals("nftInfo")){
             NFTInfoDto nftInfoDto = this.nfTInfoService.NFTInfoSelectByTemplateId(tid);
             if (nftInfoDto==null) return false;
+            //生成CID
+            String ans = ipfsUtils.returnUpLoadSuccess(file);
+            if(ans!=null) {cid = ans;}else {return false;};
             nftInfoDto.setImageUrl(cid);
             return this.nfTInfoService.NFTaddImg(request,nftInfoDto);
         }

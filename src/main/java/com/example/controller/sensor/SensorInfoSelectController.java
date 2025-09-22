@@ -1,8 +1,12 @@
 package com.example.controller.sensor;
 
 import com.example.annotation.Auditable;
+import com.example.controller.ControllerPageHelper;
+import com.example.entity.PageParam;
+import com.example.entity.PageResult;
 import com.example.entity.RestBean;
 import com.example.entity.dto.SensorInfoDto;
+import com.example.entity.vo.response.ProductVO;
 import com.example.service.sensor.SensorInfoSelectService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -44,15 +48,19 @@ public class SensorInfoSelectController {
             captureAfter = true
     )
     @GetMapping ("/selectMultiFarm")
-    public RestBean<Void> selectSensorInfoByFarmerId( @RequestParam @Valid String id
-            , HttpServletResponse response) throws IOException{
+    public RestBean<Void> selectSensorInfoByFarmerId( @RequestParam @Valid String id,
+                                                      @ModelAttribute PageParam pageParam,
+                                                      HttpServletResponse response) throws IOException{
         List<SensorInfoDto> dto=service.getSensorInfoByFarmerId(this.convertToInteger(id));
         response.setContentType("application/json;Charset=utf-8");
         if(dto!=null) {
-            response.getWriter().write(RestBean.success(dto).asJsonString());
+            PageResult<SensorInfoDto> pageResult = ControllerPageHelper.paginateList(
+                    dto, pageParam
+            );
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
         }
-        return RestBean.failure(404, "该农户没有传感器");
+        return RestBean.failure(401, "该农户没有传感器");
     }
 
     @Auditable(

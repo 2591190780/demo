@@ -118,19 +118,25 @@ public class AlipayController {
     )
     @GetMapping("/pay/select/seller")
     public  <T> RestBean<T> payInfoSelectSeller(HttpServletRequest request,
-            HttpServletResponse response, @Parameter String FarmerID) throws IOException {
+                                                HttpServletResponse response,
+                                                @Parameter String FarmerID,
+                                                @ModelAttribute PageParam pageParam
+                                                ) throws IOException {
+        response.setContentType("application/json;Charset=utf-8");
+
         Integer id = jwtUtils.getRequesetId(request);
         if(Objects.equals(id, jwtUtils.convertToInteger(FarmerID))) {
             List<TransactionAccountDto> dtoList = this.transactionProcessService.paySelectForSeller(id);
             if(dtoList.isEmpty()) { return RestBean.failure(401,"暂无订单信息。");}
             List<TransactionInfoVO> voList = this.selectWholeInfoToFront(dtoList);
-            response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(voList).asJsonString());
+            PageResult<TransactionInfoVO> pageResult = ControllerPageHelper.paginateList(
+                    voList, pageParam
+            );
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
         }
         return RestBean.failure(401,"无权限的操作。");
     }
-
 
     /**
      * 方案1：使用Service原始方法 + 内存分页

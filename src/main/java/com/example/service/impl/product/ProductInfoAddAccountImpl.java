@@ -57,12 +57,10 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         Integer fid = vo.getFarmerId();
         boolean verifyId = utils.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("权限不足");
-
         //农户提交新产品的信息    此时需要等待管理员确认后才激活产品售卖
         if(this.generateProductAccount(vo)){
             redisUtils.InfoToRedis(vo.getProductId(), vo.getFarmerId()
                     , "add","product");
-
             return RestBean.success();
         }
         return RestBean.failure(401,"请检查传入的参数");

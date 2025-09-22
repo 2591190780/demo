@@ -49,7 +49,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         List<TransactionAccountDto> dtoList = this.query()
                 .eq("seller_id",FarmerID).eq("status",1).list();
         this.updateStatusListener(dtoList);
-        return this.query().eq("seller_id",FarmerID).list();
+        return this.query().eq("seller_id",FarmerID)
+                .orderByAsc("status")
+                .orderByDesc("order_time")
+                .ne("status",6)
+                .list();
     }
 
     private void updateStatusListener(List<TransactionAccountDto> dtoList){
@@ -68,8 +72,8 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
                 .eq("buyer_id",BuyerID).eq("status",1).list();
         this.updateStatusListener(dtoList);
         return this.query().eq("buyer_id",BuyerID)
-                .orderByDesc("order_time")
                 .orderByAsc("status")
+                .orderByDesc("order_time")
                 .list();
     }
 

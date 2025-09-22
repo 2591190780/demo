@@ -71,7 +71,6 @@ public class SensorInfoSelectImpl extends ServiceImpl<SensorInfoMapper, SensorIn
             return query()
                     .eq("farm_id", id)
                     .list();
-
     }
 
     private List<SensorInfoDto> findSensorInfoByTypeId(String id){

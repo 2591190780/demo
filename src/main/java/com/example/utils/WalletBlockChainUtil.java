@@ -58,17 +58,14 @@ public class WalletBlockChainUtil {
     public Map<String, String> importPrivateKey(String userName, String privateKey) {
         // 构建请求URL（使用GET请求）
         String importUrl = webaseFrontUrl + "/privateKey/import";
-
         // 使用UriComponentsBuilder构建带参数的URL
         String url = UriComponentsBuilder.fromHttpUrl(importUrl)
                 .queryParam("privateKey", privateKey)
                 .queryParam("userName", userName)
                 .toUriString();
-
         // 设置请求头
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
         // 创建请求实体（GET请求不需要body）
         HttpEntity<?> requestEntity = new HttpEntity<>(headers);
 
@@ -80,11 +77,9 @@ public class WalletBlockChainUtil {
                     requestEntity,
                     new ParameterizedTypeReference<Map<String, Object>>() {}
             );
-
             // 检查响应状态
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
-
                 // 增强的响应处理逻辑：兼容多种响应格式
                 if (isSuccessResponse(responseBody)) {
                     // 处理成功响应
@@ -121,13 +116,11 @@ public class WalletBlockChainUtil {
         if (responseBody.containsKey("address")) {
             return true;
         }
-
         // 情况3：包含 success 字段且为 true
         if (responseBody.containsKey("success") &&
                 Boolean.TRUE.equals(responseBody.get("success"))) {
             return true;
         }
-
         return false;
     }
 
