@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -64,7 +65,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
 
         return this.update().eq("farmer_id", fid).eq("product_id", account.getProductId())
-                    .set("is_active",(byte) 0).update() ?
+                    .set("is_active",account.getIsActive()).update() ?
                 RestBean.success() : RestBean.failure(401,"参数有误");
         }
 
@@ -172,9 +173,14 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
     }
 
     public boolean productUpdateAdmin(Integer productId,Integer farmerId,byte active){
+        LocalDateTime now = null;
+        if(active == 1){
+             now = LocalDateTime.now();
+        }
         return  this.update()
                 .eq("product_id",productId)
                 .eq("farmer_id",farmerId)
+                .set("update_time", now)
                 .set("is_active",active)
                 .update();
     }

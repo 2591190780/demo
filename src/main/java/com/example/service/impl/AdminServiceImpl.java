@@ -269,8 +269,6 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
                 messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE
                         ,params
                         ,userAddress,Const.CONTRACT_FOR_MESSAGE_REPORT);
-
-
                 }
                 yield this.productInfoUpdateAccountService.productUpdateAdmin(
                         this.convertToInteger(targetId),

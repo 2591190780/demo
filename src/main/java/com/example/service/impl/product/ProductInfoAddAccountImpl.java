@@ -115,7 +115,6 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         String certificationHash = hashUtil.generateProductHash(
                 farmerId, name, category , origin,now
         );
-
         ProductInfoAccountDto dto;
         dto = new ProductInfoAccountDto(
                 productId,
@@ -129,7 +128,7 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
                 now,
                 now,
                 active,
-                null
+                vo.getProductImgurl()
         );
         if(this.save(dto)){
             /**
@@ -138,8 +137,9 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
              *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
              */
             RestBean.success();
-            vo.setProductId(dto.getProductId());
-            return true;}
+            vo.setProductId(dto.getProductId());//这里不取存入的自动递增的ID值，上一个调用的函数取不到vo里的ID值（为空）很重要。
+            return true;
+        }
         RestBean.failure(500,"未知错误请联系管理员");
         return false ;
     }

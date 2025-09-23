@@ -40,7 +40,6 @@ public class ProductionInfoAddController {
             productAddVO.setProductImgurl(cid);
          return  service.addUserProductSingle(request, productAddVO); // 按你的 service 接口
         }
-
         return RestBean.failure(401,"参数错误。");
     }
 

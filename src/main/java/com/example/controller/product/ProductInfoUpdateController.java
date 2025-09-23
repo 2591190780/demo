@@ -3,6 +3,8 @@ package com.example.controller.product;
 import com.example.annotation.Auditable;
 import com.example.entity.RestBean;
 import com.example.entity.dto.ProductInfoAccountDto;
+import com.example.entity.vo.response.ProductVO;
+import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.product.ProductInfoUpdateAccountService;
 import com.example.utils.IPFSUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,6 +25,8 @@ public class ProductInfoUpdateController {
     ProductInfoUpdateAccountService service;
     @Resource
     IPFSUtils ipfsUtils;
+    @Resource
+    ProductInfoSelectAccountService selectAccountService;
 
     @Auditable(
             operationType = "UPDATE_SINGLE_PRODUCT",
@@ -62,9 +66,14 @@ public class ProductInfoUpdateController {
             captureBefore = true,
             captureAfter = true
     )
-    @PutMapping("/update/downProduct")
-    public <T>RestBean<T> downProduct(HttpServletRequest  request
+    @PutMapping("/update/downOrUpProduct")
+    public <T>RestBean<T> downOrUpProduct(HttpServletRequest  request
             ,@RequestBody ProductInfoAccountDto accountDto){
+        Integer pid = accountDto.getProductId();
+        ProductVO dto = selectAccountService.getProductInfoAccountByProductId(pid);
+        if(dto.getUpdateTime()==null){
+            return RestBean.failure(401,"请等待管理员通过。");
+        }
         return this.service.updateProductInfoDown(request,accountDto);
     }
 
