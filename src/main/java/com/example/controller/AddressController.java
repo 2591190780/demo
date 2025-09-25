@@ -51,11 +51,6 @@ public class AddressController {
                     jwtUtils.convertToInteger(flag))? RestBean.success():RestBean.failure(401,"设置失败。");
     }
 
-    @Auditable(
-            operationType = "USERID_SELECT_ADDRESS",
-            captureBefore = true,
-            captureAfter = true
-    )
     @GetMapping("/userid/select")
     public <T>RestBean<T> selectByUserId(HttpServletRequest request, HttpServletResponse response,
                                          @Parameter String userid ,@ModelAttribute PageParam pageParam) throws IOException {
@@ -68,6 +63,20 @@ public class AddressController {
             );
             response.setContentType("application/json;Charset=utf-8");
             response.getWriter().write(RestBean.success(pageResult).asJsonString());
+            return null;
+        }
+        return RestBean.failure(401,"您还没有添加地址。");
+    }
+
+    @GetMapping("/userid/select/all")
+    public <T>RestBean<T> selectByUserIdALL(HttpServletRequest request, HttpServletResponse response,
+                                         @Parameter String userid ) throws IOException {
+        List<AddressDto> dtoList = this.addressService.findByUserId(jwtUtils.convertToInteger(userid));
+        if(dtoList.isEmpty()){ return RestBean.failure(401,"您还没有添加地址。");}
+        AddressDto addressDto = dtoList.get(0);
+        if(this.addressService.userIdEqRequestId(request,addressDto)){
+            response.setContentType("application/json;Charset=utf-8");
+            response.getWriter().write(RestBean.success(dtoList).asJsonString());
             return null;
         }
         return RestBean.failure(401,"您还没有添加地址。");

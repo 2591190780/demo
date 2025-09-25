@@ -158,7 +158,7 @@ public class ProductInfoSelectController {
     public RestBean<Void> getProductInfoAll(@RequestParam @Valid  String id, @RequestParam @Valid  String fid,
                                             @RequestParam String name, @RequestParam String category,
                                             @RequestParam String location,@ModelAttribute PageParam pageParam, HttpServletResponse response) throws IOException {
-
+        //这里只返回已经激活的农产品
         List<ProductVO> productVO = paService.selectProductAccByText(
                 this.convertToInteger(id)
                 ,this.convertToInteger(fid)

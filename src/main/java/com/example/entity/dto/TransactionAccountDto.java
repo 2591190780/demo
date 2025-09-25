@@ -24,8 +24,10 @@ public class TransactionAccountDto {
     private Integer buyerId;         // 映射数据库 buyer_id
     private Integer productId;       // 映射数据库 product_id
     private Integer sellerId;        // 映射数据库 seller_id
+
     private BigDecimal quantity;
     private BigDecimal totalPrice;   // 映射数据库 total_price
+
     private String status;
     private LocalDateTime orderTime; // 映射数据库 order_time
 
@@ -37,6 +39,9 @@ public class TransactionAccountDto {
     private LocalDateTime deliveryTime;  // 映射数据库 delivery_time
     private String alipayOrder;            // 映射数据库 alipay_order
     private int addressInfo;        //地址id
+
+    private BigDecimal payDiscount;
+
 
     public TransactionAccountDto() {
 

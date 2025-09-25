@@ -320,7 +320,6 @@ public class AlipayController {
         // 从Redis获取待支付订单哈希集
         String userKey =  userId.toString();
         Set<String> hashes = stringRedisTemplate.opsForSet().members(userKey);
-
         // 清理过期订单哈希
         if (hashes != null) {
             for (String hash : hashes) {
@@ -349,15 +348,12 @@ public class AlipayController {
                     payHashList.remove(hash);  //提供的orderid里面不存在这个hash对应的orderid，就不提交消息。
             }
         }
-
         BigDecimal totalAmount = BigDecimal.ZERO;
         StringBuilder productNames = new StringBuilder();
-
         // 生成唯一订单号（用户ID+时间戳+随机数）
         String combinedOrderId = "PAY_" + userId + "_" +
                 System.currentTimeMillis() + "_" +
                 ThreadLocalRandom.current().nextInt(1000, 9999);
-
         //将发送给支付宝的订单号和列表集合存储到redis中
         for (String hash : payHashList) {
             //存入  订单号 : hash  的 redis中
@@ -373,11 +369,11 @@ public class AlipayController {
             if (order == null || !"1".equals(order.getStatus())) {
                 sendJsonResponse(response, 401, "订单状态无效或已过期"); return;
             }
-            totalAmount = totalAmount.add(order.getTotalPrice());
 
+            totalAmount = totalAmount.add(order.getTotalPrice());
             //——————————————————————————这里可以计算优惠逻辑————————————————————————————————————————
             /*
-            数据库新增  商家优惠表 :  id  product_id farmer_id  折扣  折扣描述  折扣生效日期  折扣截至日期
+            数据库新增    id  product_id farmer_id  折扣
                    新建实付金额 REAL_PAY_COUNT 存入 redis 缓存中 便于后续处理
             */
             //____________________________________end___________________________________________
@@ -562,6 +558,7 @@ public class AlipayController {
                 //获取单笔交易的金额。
                 BigDecimal count = BigDecimal.valueOf(Float.parseFloat(counts));
                 TransactionAccountDto dto = new TransactionAccountDto();
+                //查看商品的价格跟付款的价格是否一致即可。
                 dto.setActualPayment(count);
                 dto.setCertificationHash(hash);
                 dto.setAlipayOrder(tradeNo);

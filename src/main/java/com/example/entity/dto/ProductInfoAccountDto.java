@@ -49,6 +49,9 @@ public class ProductInfoAccountDto {
 
     private String productImgurl;
 
+    private String description;
+    private BigDecimal discount;
+    private String unit;
     public ProductInfoAccountDto() {
 
     }

@@ -4,6 +4,7 @@ package com.example.service.impl.transaction;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.TransactionAccountDto;
+import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.transaction.TransactionProcessService;
@@ -15,6 +16,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -88,8 +90,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         String order_id = generateOrderId();  //生成订单号
         dto.setOrderId(order_id);
         dto.setOrderTime(LocalDateTime.now());  //生成下单时间
-
-        if (!this.requestProductVerify(dto)){
+        if (this.requestProductVerify(dto)){  //认证通过
             return  null;
         }
         String hash = blockchainHashUtil.generateTransactionHash(dto);
@@ -116,7 +117,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
             dto.setOrderTime(LocalDateTime.now());
             String hash = blockchainHashUtil.generateTransactionHash(dto);
             dto.setCertificationHash(hash);
-            if (!this.requestProductVerify(dto)){
+            if (this.requestProductVerify(dto)){  //认证通过
                 return  null;
             }
             if(TransactionMessageIntoRedis(dto)){
@@ -278,8 +279,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
 
 
     public  boolean requestProductVerify(TransactionAccountDto dto){
-         return productInfoSelectAccountService.getProductInfoAccountByProductId(dto.getProductId()) != null;
-
+       ProductVO productVO = productInfoSelectAccountService.getProductInfoAccountByProductId(dto.getProductId());
+       if(productVO == null) return true;
+       BigDecimal dtoPayDiscount = dto.getPayDiscount();
+       if (!Objects.equals(productVO.getDiscount(),dtoPayDiscount)){return true;}
+       return false;
     }
 
     private void cleanTransactionFromRedis(Integer buyerId, String hash) {

@@ -24,7 +24,6 @@ public class CollectInfoUpdateController {
     @PutMapping("/update")
     public <T> RestBean<T> UpdateProduct(HttpServletRequest request, @RequestBody CollectUpdateVO vo){
         return Service.updateNum(request,vo);
-
     }
 
 }

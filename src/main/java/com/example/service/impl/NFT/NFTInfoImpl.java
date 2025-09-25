@@ -78,13 +78,11 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
         if (params.getNftLevel()!=null) {
             queryWrapper.eq("nft_level", params.getNftLevel());
         }
+        if (this.list(queryWrapper) == null) return null ;
         return this.checkNFTAndNFTRuleStatus(this.list(queryWrapper));
     }
 
     private List<NFTInfoDto> checkNFTAndNFTRuleStatus(List<NFTInfoDto> nftInfoDtoList){
-        if (ObjectUtils.isEmpty(nftInfoDtoList)) {
-            return null;
-        }
         for (NFTInfoDto nftInfoDto : nftInfoDtoList) {
             NFTRuleDto ruleDto = ruleService.nftRuleSelectByActId(nftInfoDto.getTemplateId());
             if (ruleDto != null) {

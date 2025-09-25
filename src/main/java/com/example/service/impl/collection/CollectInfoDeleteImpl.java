@@ -31,7 +31,8 @@ public class CollectInfoDeleteImpl extends ServiceImpl<CollectionInfoMapper, Col
         if(!Objects.equals(id, cid)) return RestBean.forbidden("请不要删除他人产品信息");
         QueryWrapper<CollectionInfoDto> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", vo.getUserId())
-                .eq("product_id", vo.getProductId());
+                .eq("product_id", vo.getProductId())
+                        .eq("operation_type",vo.getOperation_type());
         collectInfoMapper.delete(wrapper);
         return RestBean.success();
     }

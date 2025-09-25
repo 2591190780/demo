@@ -124,11 +124,10 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
                 vo.getPrice(),
                 vo.getStock(),vo.getStock(),//农户在刚添加产品的时候，库存剩余量肯定等于库存的。
                 origin,
-                certificationHash,
-                now,
+                certificationHash,null,
                 now,
                 active,
-                vo.getProductImgurl()
+                vo.getProductImgurl(),vo.getDescription(),vo.getDiscount(),vo.getUnit()
         );
         if(this.save(dto)){
             /**
