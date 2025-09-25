@@ -23,6 +23,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -248,8 +250,21 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
             List<Object> para = new ArrayList<>();
             para.add(0, nftTransactionDto.getNftId());
             para.add(1,toAddress);
-            para.add(2,nftTransactionDto.getPrice());
-
+            String priceStr = String.valueOf(nftTransactionDto.getPrice());          // "10000000000000.000000000000000000"
+            BigDecimal bd = new BigDecimal(priceStr)
+                    .setScale(18, RoundingMode.HALF_UP);             // 保证 18 位小数
+            BigInteger onChainValue = bd.movePointRight(18)          // 去掉小数点
+                    .toBigInteger();                                 // 10000000000000000000000000000
+            para.add(2, onChainValue);
+            // 1. 转 BigDecimal
+//            BigDecimal bd2 = new BigDecimal(onChainValue);
+//            // 2. ÷10^18 移回小数点
+//            BigDecimal realPrice = bd2.movePointLeft(18);             // 10000000000000.000000000000000000
+//            // 3. 去掉尾部多余的 0（可选）
+//            String display = realPrice.stripTrailingZeros()
+//                    .toPlainString();                                  // "10000000000000"
+            // 入库/上链
+            // para.add(2, realPrice.toPlainString());           // 写入
             //对链上NFT归属进行操作//这里是对NFT转移的发生记录
             Map<String, Object> result = this.weBaseUtils.callContractMethod(fromAddress,Const.CONTRACT_FOR_NFT_INFO,
                     Const.CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT,para);

@@ -69,7 +69,6 @@ public class WeBaseUtils {
         requestBody.put("contractAbi", abiNode);
         requestBody.put("useCns", false);
 
-
         // 3. 发送请求到WeBase-Front
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
