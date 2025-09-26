@@ -15,4 +15,6 @@ public class CollectUpdateVO {
     private Integer userId;
     private Integer productId;
     private Integer productNum;
+    //添加类型 1购物车/2收藏夹
+    private String operation_type;
 }

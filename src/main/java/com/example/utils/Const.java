@@ -29,6 +29,9 @@ public class Const {
 
     public static final  String APLIPAY_RETURN_URL = "http://demotestccit.natapp1.cc/alipay/return";
     public static final  String APLIPAY_NOTIFY_URL = "http://demotestccit.natapp1.cc/alipay/notify";
+    public static final  String APLIPAY_RETURN_HTML_URL_SUCCESS ="redirect:http://demotestccit.natapp1.cc/demo/payment-success.html";
+    public static final  String APLIPAY_RETURN_HTML_URL_FAIL ="redirect:http://demotestccit.natapp1.cc/demo/payment-failed.html";
+    public static final  String APLIPAY_RETURN_HTML_URL_EXCEPTION ="redirect:http://demotestccit.natapp1.cc/demo/payment-error.html";
 
     /**
      * 产品  农户的相关操作  存入Redis队列等待管理员处理

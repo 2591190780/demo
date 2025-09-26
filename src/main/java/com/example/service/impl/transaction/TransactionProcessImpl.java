@@ -3,6 +3,7 @@ package com.example.service.impl.transaction;
 
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
@@ -108,9 +109,18 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     }
     //添加多个交易信息
     @Override
-    public  List<TransactionAccountDto> TransactionInfoAddMulti(List<TransactionAccountDto> dtoList){
+    public  String TransactionInfoAddMulti(List<TransactionAccountDto> dtoList){
         boolean flag =true;
         for(TransactionAccountDto dto : dtoList){
+            //检查商家供货情况。
+            ProductVO productVO = this.productInfoSelectAccountService
+                    .getProductInfoAccountByProductId(dto.getProductId());
+            if(  productVO.getStockRemain().compareTo(dto.getQuantity())<0){
+                return "401:商家库存不足,ProductID:%d".formatted(dto.getProductId());
+            }
+            if (productVO.getIsActive() == 0 ){
+                return "401:商品未激活,ProductID:%d".formatted(dto.getProductId());
+            }
             //前端传入 买家id，卖家id，产品id，数量，总价，后端生成交易hash，订单号，以及下单时间。
             String order_id = generateOrderId();
             dto.setOrderId(order_id);
@@ -118,7 +128,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
             String hash = blockchainHashUtil.generateTransactionHash(dto);
             dto.setCertificationHash(hash);
             if (this.requestProductVerify(dto)){  //认证通过
-                return  null;
+                return  "401:参数验证失败,请检查参数信息,ProductID:%d".formatted(dto.getProductId());
             }
             if(TransactionMessageIntoRedis(dto)){
                 dto.setStatus("1");
@@ -129,11 +139,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
                  *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
                  */
             }
+            if(!flag){
+                return "401:保存交易信息失败，ProductID:%d。".formatted(dto.getProductId());
+            }
         }
-        if(!flag){
-            return null;
-        }
-        return  dtoList;
+        return  "200";
     }
 
     @Override
@@ -316,7 +326,6 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         stringRedisTemplate.opsForSet().add(buyer_id,hash);
         stringRedisTemplate.expire(buyer_id,15,TimeUnit.MINUTES);
         stringRedisTemplate.opsForValue().set(hash,"",15,TimeUnit.MINUTES);
-
         return true;
     }
 

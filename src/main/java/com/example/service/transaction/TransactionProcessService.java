@@ -12,7 +12,7 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     //更新订单状态
     boolean transactionStatusUpdate(TransactionAccountDto dto,String status);
     TransactionAccountDto getOrderByHash(String hash);
-    List<TransactionAccountDto> TransactionInfoAddMulti(List<TransactionAccountDto> dtoList);
+    String TransactionInfoAddMulti(List<TransactionAccountDto> dtoList);
     boolean cancelTransaction(HttpServletRequest request,String hash);
     boolean cancelTransactionMulti(HttpServletRequest request,List<String> hashList);
     List<TransactionAccountDto> transactionSelectMulti(HttpServletRequest request,Integer id);

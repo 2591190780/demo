@@ -169,6 +169,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
                 .set("stock_remain",stockRemain)
                 .set("is_active",1)
                 .set("product_imgurl",imgURL)
+                .set("description",account.getDescription())
                 .update();
     }
 

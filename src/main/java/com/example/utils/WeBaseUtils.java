@@ -7,9 +7,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
@@ -36,6 +38,12 @@ public class WeBaseUtils {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
     }
+
+    // 暴露 logger 以便外部组件记录错误/状态
+    public Logger getLogger() {
+        return log;
+    }
+
     // 在类中添加以下方法
     public Map<String, Object> callContractMethod(
             String userAddress,
@@ -69,6 +77,7 @@ public class WeBaseUtils {
         requestBody.put("contractAbi", abiNode);
         requestBody.put("useCns", false);
 
+
         // 3. 发送请求到WeBase-Front
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -87,7 +96,6 @@ public class WeBaseUtils {
             throw new RuntimeException("WeBase请求失败: " + response.getStatusCode());
         }
         String responseBody = response.getBody();
-        // 后续省略
         if (responseBody == null) {
             throw new RuntimeException("WeBase响应体为空");
         }
@@ -172,30 +180,36 @@ public class WeBaseUtils {
 
             log.info("WeBase服务初始化完成: baseUrl={}, groupId={}", baseUrl, groupId);
 
-            // 初始化时加载合约列表到缓存
-            loadContractListToCache();
+            // 注意：不在这里同步加载合约，避免阻塞启动线程。由异步启动器（WeBaseStartup）触发加载。
         } else {
             log.error("WeBase配置未加载!");
         }
     }
 
-    // 加载合约列表到缓存
-    private void loadContractListToCache() {
-        List<ContractInfo> contracts = getContractList();
-        for (ContractInfo contract : contracts) {
-            if (contract.getContractAddress() != null && contract.getContractAbi() != null) {
-                String address = contract.getContractAddress().toLowerCase();
+    // 将 loadContractListToCache 设为 public，并在内部做容错处理
+    public void loadContractListToCache() {
+        try {
+            List<ContractInfo> contracts = getContractList();
+            contractAbiCache.clear();
+            simplifiedContractCache.clear();
 
-                // 缓存ABI
-                contractAbiCache.put(address, contract.getContractAbi());
+            for (ContractInfo contract : contracts) {
+                if (contract.getContractAddress() != null && contract.getContractAbi() != null) {
+                    String address = contract.getContractAddress().toLowerCase();
 
-                // 缓存简化合约信息
-                simplifiedContractCache.put(address, createSimplifiedContract(contract));
+                    // 缓存ABI
+                    contractAbiCache.put(address, contract.getContractAbi());
 
-                log.debug("缓存合约: {} -> {}", address, contract.getContractName());
+                    // 缓存简化合约信息
+                    simplifiedContractCache.put(address, createSimplifiedContract(contract));
+
+                    log.debug("缓存合约: {} -> {}", address, contract.getContractName());
+                }
             }
+            log.info("已缓存 {} 个合约信息", simplifiedContractCache.size());
+        } catch (Exception e) {
+            log.error("加载合约缓存失败", e);
         }
-        log.info("已缓存 {} 个合约信息", simplifiedContractCache.size());
     }
 
     // 创建简化合约信息
@@ -216,11 +230,11 @@ public class WeBaseUtils {
 
                     List<Param> inputs = new ArrayList<>();
                     JsonNode inputsNode = abiNode.get("inputs");
-                    if (inputsNode.isArray()) {
+                    if (inputsNode != null && inputsNode.isArray()) {
                         for (JsonNode inputNode : inputsNode) {
                             Param param = new Param();
-                            param.setName(inputNode.get("name").asText());
-                            param.setType(inputNode.get("type").asText());
+                            param.setName(inputNode.has("name") ? inputNode.get("name").asText() : "");
+                            param.setType(inputNode.has("type") ? inputNode.get("type").asText() : "");
                             inputs.add(param);
                         }
                     }
@@ -236,13 +250,13 @@ public class WeBaseUtils {
         return simplified;
     }
 
-    // 获取合约列表 - 修复反序列化问题
+    // 获取合约列表 - 修复反序列化问题并增强日志/异常处理
     public List<ContractInfo> getContractList() {
         if (!validateBaseUrl()) return Collections.emptyList();
 
         String apiUrl = baseUrl + "/contract/contractList";
         log.info("请求合约列表: {}", apiUrl);
-
+        long start = System.currentTimeMillis();
         try {
             // 1. 准备请求头和体
             HttpHeaders headers = new HttpHeaders();
@@ -266,24 +280,28 @@ public class WeBaseUtils {
                     String.class
             );
 
-            log.debug("合约列表响应: 状态码={}, 响应体={}",
-                    response.getStatusCode(),
-                    response.getBody());
+            long elapsed = System.currentTimeMillis() - start;
+            log.info("WeBase 响应耗时 {} ms, 状态 {}", elapsed, response.getStatusCode());
+
+            log.debug("合约列表响应: 状态码={}, 响应体={}", response.getStatusCode(), response.getBody());
 
             // 3. 解析响应 - 使用更灵活的方式处理数据结构
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
                 JsonNode rootNode = objectMapper.readTree(response.getBody());
 
                 // 检查响应代码
-                int code = rootNode.get("code").asInt();
-                String message = rootNode.get("message").asText();
+                int code = rootNode.has("code") ? rootNode.get("code").asInt(-1) : -1;
+                String message = rootNode.has("message") ? rootNode.get("message").asText("") : "";
 
                 if (code == 0) {
                     JsonNode dataNode = rootNode.get("data");
 
                     // 处理不同的数据结构
                     List<ContractInfo> contracts;
-                    if (dataNode.isArray()) {
+                    if (dataNode == null) {
+                        log.warn("WeBase 返回 data 为空");
+                        return Collections.emptyList();
+                    } else if (dataNode.isArray()) {
                         // 如果data是数组，直接解析
                         contracts = new ArrayList<>();
                         for (JsonNode contractNode : dataNode) {
@@ -301,7 +319,7 @@ public class WeBaseUtils {
                         }
                         log.info("成功获取 {} 个合约 (分页格式)", contracts.size());
                     } else {
-                        log.error("未知的响应格式: {}", dataNode);
+                        log.error("未知的响应格式: {}", dataNode.toString());
                         return Collections.emptyList();
                     }
 
@@ -310,8 +328,10 @@ public class WeBaseUtils {
                     log.error("WeBase返回错误: code={}, message={}", code, message);
                 }
             }
+        } catch (ResourceAccessException e) {
+            log.error("网络访问失败: 无法连接到 {} (可能是主机不可达/超时) - {}", baseUrl, e.getMessage());
         } catch (Exception e) {
-            log.error("获取合约列表失败: {}", e.getMessage(), e);
+            log.error("获取合约列表失败", e);
         }
         return Collections.emptyList();
     }
@@ -319,10 +339,10 @@ public class WeBaseUtils {
     // 解析单个合约信息
     private ContractInfo parseContractInfo(JsonNode contractNode) {
         ContractInfo contract = new ContractInfo();
-        contract.setContractName(contractNode.get("contractName").asText());
-        contract.setContractAddress(contractNode.get("contractAddress").asText());
-        contract.setContractPath(contractNode.get("contractPath").asText());
-        contract.setContractAbi(contractNode.get("contractAbi").asText());
+        contract.setContractName(contractNode.has("contractName") ? contractNode.get("contractName").asText() : "");
+        contract.setContractAddress(contractNode.has("contractAddress") ? contractNode.get("contractAddress").asText() : "");
+        contract.setContractPath(contractNode.has("contractPath") ? contractNode.get("contractPath").asText() : "");
+        contract.setContractAbi(contractNode.has("contractAbi") ? contractNode.get("contractAbi").asText() : "");
 
         // 可选字段
         if (contractNode.has("deployTime")) {

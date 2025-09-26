@@ -16,9 +16,9 @@ public interface TransactionProcessMapper extends BaseMapper<TransactionAccountD
 
 
 
-    @Select("SELECT COUNT(*) FROM order_info WHERE buyer_id = #{buyerId} AND status=5 ")
+    @Select("SELECT COUNT(*) FROM order_info WHERE buyer_id = #{buyerId} AND status!=1 AND status!=6  ")
     Integer countNumTransactionByBuyerIdStatus( Integer buyerId);
 
-    @Select("SELECT SUM(actual_payment) FROM order_info WHERE buyer_id = #{buyerId} AND status=5 ")
+    @Select("SELECT SUM(actual_payment) FROM order_info WHERE buyer_id = #{buyerId} AND status!=1 AND status!=6 ")
     Integer sumTotalMoneyByBuyerIdStatus( Integer buyerId);
 }

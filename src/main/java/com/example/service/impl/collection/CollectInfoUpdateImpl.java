@@ -27,7 +27,9 @@ public class CollectInfoUpdateImpl extends ServiceImpl<CollectInfoUpdateMapper,C
         Integer pid = vo.getProductId();
                 update()
                .eq("user_id", id)
-               .eq("product_id",pid).set("product_num",vo.getProductNum())
+               .eq("product_id",pid)
+                        .eq("operation_type",vo.getOperation_type())
+                        .set("product_num",vo.getProductNum())
         .update();
         return RestBean.success();
     }

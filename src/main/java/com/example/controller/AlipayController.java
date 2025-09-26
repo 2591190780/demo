@@ -287,11 +287,12 @@ public class AlipayController {
          * 在这里还需要加入 传入订单信息 与 商家库存 是否满足的逻辑。需要返回提示。
          * 在service中加入 订单有效性逻辑判断。
          */
-        List <TransactionAccountDto> dtoList = this.transactionProcessService.TransactionInfoAddMulti(dto);
-        if (dtoList != null){
+        String ans = this.transactionProcessService.TransactionInfoAddMulti(dto);
+        if (Objects.equals(ans, "200")){
             response.getWriter().write(RestBean.success(dto).asJsonString());
         }else{
-            response.getWriter().write(RestBean.failure(401,"请联系管理员").asJsonString());
+            String[] param = ans.split(":");
+            response.getWriter().write(RestBean.failure(401,param[1]).asJsonString());
         }
 
     }
@@ -478,15 +479,15 @@ public class AlipayController {
                 System.out.println("同步回调支付成功: 订单号=" + outTradeNo + ", 金额=" + totalAmount);
 
                 // 5. 重定向到前端支付成功页面
-                return "redirect:http://demotestccit.natapp1.cc/payment-success.html";
+                return Const.APLIPAY_RETURN_HTML_URL_SUCCESS;
             } else {
                 System.err.println("同步回调验签失败");
                 // 验签失败重定向到失败页面
-                return "redirect:http://demotestccit.natapp1.cc/payment-failed.html";
+                return Const.APLIPAY_RETURN_HTML_URL_FAIL;
             }
         } catch (AlipayApiException e) {
             System.err.println("同步回调验签异常: " + e.getMessage());
-            return "redirect:http://demotestccit.natapp1.cc/payment-error.html";
+            return Const.APLIPAY_RETURN_HTML_URL_EXCEPTION;
         }
     }
 

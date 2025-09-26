@@ -268,7 +268,6 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
             //对链上NFT归属进行操作//这里是对NFT转移的发生记录
             Map<String, Object> result = this.weBaseUtils.callContractMethod(fromAddress,Const.CONTRACT_FOR_NFT_INFO,
                     Const.CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT,para);
-
             if (result.get("statusOK") == Boolean.FALSE) return false;
             //返回错误代码链上链下信息有误，不予执行。
             //这里是记录了交易的发生。
