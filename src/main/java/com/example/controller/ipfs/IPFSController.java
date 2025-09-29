@@ -73,7 +73,8 @@ public class IPFSController {
              */
             //添加对象操作
         if (this.operationTypeImgAdd(request,operationType, String.valueOf(userId),id,file)){
-            return RestBean.success("上传成功，图片的CID为:");
+            String cid = this.accountService.findAccountById(userId).getUserImgurl();
+            return RestBean.success("上传成功，图片的CID为:%s".formatted(cid));
         };
         // 上传到IPFS
         return RestBean.failure(401,"不支持的操作类型");
