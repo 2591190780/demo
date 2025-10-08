@@ -53,6 +53,10 @@ public class BlockChainEvidenceImpl extends ServiceImpl<BlockChainEvidenceMapper
     }
 
     @Override
+    public     List<BlockChainEvidenceDto> selectInfoByRelateId(Integer id){
+        return this.query().eq("related_id", id).list();
+    }
+    @Override
     public boolean updateInfoById(Integer id , Integer block,String txHash){
         return this.update().eq("evidence_id",id).set("block_number",block)
                 .set("timestamp", LocalDateTime.now()).set("tx_hash",txHash).update();

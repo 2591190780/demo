@@ -10,13 +10,13 @@ public class Const {
     public static final  String CONTRACT_FOR_NFT_RULE_METHOD_DELETERULEGROUP = "deleteRulesByTokenId";
     public static final  String CONTRACT_FOR_NFT_RULE_METHOD_GETRULEBYTOKENID = "getRulesByTokenIdFormatted";
     public static final  String CONTRACT_FOR_NFT_RULE_METHOD_ADDORUODATERULE = "addOrUpdateRule";
-    public static final  String CONTRACT_FOR_NFT_RULE = "0x7319fcb2694c68632d93aedf3ac0d7547704cb46";
+    public static final  String CONTRACT_FOR_NFT_RULE = "0x59875722fa83b3b8b79c186dd1fdf5b07d452f3e";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO = "storeNFTInfo";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT = "tradeNFT";
-    public static final  String CONTRACT_FOR_NFT_INFO = "0x8aab865d03de821b53f975b3eaaa36acfd2c3ef6";
-
+    public static final  String CONTRACT_FOR_NFT_INFO = "0xee0a61b0d8ebcabfd0037406b82b93f6ac66f2f8";
+    public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_GETFULLEVIDENCEBYHASH = "getFullEvidenceByHash";
     public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE = "addEvidence";
-    public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x1b4a3748ffc1f3d43d255a3c7eec0d9f4c7dec55";
+    public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x8331bc3d7d298ccb5c088f047344cab0a7ff9d7c";
     /**
      * NFT交易信息
      */

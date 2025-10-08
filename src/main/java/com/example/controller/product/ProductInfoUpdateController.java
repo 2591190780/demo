@@ -41,6 +41,13 @@ public class ProductInfoUpdateController {
             String cid = ipfsUtils.returnUpLoadSuccess(file);
             accountDto.setProductImgurl(cid);
         }
+        Integer pid = accountDto.getProductId();
+        ProductVO dto = selectAccountService.getProductInfoAccountByProductId(pid);
+
+        if(dto.getUpdateTime()==null){
+            return RestBean.failure(401,"请等待管理员通过。");
+        }
+
         RestBean<Object> result = service.updateSingleProductInfo(request, accountDto);
         if (result == null) {
             return RestBean.success();
@@ -76,6 +83,4 @@ public class ProductInfoUpdateController {
         }
         return this.service.updateProductInfoDown(request,accountDto);
     }
-
-
 }

@@ -6,15 +6,16 @@ import com.example.controller.ControllerPageHelper;
 import com.example.entity.PageParam;
 import com.example.entity.PageResult;
 import com.example.entity.RestBean;
-import com.example.entity.dto.Account;
-import com.example.entity.dto.NFTInfoDto;
-import com.example.entity.dto.NFTRuleDto;
+import com.example.entity.dto.*;
 import com.example.entity.vo.request.ContractCallRequest;
 import com.example.entity.vo.response.AuthorizeVO;
+import com.example.entity.vo.response.BlockChainResultVO;
 import com.example.entity.vo.response.NFTRuleVO;
 import com.example.service.AccountService;
+import com.example.service.BlockChainEvidenceService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
+import com.example.service.NFT.NFTTransactionService;
 import com.example.service.blockchain.ConditionNFTRule;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
@@ -53,7 +54,10 @@ public class ContractController {
     NFTInfoService nftInfoService;
     @Resource
     NFTRuleService nftRuleService;
-
+    @Resource
+    NFTTransactionService nftTransactionService;
+    @Resource
+    BlockChainEvidenceService blockChainEvidenceService;
 
     // 获取所有简化合约信息
     @Auditable(
@@ -167,7 +171,8 @@ public class ContractController {
         }
         if (
         this.conditionNFTRule.NFTRuleReport(accountService.findAccountById(id).getWalletAddress(),
-                nId ,ruleList)){
+                nId ,ruleList)
+        ){
            if ( this.nftRuleService.updateStatusRuleInChainNode(rId , nId,1)) {
                response.getWriter().write(RestBean.success().asJsonString());
                return ;
@@ -280,4 +285,35 @@ public class ContractController {
             return RestBean.success();
         }
     }
+
+    @GetMapping("/nft/transaction/result")
+    public <T>RestBean<T> transactionResult(HttpServletRequest request,HttpServletResponse response,
+                                                      @RequestParam("relateId") Integer txId) throws Exception {
+        Integer userId = this.jwtUtils.getRequesetId(request);
+
+        NFTTransactionDto nftTransactionDto = this.nftTransactionService.selectNFTTransactionById(txId);
+        List<BlockChainEvidenceDto> blockChainEvidenceDtoList = this.blockChainEvidenceService.selectInfoByRelateId(txId);
+        NFTInfoDto nftInfoDto = this.nftInfoService.NFTInfoSelectByTemplateId(nftTransactionDto.getNftId());
+        Account account = this.accountService.findAccountById(userId);
+        List<Object> param = new ArrayList<>();
+        param.add(0,blockChainEvidenceDtoList.get(0).getSubmitHash());
+
+        Map<String, Object> result = weBaseUtils.callContractMethod(
+                account.getWalletAddress(),
+                Const.CONTRACT_FOR_MESSAGE_REPORT,
+                Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_GETFULLEVIDENCEBYHASH,
+                param
+        );
+
+
+//        BlockChainResultVO vo = new BlockChainResultVO(
+//
+//        )
+
+
+
+        return RestBean.success();
+    }
+
+
 }

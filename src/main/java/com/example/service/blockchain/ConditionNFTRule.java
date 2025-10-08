@@ -123,6 +123,7 @@ public class ConditionNFTRule {
             "order_info", Map.of(
                     "buyer",   "buyer_id",
                     "seller",  "seller_id"
+
                     //这里添加聚合字段
             )
     );
@@ -423,7 +424,7 @@ public class ConditionNFTRule {
                 return false;
             }
             NFTInfoDto dto = this.nftInfoService.NFTInfoSelectByTemplateId(nftID);
-            NFTRuleDto ruleDto =this.nftRuleService.nftRuleSelectByActId(nftID);
+            NFTRuleDto ruleDto =this.nftRuleService.nftRuleSelectByActChainNodeId(nftID);
             if( dto==null || ruleDto ==null) return false;
             List<Object> param = new ArrayList<>();
             param.add(0,tableName);
