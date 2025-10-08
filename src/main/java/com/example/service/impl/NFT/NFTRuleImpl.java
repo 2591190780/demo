@@ -40,9 +40,17 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
 
     @Override
     public NFTRuleDto nftRuleSelectByActId (Integer id){
-
         return this.query().eq("template_id", id)
-                .eq("is_active",1).one();
+                .eq("is_active",1)
+                .one();
+    }
+
+    @Override
+    public NFTRuleDto nftRuleSelectByActChainNodeId (Integer id){
+        return this.query().eq("template_id", id)
+                .eq("is_active",0)
+                .eq("rule_inchainnode",0)
+                .one();
     }
 
     @Override
@@ -88,6 +96,7 @@ public class NFTRuleImpl extends ServiceImpl<NFTRuleMapper, NFTRuleDto> implemen
         }
         return  this.update().eq("rule_id",id)
                 .set("is_active",answer)
+                .set("rule_inchainnode",answer)
                 .set("update_time",LocalDateTime.now())
                 .update();
     }

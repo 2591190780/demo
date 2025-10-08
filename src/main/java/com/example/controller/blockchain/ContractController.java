@@ -167,7 +167,8 @@ public class ContractController {
         }
         if (
         this.conditionNFTRule.NFTRuleReport(accountService.findAccountById(id).getWalletAddress(),
-                nId ,ruleList)){
+                nId ,ruleList)
+        ){
            if ( this.nftRuleService.updateStatusRuleInChainNode(rId , nId,1)) {
                response.getWriter().write(RestBean.success().asJsonString());
                return ;

@@ -132,8 +132,10 @@ public class NFTInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> implemen
          * NFT 图片只允许上传一次  不可修改
          */
         if(this.NFTInfoSelectByTemplateId(dto.getTemplateId()).getImageUrl()!=null) return false;
-        return  this.update().eq("template_id",dto.getTemplateId())
-                .set("image_url",dto.getImageUrl()).update();
+        return this.update()
+                .eq("template_id",dto.getTemplateId())
+                .set("image_url",dto.getImageUrl())
+                .update();
     }
 
 }
