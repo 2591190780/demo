@@ -36,4 +36,14 @@ public class CollectInfoDeleteImpl extends ServiceImpl<CollectionInfoMapper, Col
         collectInfoMapper.delete(wrapper);
         return RestBean.success();
     }
+
+
+    @Override
+    public boolean CollectInfoDeleteAll(Integer userId) {
+        QueryWrapper<CollectionInfoDto> wrapper = new QueryWrapper<>();
+        wrapper.eq("user_id", userId)
+                .eq("operation_type",1);
+        collectInfoMapper.delete(wrapper);
+        return true;
+    }
 }
