@@ -16,6 +16,10 @@ public class BlockChainResultVO {
     NFTInfoDto nftInfoDto;
     @Length(min = 66, max = 66)
     String txHash;
+    Integer type;
+
+//    @Length(min = 66, max = 66)
+//    String submitHash;
 
 
 }

@@ -82,6 +82,7 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
         return this.query().eq("to_user", toId).list();
     }
 
+
     @Override
     public  NFTTransactionDto selectOrderByTime(Integer nftId){
         return this.query().eq("nft_id", nftId)

@@ -1,6 +1,7 @@
 package com.example.controller.blockchain;
 
 import com.alipay.api.domain.AccountDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.annotation.Auditable;
 import com.example.controller.ControllerPageHelper;
 import com.example.entity.PageParam;
@@ -11,6 +12,7 @@ import com.example.entity.vo.request.ContractCallRequest;
 import com.example.entity.vo.response.AuthorizeVO;
 import com.example.entity.vo.response.BlockChainResultVO;
 import com.example.entity.vo.response.NFTRuleVO;
+import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.service.AccountService;
 import com.example.service.BlockChainEvidenceService;
 import com.example.service.NFT.NFTInfoService;
@@ -55,6 +57,8 @@ public class ContractController {
     NFTTransactionService nftTransactionService;
     @Resource
     BlockChainEvidenceService blockChainEvidenceService;
+    @Resource
+    NFTTransactionMapper nftTransactionMapper;
 
     // 获取所有简化合约信息
     @Auditable(
@@ -293,6 +297,10 @@ public class ContractController {
         List<BlockChainEvidenceDto> blockChainEvidenceDtoList = this.blockChainEvidenceService.selectInfoByRelateId(txId);
         NFTInfoDto nftInfoDto = this.nftInfoService.NFTInfoSelectByTemplateId(nftTransactionDto.getNftId());
         Account account = this.accountService.findAccountById(userId);
+        if(blockChainEvidenceDtoList==null || blockChainEvidenceDtoList.isEmpty()){
+            response.getWriter().write(RestBean.failure(401,"认证查询失败，，暂未查询到认证信息。").asJsonString());
+            return;
+        }
         List<Object> param = new ArrayList<>();
         param.add(0,blockChainEvidenceDtoList.get(0).getSubmitHash());
 
@@ -318,12 +326,35 @@ public class ContractController {
         List<String> addressList = mapper.readValue("[" + dataStr + "]", new TypeReference<List<String>>() {});
         // 提取 0x 地址
         String[] address = addressList.toArray(new String[0]);
+
         BlockChainResultVO vo = new BlockChainResultVO(
-            address[1],address[0],nftInfoDto,blockChainEvidenceDtoList.get(0).getTxHash()
+            address[1],address[0],nftInfoDto,blockChainEvidenceDtoList.get(0).getTxHash(),nftTransactionDto.getType()
         );
         response.getWriter().write(RestBean.success(vo).asJsonString());
         return ;
     }
 
+    @GetMapping("/nft/myTransaction")
+    public void getMyTransaction(
+            HttpServletRequest request, HttpServletResponse response,
+            @ModelAttribute PageParam pageParam
+    )throws Exception{
+        response.setContentType("application/json;charset=UTF-8");
+        Integer userId = this.jwtUtils.getRequesetId(request);
+        Page<NFTTransactionDto> page = this.nftTransactionMapper.selectMyTransaction(pageParam.toPage(),userId);
+        if (page.getTotal() == 0) {
+            response.getWriter().write(RestBean.failure(401,"未查询到您的NFT交易记录。").asJsonString());
+            return;
+        }
+        PageResult<NFTTransactionDto> pageResult = new PageResult<>(
+                page.getTotal(),
+                page.getRecords(),
+                (int) page.getCurrent(),
+                (int) page.getPages(),
+                (int) page.getSize()
+        );
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
+        return;
+    }
 
 }

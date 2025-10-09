@@ -20,4 +20,10 @@ public interface NFTTransactionMapper extends BaseMapper<NFTTransactionDto> {
             "WHERE (from_user = #{fid} OR to_user = #{fid}) " +
             "AND active = 1")
     Integer countNumByFromID(@Param("fid") Integer fid);
+
+    @Select("SELECT * FROM nft_transaction WHERE (from_user = #{uid} OR to_user = #{uid})")
+    Page<NFTTransactionDto> selectMyTransaction(
+            Page<NFTTransactionDto> page,
+            @Param("uid") Integer uid);
+
 }
