@@ -32,10 +32,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/contract")
@@ -287,10 +284,11 @@ public class ContractController {
     }
 
     @GetMapping("/nft/transaction/result")
-    public <T>RestBean<T> transactionResult(HttpServletRequest request,HttpServletResponse response,
+    public void transactionResult(HttpServletRequest request,HttpServletResponse response,
                                                       @RequestParam("relateId") Integer txId) throws Exception {
-        Integer userId = this.jwtUtils.getRequesetId(request);
+        response.setContentType("application/json;charset=UTF-8");
 
+        Integer userId = this.jwtUtils.getRequesetId(request);
         NFTTransactionDto nftTransactionDto = this.nftTransactionService.selectNFTTransactionById(txId);
         List<BlockChainEvidenceDto> blockChainEvidenceDtoList = this.blockChainEvidenceService.selectInfoByRelateId(txId);
         NFTInfoDto nftInfoDto = this.nftInfoService.NFTInfoSelectByTemplateId(nftTransactionDto.getNftId());
@@ -305,14 +303,26 @@ public class ContractController {
                 param
         );
 
-
-//        BlockChainResultVO vo = new BlockChainResultVO(
-//
-//        )
-
-
-
-        return RestBean.success();
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayList<?> data = (ArrayList<?>) result.get("data");
+        String dataStr = (String) data.get(2);
+        // 去掉首尾空格和中括号
+        dataStr = dataStr.trim();
+        if (dataStr.startsWith("[") && dataStr.endsWith("]")) {
+            dataStr = dataStr.substring(1, dataStr.length() - 1);
+        }else{
+            response.getWriter().write(RestBean.failure(401,"未查询到对应记录。").asJsonString());
+            return;
+        }
+        // 用 Jackson 解析成 List<String>
+        List<String> addressList = mapper.readValue("[" + dataStr + "]", new TypeReference<List<String>>() {});
+        // 提取 0x 地址
+        String[] address = addressList.toArray(new String[0]);
+        BlockChainResultVO vo = new BlockChainResultVO(
+            address[1],address[0],nftInfoDto,blockChainEvidenceDtoList.get(0).getTxHash()
+        );
+        response.getWriter().write(RestBean.success(vo).asJsonString());
+        return ;
     }
 
 

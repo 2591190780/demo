@@ -32,6 +32,7 @@ public class MessageReportService {
         List<WeBaseUtils.ContractMethod> methodList  = info.getMethods();
         for (WeBaseUtils.ContractMethod method : methodList ){
             if(!Objects.equals(method.getName(), operationName)) continue;
+            //生产记录进入数据库
             if (!this.blockChainEvidenceService.addInfo( Integer.parseInt(params.get(0).toString())
                     , Integer.parseInt(params.get(1).toString())
                     ,  params.get(2).toString())) continue;
@@ -39,8 +40,8 @@ public class MessageReportService {
                     = weBaseUtils.callContractMethod(userWalletAddress,contractAddress,operationName,params);
             String txHash = (String) result.get("transactionHash");
             String blockNumber = (String) result.get("blockNumber");
-
             String submitHash = (String) params.get(2);
+            //更新数据表
             this.blockChainEvidenceService.updateInfoBySubmitHash(blockNumber,txHash,submitHash);
             return "上链成功";
         }
