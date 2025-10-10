@@ -18,7 +18,7 @@ public class BlockchainHashUtil {
     NFTInfoService nftInfoService;
 
     private static final DateTimeFormatter TIMESTAMP_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
+            DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     /**
      * 生成产品存证哈希
      *

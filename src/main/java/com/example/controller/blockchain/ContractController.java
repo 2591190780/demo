@@ -301,6 +301,10 @@ public class ContractController {
             response.getWriter().write(RestBean.failure(401,"认证查询失败，，暂未查询到认证信息。").asJsonString());
             return;
         }
+        if(blockChainEvidenceDtoList.size()!=3 ){
+            response.getWriter().write(RestBean.failure(401,"交易记录不完整。").asJsonString());
+            return;
+        }
         List<Object> param = new ArrayList<>();
         param.add(0,blockChainEvidenceDtoList.get(0).getSubmitHash());
 
@@ -319,6 +323,7 @@ public class ContractController {
         if (dataStr.startsWith("[") && dataStr.endsWith("]")) {
             dataStr = dataStr.substring(1, dataStr.length() - 1);
         }else{
+
             response.getWriter().write(RestBean.failure(401,"未查询到对应记录。").asJsonString());
             return;
         }
@@ -328,7 +333,8 @@ public class ContractController {
         String[] address = addressList.toArray(new String[0]);
 
         BlockChainResultVO vo = new BlockChainResultVO(
-            address[1],address[0],nftInfoDto,blockChainEvidenceDtoList.get(0).getTxHash(),nftTransactionDto.getType()
+            address[1],address[0],nftInfoDto,blockChainEvidenceDtoList.get(0).getTxHash()
+                ,blockChainEvidenceDtoList.get(2).getTxHash(),nftTransactionDto.getType()
         );
         response.getWriter().write(RestBean.success(vo).asJsonString());
         return ;

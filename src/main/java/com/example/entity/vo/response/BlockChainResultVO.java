@@ -15,7 +15,8 @@ public class BlockChainResultVO {
     String toWalletAddress;
     NFTInfoDto nftInfoDto;
     @Length(min = 66, max = 66)
-    String txHash;
+    String txHashSeller; //
+    String txHashBuyer;
     Integer type;
 
 //    @Length(min = 66, max = 66)
