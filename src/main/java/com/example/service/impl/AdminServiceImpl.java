@@ -7,6 +7,7 @@ import com.example.entity.vo.response.PendingApplicationVO;
 import com.example.mapper.AdminMapper;
 import com.example.service.AccountService;
 import com.example.service.AdminService;
+import com.example.service.BlockChainEvidenceService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
 import com.example.service.NFT.NFTTransactionService;
@@ -244,7 +245,8 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
             default -> throw new IllegalStateException("Unexpected value: " + type);
         };
     }
-
+    @Resource
+    BlockChainEvidenceService blockChainEvidenceService;
     private Object objectConfirm (PendingApplicationVO vo,byte ans) throws Exception {
         if (vo == null) return null;
         String operation = vo.getOperation();
@@ -258,58 +260,68 @@ public class AdminServiceImpl extends ServiceImpl<AdminMapper, PendingApplicatio
         Object result = switch (targetType) {
             case "product" -> {
                 //只有在添加产品的时候才会触发上链，否则不会上链。
-                if(ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)){
+                if (ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)) {
                     //产品上链操作  获取上链产品的hash值
-                String hash = this.productInfoSelectAccountService
-                        .getProductInfoAccountByProductId(this.convertToInteger(targetId)).getCertificationHash();
-                    params.add(0,1);
-                    params.add(1,convertToInteger(targetId));
-                    params.add(2,hash);
+                    String hash = this.productInfoSelectAccountService
+                            .getProductInfoAccountByProductId(this.convertToInteger(targetId)).getCertificationHash();
+                    params.add(0, 1);
+                    params.add(1, convertToInteger(targetId));
+                    params.add(2, hash);
                     //执行上链操作
-                messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE
-                        ,params
-                        ,userAddress,Const.CONTRACT_FOR_MESSAGE_REPORT);
+                    messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE
+                            , params
+                            , userAddress, Const.CONTRACT_FOR_MESSAGE_REPORT);
                 }
                 yield this.productInfoUpdateAccountService.productUpdateAdmin(
                         this.convertToInteger(targetId),
-                        this.convertToInteger(farmerId),  ans);
+                        this.convertToInteger(farmerId), ans);
             }
-            case "userInfo" -> this.accountService.updateRoleAdmin(convertToInteger(farmerId),targetId);
-            case "nft_info" ->{
-                if(ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)){
+            case "userInfo" -> this.accountService.updateRoleAdmin(convertToInteger(farmerId), targetId);
+            case "nft_info" -> {
+                if (ans == (byte) 1 && Objects.equals(operation, Const.FARMER_ADD_APPLY_LIST)) {
                     //检查图片信息是否已经存在CID值了
                     NFTInfoDto nftInfoDto = this.nftInfoService.NFTInfoSelectByTemplateId(convertToInteger(targetId));
                     Integer publicID = nftInfoDto.getPublicBy();
                     Integer nftID = nftInfoDto.getTemplateId();
                     String cid = nftInfoDto.getImageUrl();
-                    if (cid ==null) yield null;
+                    if (cid == null) yield null;
                     String nftContractAddress = Const.CONTRACT_FOR_NFT_INFO;
-                    String ipfs = "ipfs/"+cid;
+                    String ipfs = "ipfs/" + cid;
                     String metadata = nftInfoDto.getMetadataUrl();
                     BigDecimal price = this.theLatestNFTPrice(nftID);
 
                     List<Object> param = new ArrayList<>();
-                    param.add(0,nftID);
-                    param.add(1,nftContractAddress);
-                    param.add(2,ipfs);
-                    param.add(3,metadata);
-                    param.add(4,price);
+                    param.add(0, nftID);
+                    param.add(1, nftContractAddress);
+                    param.add(2, ipfs);
+                    param.add(3, metadata);
+                    param.add(4, price);
                     String ownerAddress = this.accountService.findAccountById(publicID).getWalletAddress();
                     String methodName = Const.CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO;
+
                     //service的update操作已经做了权限验证
                     /**
                      * 这里要对NFT信息进行上链。
                      */
-                    weBaseUtils.callContractMethod(ownerAddress,nftContractAddress,methodName,param);
+                    weBaseUtils.callContractMethod(ownerAddress, nftContractAddress, methodName, param);
+
                     //this.nftInfoService.nftUpdateContractAdmin(nftContractAddress,nftID);
                 }
                 yield this.nftInfoService.NFTInfoUpdateAdmin(this.convertToInteger(targetId), ans);
             }
 
-            case "nft_rule" ->//管理员同意了此规则，需要是上传规则至区块链合约上方法在ConditionNFTRule.XXXreport.
-                    this.nftRuleService.nftRuleUpdateAdmin(convertToInteger(targetId),ans);
-
-
+            case "nft_rule" -> {
+                if(ans == 1){//管理员同意了此规则，需要是上传规则至区块链合约上方法在ConditionNFTRule.XXXreport.
+                NFTRuleDto dto = this.nftRuleService.nftRuleSelectByID(convertToInteger(targetId));
+                params.add(0, 7);
+                params.add(1, dto.getTemplateId());
+                params.add(2, dto.getApplyHash());
+                messageReportService.blockChainEvidenceReport(Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE
+                        , params
+                        , userAddress, Const.CONTRACT_FOR_MESSAGE_REPORT);
+            }
+            yield this.nftRuleService.nftRuleUpdateAdmin(convertToInteger(targetId), ans);
+            }
             case "sensor" -> this.sensorInfoUpdateService.updateSensorInfoDtoadmin(
                     new SensorInfoDto(
                                     this.convertToInteger(targetId),
