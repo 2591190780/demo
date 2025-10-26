@@ -56,7 +56,8 @@ public class SecurityConfiguration {
                                 "/alipay/notify",
                                 "/alipay/alipay/return",//测试阶段的alipay需要开放安全权限
                                 "/api/selectProducts/search/latest/five",
-                            "/api/selectProducts/search/all"
+                            "/api/selectProducts/search/all",
+                            "/api/data/visualization/**"
                             //    ,"/api/selectProducts/**"
                              //   ,"api/nft/**" //测试阶段的图片上传功能。
                         ).permitAll() //knife4j相关接口

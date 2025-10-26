@@ -1,9 +1,11 @@
 package com.example.service.transaction;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.entity.vo.response.SalesTrend;
 import com.example.entity.dto.TransactionAccountDto;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TransactionProcessService extends IService<TransactionAccountDto> {
@@ -26,4 +28,10 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     TransactionAccountDto getOrderByTransactionID(Integer transactionID);
     TransactionAccountDto getOrderByAlipayOrderAndTrasactionId(String alipayOrder,Integer transactionId);
     boolean updateStatusByAlipayOrder(String alipayOrder,Integer trasactionId,Integer sellerId,String status);
+
+    //可视化接口
+    List<SalesTrend> getTransactionMoneyByDate(LocalDateTime startDay, LocalDateTime endDay);
+
+
+
 }

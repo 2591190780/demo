@@ -1,9 +1,10 @@
 package com.example.service.impl.transaction;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.entity.dto.ProductInfoAccountDto;
+import com.example.entity.vo.response.SalesTrend;
 import com.example.entity.dto.TransactionAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
@@ -18,9 +19,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper, TransactionAccountDto>
@@ -36,6 +39,26 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     StringRedisTemplate stringRedisTemplate;
     @Resource
     ProductInfoSelectAccountService productInfoSelectAccountService;
+
+
+    @Override
+    public List<SalesTrend> getTransactionMoneyByDate(LocalDateTime startDay, LocalDateTime endDay) {
+        QueryWrapper<TransactionAccountDto> qw = new QueryWrapper<>();
+        qw.select("DATE(order_time) AS date", "SUM(actual_payment) AS money")
+                .ge("order_time", startDay)
+                .lt("order_time", endDay)
+                .notIn("status", 1, 6)
+                .groupBy("DATE(order_time)")
+                .orderByAsc("DATE(order_time)");
+
+        // 查询并封装
+        return this.getBaseMapper().selectMaps(qw)
+                .stream()
+                .map(m -> new SalesTrend(
+                        new BigDecimal(m.get("money").toString()), LocalDate.parse(m.get("date").toString())
+                ))
+                .collect(Collectors.toList());
+    }
 
     @Override
     public boolean updateStatusByAlipayOrder(String alipayOrder,Integer transactionId,Integer sellerId,String status){

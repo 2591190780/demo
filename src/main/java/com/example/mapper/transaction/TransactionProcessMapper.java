@@ -14,11 +14,11 @@ public interface TransactionProcessMapper extends BaseMapper<TransactionAccountD
     Page<TransactionAccountDto> selectBySellerIdPage(
             Page<TransactionAccountDto> page, @Param("sellerId") Integer sellerId);
 
-
-
     @Select("SELECT COUNT(*) FROM order_info WHERE buyer_id = #{buyerId} AND status!=1 AND status!=6  ")
     Integer countNumTransactionByBuyerIdStatus( Integer buyerId);
 
     @Select("SELECT SUM(actual_payment) FROM order_info WHERE buyer_id = #{buyerId} AND status!=1 AND status!=6 ")
     Integer sumTotalMoneyByBuyerIdStatus( Integer buyerId);
+
+
 }
