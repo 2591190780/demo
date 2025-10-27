@@ -5,6 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.NFTPendingApplication;
 import com.example.entity.dto.BlockChainEvidenceDto;
 import com.example.entity.dto.NFTTransactionDto;
+import com.example.entity.dto.UserNFTDto;
+import com.example.entity.records.BestSellingNFT;
+import com.example.entity.records.MostNFTNumberOwner;
+import com.example.entity.records.SalesTrend;
 import com.example.mapper.BlockChainEvidenceMapper;
 import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.service.AccountService;
@@ -12,10 +16,7 @@ import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTTransactionService;
 import com.example.service.NFT.UserNFTService;
 import com.example.service.blockchain.MessageReportService;
-import com.example.utils.BlockchainHashUtil;
-import com.example.utils.Const;
-import com.example.utils.JwtUtils;
-import com.example.utils.WeBaseUtils;
+import com.example.utils.*;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.PartialUpdate;
@@ -26,13 +27,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTransactionDto>
@@ -62,6 +62,24 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
     WeBaseUtils weBaseUtils;
     @Resource
     BlockChainEvidenceMapper blockChainEvidenceMapper;
+
+    @Override
+    public List<BestSellingNFT> getSalesNFTTrend(LocalDateTime startDay, LocalDateTime endDay){
+        QueryWrapper<NFTTransactionDto> qw = new QueryWrapper<>();
+        qw.select("DATE(tx_time) AS date", "COUNT(nft_id) AS total_count")
+                .ge("tx_time", startDay)
+                .lt("tx_time", endDay)
+                .eq("type", 3)
+                .groupBy("DATE(tx_time)")
+                .orderByAsc("DATE(tx_time)");
+
+        return this.getBaseMapper().selectMaps(qw)
+                .stream()
+                .map(m -> new BestSellingNFT(null,DataTypeUtils.getLongValue(m.get("total_count"))
+                        , LocalDate.parse(m.get("date").toString())
+                ))
+                .collect(Collectors.toList());
+    }
 
     @Override
     public List<NFTTransactionDto> selectNFTTransactionByNFTId(Integer nftId){

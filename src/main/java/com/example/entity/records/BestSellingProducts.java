@@ -1,4 +1,4 @@
-package com.example.entity.vo.response;
+package com.example.entity.records;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

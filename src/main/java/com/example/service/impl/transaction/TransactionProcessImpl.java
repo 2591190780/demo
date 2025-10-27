@@ -4,7 +4,8 @@ package com.example.service.impl.transaction;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.example.entity.vo.response.SalesTrend;
+import com.example.entity.records.BestSellingProducts;
+import com.example.entity.records.SalesTrend;
 import com.example.entity.dto.TransactionAccountDto;
 import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
@@ -40,6 +41,49 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     @Resource
     ProductInfoSelectAccountService productInfoSelectAccountService;
 
+    @Override
+    public List<BestSellingProducts> getBestSellingProductsByDate(LocalDateTime startDay, LocalDateTime endDay) {
+        // 查询销售数据，按产品ID分组统计销量
+        QueryWrapper<TransactionAccountDto> qw = new QueryWrapper<>();
+        qw.select("product_id", "SUM(quantity) AS total_count")
+                .ge("order_time", startDay)
+                .lt("order_time", endDay)
+                .notIn("status", 1, 6)
+                .groupBy("product_id")
+                .orderByDesc("total_count")
+                .last("LIMIT 10"); // 取前10个畅销商品
+
+        List<Map<String, Object>> salesData = this.getBaseMapper().selectMaps(qw);
+
+        // 转换为 BestSellingProducts 列表
+        return convertToBestSellingProducts(salesData);
+    }
+
+    private List<BestSellingProducts> convertToBestSellingProducts(List<Map<String, Object>> salesData) {
+        List<BestSellingProducts> result = new ArrayList<>();
+
+        for (Map<String, Object> data : salesData) {
+            Long productId = ((Number) data.get("product_id")).longValue();
+            Integer count = ((Number) data.get("total_count")).intValue();
+
+            // 通过 productinfoAccountService 查询产品名称
+            String productName = getProductNameById(Math.toIntExact(productId));
+
+            result.add(new BestSellingProducts(productName, count));
+        }
+
+        return result;
+    }
+
+    private String getProductNameById(Integer productId) {
+        try {
+            ProductVO productInfo = productInfoSelectAccountService.getProductInfoAccountByProductId(productId);
+            return productInfo != null ? productInfo.getName() : "未知商品";
+        } catch (Exception e) {
+            log.warn("获取产品名称失败, productId: {%d,%s}".formatted(productId, e));
+            return "未知商品";
+        }
+    }
 
     @Override
     public List<SalesTrend> getTransactionMoneyByDate(LocalDateTime startDay, LocalDateTime endDay) {

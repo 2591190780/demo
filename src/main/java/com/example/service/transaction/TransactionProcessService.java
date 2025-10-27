@@ -1,7 +1,8 @@
 package com.example.service.transaction;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.example.entity.vo.response.SalesTrend;
+import com.example.entity.records.BestSellingProducts;
+import com.example.entity.records.SalesTrend;
 import com.example.entity.dto.TransactionAccountDto;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -31,7 +32,7 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
 
     //可视化接口
     List<SalesTrend> getTransactionMoneyByDate(LocalDateTime startDay, LocalDateTime endDay);
-
+    List<BestSellingProducts> getBestSellingProductsByDate(LocalDateTime startDay, LocalDateTime endDay);
 
 
 }
