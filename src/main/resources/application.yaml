@@ -54,8 +54,8 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 1MB
-      max-request-size: 1MB
+      max-file-size: 2MB
+      max-request-size: 2MB
 
 
 ipfs:

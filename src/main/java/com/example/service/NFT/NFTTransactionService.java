@@ -3,8 +3,10 @@ package com.example.service.NFT;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.example.entity.NFTPendingApplication;
 import com.example.entity.dto.NFTTransactionDto;
+import com.example.entity.records.BestSellingNFT;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface NFTTransactionService extends IService<NFTTransactionDto> {
@@ -18,6 +20,9 @@ public interface NFTTransactionService extends IService<NFTTransactionDto> {
     NFTTransactionDto selectOrderByTime(Integer nftId);
     boolean buyApplyForNFT(NFTPendingApplication application);
     List<NFTPendingApplication>  getApplyForNFT(Integer id);
+
+    //可视化
+    List<BestSellingNFT> getSalesNFTTrend(LocalDateTime startDay, LocalDateTime endDay);
 
 
 }

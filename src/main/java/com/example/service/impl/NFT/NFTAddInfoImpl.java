@@ -36,6 +36,7 @@ public class NFTAddInfoImpl extends ServiceImpl<NFTInfoMapper, NFTInfoDto> imple
         nftInfoDto.setRemainCount(nftInfoDto.getIssuanceLimit());
         nftInfoDto.setIsActive(0);
         nftInfoDto.setContractAddress(Const.CONTRACT_FOR_NFT_INFO);
+        nftInfoDto.setImageUrl(null);
         if (this.save(nftInfoDto)){
             // 请求发送给 Redis等待管理员确认
             infoToRedisUtils.InfoToRedis(nftInfoDto.getTemplateId(),userId,"add","nft_info");

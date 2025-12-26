@@ -57,12 +57,10 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         Integer fid = vo.getFarmerId();
         boolean verifyId = utils.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("权限不足");
-
         //农户提交新产品的信息    此时需要等待管理员确认后才激活产品售卖
         if(this.generateProductAccount(vo)){
             redisUtils.InfoToRedis(vo.getProductId(), vo.getFarmerId()
                     , "add","product");
-
             return RestBean.success();
         }
         return RestBean.failure(401,"请检查传入的参数");
@@ -117,7 +115,6 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
         String certificationHash = hashUtil.generateProductHash(
                 farmerId, name, category , origin,now
         );
-
         ProductInfoAccountDto dto;
         dto = new ProductInfoAccountDto(
                 productId,
@@ -127,11 +124,10 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
                 vo.getPrice(),
                 vo.getStock(),vo.getStock(),//农户在刚添加产品的时候，库存剩余量肯定等于库存的。
                 origin,
-                certificationHash,
-                now,
+                certificationHash,null,
                 now,
                 active,
-                null
+                vo.getProductImgurl(),vo.getDescription(),vo.getDiscount(),vo.getUnit()
         );
         if(this.save(dto)){
             /**
@@ -140,8 +136,9 @@ public class ProductInfoAddAccountImpl extends ServiceImpl<ProductInfoAddAccount
              *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
              */
             RestBean.success();
-            vo.setProductId(dto.getProductId());
-            return true;}
+            vo.setProductId(dto.getProductId());//这里不取存入的自动递增的ID值，上一个调用的函数取不到vo里的ID值（为空）很重要。
+            return true;
+        }
         RestBean.failure(500,"未知错误请联系管理员");
         return false ;
     }

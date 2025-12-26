@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -45,10 +46,9 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         Integer fid = account.getFarmerId();
         boolean verifyId = utils.getUserIdVerify(request,fid);
         if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
-
         if(update(account)) {
-            redisUtils.InfoToRedis(account.getProductId(), account.getFarmerId()
-                    , "update","product");
+//            redisUtils.InfoToRedis(account.getProductId(), account.getFarmerId()
+//                    , "update","product");
             return null;
         }
         return  RestBean.failure(401,"参数有误");
@@ -65,7 +65,7 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
         if(!verifyId)return RestBean.forbidden("请检查农产品所属农户");
 
         return this.update().eq("farmer_id", fid).eq("product_id", account.getProductId())
-                    .set("is_active",(byte) 0).update() ?
+                    .set("is_active",account.getIsActive()).update() ?
                 RestBean.success() : RestBean.failure(401,"参数有误");
         }
 
@@ -154,28 +154,36 @@ public class ProductInfoUpdateAccountImpl extends ServiceImpl<ProductInfoUpdateA
                 .set("stock_remain",remain).update() ;
     }
 
-
-    //用户需要将update消息提交到redis队列中，等待管理员用户确认后生效
     public boolean update(ProductInfoAccountDto account){
         Integer productId = account.getProductId();
         Integer farmerId= account.getFarmerId();
         BigDecimal price = account.getPrice();
         BigDecimal stock = account.getStock();
+        BigDecimal stockRemain = account.getStockRemain();
         String imgURL = account.getProductImgurl();
         return  this.update()
                 .eq("product_id",productId)
                 .eq("farmer_id",farmerId)
                 .set("price",price)
                 .set("stock",stock)
-                .set("is_active",0)
+                .set("stock_remain",stockRemain)
+                .set("is_active",1)
                 .set("product_imgurl",imgURL)
+                .set("description",account.getDescription())
+                .set("discount",account.getDiscount())
+                .set("unit",account.getUnit())
                 .update();
     }
 
     public boolean productUpdateAdmin(Integer productId,Integer farmerId,byte active){
+        LocalDateTime now = null;
+        if(active == 1){
+             now = LocalDateTime.now();
+        }
         return  this.update()
                 .eq("product_id",productId)
                 .eq("farmer_id",farmerId)
+                .set("update_time", now)
                 .set("is_active",active)
                 .update();
     }

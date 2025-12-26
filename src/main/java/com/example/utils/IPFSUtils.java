@@ -20,6 +20,32 @@ public class IPFSUtils {
         this.gatewayUrl = gatewayUrl;
     }
 
+    public String uploadImg(MultipartFile file) throws IOException {
+        // 验证文件是否为空
+        if (file.isEmpty()) {
+            return "上传的文件为空";
+        }
+        // 验证文件类型（可选）
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return "仅支持图片文件上传";
+        }
+        // 1. 生成CID值
+        IPFSUtils.IPFSResponse response = this.storeFile(file);  // 需要在 增添的操作对应的表上进行。
+        String cid = response.cid();
+        return "CID:"+cid;
+    }
+
+    public String returnUpLoadSuccess(MultipartFile file) throws IOException {
+        String Rcid = this.uploadImg(file);
+        if (Rcid.startsWith("CID:")){
+            String cid = Rcid.split("CID:")[1];
+            if(cid.startsWith("Qm")) return cid;
+            return null;
+        }
+        return null;
+    }
+
     public IPFSResponse storeFile(MultipartFile file) throws IOException {
         try {
             // 添加超时设置（Windows 环境可能需要）

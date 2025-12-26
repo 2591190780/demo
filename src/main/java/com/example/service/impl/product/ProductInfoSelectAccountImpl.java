@@ -79,6 +79,7 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
             queryWrapper.like("origin_location", location.trim()); // 模糊匹配产地
             // 如果需要精确匹配产地，改为：.eq("origin_location", location.trim())
         }
+        queryWrapper.eq("is_active", 1);
         // 执行查询
         return convertToProductVOList(list(queryWrapper));
     }
@@ -157,6 +158,8 @@ public class ProductInfoSelectAccountImpl extends ServiceImpl<ProductInfoSelectA
         vo.setProductImgurl(account.getProductImgurl());
         vo.setIsActive(account.getIsActive());
         vo.setStockRemain(account.getStockRemain());
+        vo.setDescription(account.getDescription());
+        vo.setDiscount(account.getDiscount());
         return vo;
     }
 }

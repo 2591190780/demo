@@ -1,18 +1,27 @@
 package com.example.service.impl.NFT;
 
+import com.alipay.api.domain.AccountInfoVO;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.*;
+import com.example.entity.records.BestSellingProducts;
+import com.example.entity.records.MostNFTNumberOwner;
+import com.example.entity.records.SalesTrend;
+import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.NFT.UserNFTMapper;
+import com.example.service.AccountService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
 import com.example.service.NFT.UserNFTService;
+import com.example.utils.DataTypeUtils;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserNFTImpl extends ServiceImpl<UserNFTMapper, UserNFTDto> implements UserNFTService {
@@ -26,6 +35,38 @@ public class UserNFTImpl extends ServiceImpl<UserNFTMapper, UserNFTDto> implemen
     @Resource
     UserNFTMapper userNFTMapper;
 
+    @Resource
+    AccountService accountService;
+
+    @Override
+    public  List<MostNFTNumberOwner> getMostNFTNumberOwner(){
+        QueryWrapper<UserNFTDto> qw = new QueryWrapper<>();
+        qw.select("user_id", "COUNT(nft_id) AS total_count")
+                .eq("status",1)
+                .groupBy("user_id")
+                .orderByDesc("total_count")
+                .last("LIMIT 10");
+
+        List<Map<String, Object>> dataList = this.getBaseMapper().selectMaps(qw);
+        List<MostNFTNumberOwner> result = new ArrayList<>();
+        for (Map<String, Object> data : dataList) {
+            Long userId = DataTypeUtils.getLongValue(data.get("user_id"));
+            Integer count = DataTypeUtils.getIntegerValue(data.get("total_count"));
+            String userName = getProductNameById(Math.toIntExact(userId));
+
+            result.add(new MostNFTNumberOwner(userName, count));
+        }
+        return result;
+    }
+    private String getProductNameById(Integer uid) {
+        try {
+            Account account = this.accountService.findAccountById(uid);
+            return account != null ? account.getUsername() : "未知用户";
+        } catch (Exception e) {
+            log.warn("获取产品名称失败, productId: {%d,%s}".formatted(uid, e));
+            return "未知商品";
+        }
+    }
     @Override
     public UserNFTDto selectNFTById(Integer id){
         return query().eq("id", id).one();

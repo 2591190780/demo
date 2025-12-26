@@ -5,6 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.NFTPendingApplication;
 import com.example.entity.dto.BlockChainEvidenceDto;
 import com.example.entity.dto.NFTTransactionDto;
+import com.example.entity.dto.UserNFTDto;
+import com.example.entity.records.BestSellingNFT;
+import com.example.entity.records.MostNFTNumberOwner;
+import com.example.entity.records.SalesTrend;
 import com.example.mapper.BlockChainEvidenceMapper;
 import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.service.AccountService;
@@ -12,10 +16,7 @@ import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTTransactionService;
 import com.example.service.NFT.UserNFTService;
 import com.example.service.blockchain.MessageReportService;
-import com.example.utils.BlockchainHashUtil;
-import com.example.utils.Const;
-import com.example.utils.JwtUtils;
-import com.example.utils.WeBaseUtils;
+import com.example.utils.*;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.PartialUpdate;
@@ -23,14 +24,15 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTransactionDto>
@@ -62,6 +64,24 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
     BlockChainEvidenceMapper blockChainEvidenceMapper;
 
     @Override
+    public List<BestSellingNFT> getSalesNFTTrend(LocalDateTime startDay, LocalDateTime endDay){
+        QueryWrapper<NFTTransactionDto> qw = new QueryWrapper<>();
+        qw.select("DATE(tx_time) AS date", "COUNT(nft_id) AS total_count")
+                .ge("tx_time", startDay)
+                .lt("tx_time", endDay)
+                .eq("type", 3)
+                .groupBy("DATE(tx_time)")
+                .orderByAsc("DATE(tx_time)");
+
+        return this.getBaseMapper().selectMaps(qw)
+                .stream()
+                .map(m -> new BestSellingNFT(null,DataTypeUtils.getLongValue(m.get("total_count"))
+                        , LocalDate.parse(m.get("date").toString())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public List<NFTTransactionDto> selectNFTTransactionByNFTId(Integer nftId){
         return this.query().eq("nft_id", nftId).list();
     }
@@ -79,6 +99,7 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
     public List<NFTTransactionDto> selectNFTTransactionByToId(Integer toId){
         return this.query().eq("to_user", toId).list();
     }
+
 
     @Override
     public  NFTTransactionDto selectOrderByTime(Integer nftId){
@@ -248,12 +269,24 @@ public class NFTTransactionImpl extends ServiceImpl<NFTTransactionMapper, NFTTra
             List<Object> para = new ArrayList<>();
             para.add(0, nftTransactionDto.getNftId());
             para.add(1,toAddress);
-            para.add(2,nftTransactionDto.getPrice());
-
+            String priceStr = String.valueOf(nftTransactionDto.getPrice());          // "10000000000000.000000000000000000"
+            BigDecimal bd = new BigDecimal(priceStr)
+                    .setScale(18, RoundingMode.HALF_UP);             // 保证 18 位小数
+            BigInteger onChainValue = bd.movePointRight(18)          // 去掉小数点
+                    .toBigInteger();                                 // 10000000000000000000000000000
+            para.add(2, onChainValue);
+            // 1. 转 BigDecimal
+//            BigDecimal bd2 = new BigDecimal(onChainValue);
+//            // 2. ÷10^18 移回小数点
+//            BigDecimal realPrice = bd2.movePointLeft(18);             // 10000000000000.000000000000000000
+//            // 3. 去掉尾部多余的 0（可选）
+//            String display = realPrice.stripTrailingZeros()
+//                    .toPlainString();                                  // "10000000000000"
+            // 入库/上链
+            // para.add(2, realPrice.toPlainString());           // 写入
             //对链上NFT归属进行操作//这里是对NFT转移的发生记录
             Map<String, Object> result = this.weBaseUtils.callContractMethod(fromAddress,Const.CONTRACT_FOR_NFT_INFO,
                     Const.CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT,para);
-
             if (result.get("statusOK") == Boolean.FALSE) return false;
             //返回错误代码链上链下信息有误，不予执行。
             //这里是记录了交易的发生。

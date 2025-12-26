@@ -16,6 +16,7 @@ import com.example.entity.RestBean;
 import com.example.entity.dto.AddressDto;
 import com.example.entity.dto.ProductInfoAccountDto;
 import com.example.entity.dto.TransactionAccountDto;
+import com.example.entity.vo.response.OrderInfoVO;
 import com.example.entity.vo.response.ProductVO;
 import com.example.entity.vo.response.TransactionInfoVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
@@ -118,19 +119,34 @@ public class AlipayController {
     )
     @GetMapping("/pay/select/seller")
     public  <T> RestBean<T> payInfoSelectSeller(HttpServletRequest request,
-            HttpServletResponse response, @Parameter String FarmerID) throws IOException {
+                                                HttpServletResponse response,
+                                                @Parameter String FarmerID,
+                                                @ModelAttribute PageParam pageParam
+                                                ) throws IOException {
+        response.setContentType("application/json;Charset=utf-8");
+
         Integer id = jwtUtils.getRequesetId(request);
         if(Objects.equals(id, jwtUtils.convertToInteger(FarmerID))) {
             List<TransactionAccountDto> dtoList = this.transactionProcessService.paySelectForSeller(id);
             if(dtoList.isEmpty()) { return RestBean.failure(401,"暂无订单信息。");}
             List<TransactionInfoVO> voList = this.selectWholeInfoToFront(dtoList);
-            response.setContentType("application/json;Charset=utf-8");
-            response.getWriter().write(RestBean.success(voList).asJsonString());
+            List<OrderInfoVO> orderInfoVOList = new ArrayList<>();
+
+            for (TransactionInfoVO vo : voList) {
+                Integer addressId = vo.getAddressInfo();
+                OrderInfoVO orderInfoVO = new OrderInfoVO(
+                        vo,this.addressService.findById(addressId)
+                );
+                orderInfoVOList.add(orderInfoVO);
+            }
+            PageResult<OrderInfoVO> pageResult = ControllerPageHelper.paginateList(
+                    orderInfoVOList, pageParam
+            );
+            response.getWriter().write(RestBean.success(pageResult).asJsonString());
             return null;
         }
         return RestBean.failure(401,"无权限的操作。");
     }
-
 
     /**
      * 方案1：使用Service原始方法 + 内存分页
@@ -271,11 +287,12 @@ public class AlipayController {
          * 在这里还需要加入 传入订单信息 与 商家库存 是否满足的逻辑。需要返回提示。
          * 在service中加入 订单有效性逻辑判断。
          */
-        List <TransactionAccountDto> dtoList = this.transactionProcessService.TransactionInfoAddMulti(dto);
-        if (dtoList != null){
+        String ans = this.transactionProcessService.TransactionInfoAddMulti(dto);
+        if (Objects.equals(ans, "200")){
             response.getWriter().write(RestBean.success(dto).asJsonString());
         }else{
-            response.getWriter().write(RestBean.failure(401,"请联系管理员").asJsonString());
+            String[] param = ans.split(":");
+            response.getWriter().write(RestBean.failure(401,param[1]).asJsonString());
         }
 
     }
@@ -304,7 +321,6 @@ public class AlipayController {
         // 从Redis获取待支付订单哈希集
         String userKey =  userId.toString();
         Set<String> hashes = stringRedisTemplate.opsForSet().members(userKey);
-
         // 清理过期订单哈希
         if (hashes != null) {
             for (String hash : hashes) {
@@ -333,15 +349,12 @@ public class AlipayController {
                     payHashList.remove(hash);  //提供的orderid里面不存在这个hash对应的orderid，就不提交消息。
             }
         }
-
         BigDecimal totalAmount = BigDecimal.ZERO;
         StringBuilder productNames = new StringBuilder();
-
         // 生成唯一订单号（用户ID+时间戳+随机数）
         String combinedOrderId = "PAY_" + userId + "_" +
                 System.currentTimeMillis() + "_" +
                 ThreadLocalRandom.current().nextInt(1000, 9999);
-
         //将发送给支付宝的订单号和列表集合存储到redis中
         for (String hash : payHashList) {
             //存入  订单号 : hash  的 redis中
@@ -357,11 +370,11 @@ public class AlipayController {
             if (order == null || !"1".equals(order.getStatus())) {
                 sendJsonResponse(response, 401, "订单状态无效或已过期"); return;
             }
-            totalAmount = totalAmount.add(order.getTotalPrice());
 
+            totalAmount = totalAmount.add(order.getTotalPrice());
             //——————————————————————————这里可以计算优惠逻辑————————————————————————————————————————
             /*
-            数据库新增  商家优惠表 :  id  product_id farmer_id  折扣  折扣描述  折扣生效日期  折扣截至日期
+            数据库新增    id  product_id farmer_id  折扣
                    新建实付金额 REAL_PAY_COUNT 存入 redis 缓存中 便于后续处理
             */
             //____________________________________end___________________________________________
@@ -466,15 +479,15 @@ public class AlipayController {
                 System.out.println("同步回调支付成功: 订单号=" + outTradeNo + ", 金额=" + totalAmount);
 
                 // 5. 重定向到前端支付成功页面
-                return "redirect:http://demotestccit.natapp1.cc/payment-success.html";
+                return Const.APLIPAY_RETURN_HTML_URL_SUCCESS;
             } else {
                 System.err.println("同步回调验签失败");
                 // 验签失败重定向到失败页面
-                return "redirect:http://demotestccit.natapp1.cc/payment-failed.html";
+                return Const.APLIPAY_RETURN_HTML_URL_FAIL;
             }
         } catch (AlipayApiException e) {
             System.err.println("同步回调验签异常: " + e.getMessage());
-            return "redirect:http://demotestccit.natapp1.cc/payment-error.html";
+            return Const.APLIPAY_RETURN_HTML_URL_EXCEPTION;
         }
     }
 
@@ -546,6 +559,7 @@ public class AlipayController {
                 //获取单笔交易的金额。
                 BigDecimal count = BigDecimal.valueOf(Float.parseFloat(counts));
                 TransactionAccountDto dto = new TransactionAccountDto();
+                //查看商品的价格跟付款的价格是否一致即可。
                 dto.setActualPayment(count);
                 dto.setCertificationHash(hash);
                 dto.setAlipayOrder(tradeNo);
@@ -628,7 +642,7 @@ public class AlipayController {
             captureBefore = true,
             captureAfter = true
     )
-    @GetMapping("/paySelect")
+    @GetMapping("/paySelect") //查询未支付的订单。
     public  <T> RestBean<T> paySelect(HttpServletRequest request
             ,HttpServletResponse response, @Parameter @Valid String Id) throws IOException {
         Integer userId = jwtUtils.convertToInteger(Id);

@@ -1,9 +1,12 @@
 package com.example.service.transaction;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.entity.records.BestSellingProducts;
+import com.example.entity.records.SalesTrend;
 import com.example.entity.dto.TransactionAccountDto;
 import jakarta.servlet.http.HttpServletRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TransactionProcessService extends IService<TransactionAccountDto> {
@@ -12,7 +15,7 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     //更新订单状态
     boolean transactionStatusUpdate(TransactionAccountDto dto,String status);
     TransactionAccountDto getOrderByHash(String hash);
-    List<TransactionAccountDto> TransactionInfoAddMulti(List<TransactionAccountDto> dtoList);
+    String TransactionInfoAddMulti(List<TransactionAccountDto> dtoList);
     boolean cancelTransaction(HttpServletRequest request,String hash);
     boolean cancelTransactionMulti(HttpServletRequest request,List<String> hashList);
     List<TransactionAccountDto> transactionSelectMulti(HttpServletRequest request,Integer id);
@@ -26,4 +29,10 @@ public interface TransactionProcessService extends IService<TransactionAccountDt
     TransactionAccountDto getOrderByTransactionID(Integer transactionID);
     TransactionAccountDto getOrderByAlipayOrderAndTrasactionId(String alipayOrder,Integer transactionId);
     boolean updateStatusByAlipayOrder(String alipayOrder,Integer trasactionId,Integer sellerId,String status);
+
+    //可视化接口
+    List<SalesTrend> getTransactionMoneyByDate(LocalDateTime startDay, LocalDateTime endDay);
+    List<BestSellingProducts> getBestSellingProductsByDate(LocalDateTime startDay, LocalDateTime endDay);
+
+
 }

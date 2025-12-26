@@ -43,4 +43,7 @@ public class ProductAddVO {
     private byte isActive;
 
     private String productImgurl;
+    private String description;
+    private BigDecimal discount;
+    private String unit;
 }

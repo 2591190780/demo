@@ -1,20 +1,23 @@
 package com.example.controller.blockchain;
 
 import com.alipay.api.domain.AccountDTO;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.annotation.Auditable;
 import com.example.controller.ControllerPageHelper;
 import com.example.entity.PageParam;
 import com.example.entity.PageResult;
 import com.example.entity.RestBean;
-import com.example.entity.dto.Account;
-import com.example.entity.dto.NFTInfoDto;
-import com.example.entity.dto.NFTRuleDto;
+import com.example.entity.dto.*;
 import com.example.entity.vo.request.ContractCallRequest;
 import com.example.entity.vo.response.AuthorizeVO;
+import com.example.entity.vo.response.BlockChainResultVO;
 import com.example.entity.vo.response.NFTRuleVO;
+import com.example.mapper.NFT.NFTTransactionMapper;
 import com.example.service.AccountService;
+import com.example.service.BlockChainEvidenceService;
 import com.example.service.NFT.NFTInfoService;
 import com.example.service.NFT.NFTRuleService;
+import com.example.service.NFT.NFTTransactionService;
 import com.example.service.blockchain.ConditionNFTRule;
 import com.example.utils.Const;
 import com.example.utils.JwtUtils;
@@ -31,10 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/contract")
@@ -53,7 +53,12 @@ public class ContractController {
     NFTInfoService nftInfoService;
     @Resource
     NFTRuleService nftRuleService;
-
+    @Resource
+    NFTTransactionService nftTransactionService;
+    @Resource
+    BlockChainEvidenceService blockChainEvidenceService;
+    @Resource
+    NFTTransactionMapper nftTransactionMapper;
 
     // 获取所有简化合约信息
     @Auditable(
@@ -167,7 +172,8 @@ public class ContractController {
         }
         if (
         this.conditionNFTRule.NFTRuleReport(accountService.findAccountById(id).getWalletAddress(),
-                nId ,ruleList)){
+                nId ,ruleList)
+        ){
            if ( this.nftRuleService.updateStatusRuleInChainNode(rId , nId,1)) {
                response.getWriter().write(RestBean.success().asJsonString());
                return ;
@@ -280,4 +286,81 @@ public class ContractController {
             return RestBean.success();
         }
     }
+
+    @GetMapping("/nft/transaction/result")
+    public void transactionResult(HttpServletRequest request,HttpServletResponse response,
+                                                      @RequestParam("relateId") Integer txId) throws Exception {
+        response.setContentType("application/json;charset=UTF-8");
+
+        Integer userId = this.jwtUtils.getRequesetId(request);
+        NFTTransactionDto nftTransactionDto = this.nftTransactionService.selectNFTTransactionById(txId);
+        List<BlockChainEvidenceDto> blockChainEvidenceDtoList = this.blockChainEvidenceService.selectInfoByRelateId(txId);
+        NFTInfoDto nftInfoDto = this.nftInfoService.NFTInfoSelectByTemplateId(nftTransactionDto.getNftId());
+        Account account = this.accountService.findAccountById(userId);
+        if(blockChainEvidenceDtoList==null || blockChainEvidenceDtoList.isEmpty()){
+            response.getWriter().write(RestBean.failure(401,"认证查询失败，，暂未查询到认证信息。").asJsonString());
+            return;
+        }
+        if(blockChainEvidenceDtoList.size()!=3 ){
+            response.getWriter().write(RestBean.failure(401,"交易记录不完整。").asJsonString());
+            return;
+        }
+        List<Object> param = new ArrayList<>();
+        param.add(0,blockChainEvidenceDtoList.get(0).getSubmitHash());
+
+        Map<String, Object> result = weBaseUtils.callContractMethod(
+                account.getWalletAddress(),
+                Const.CONTRACT_FOR_MESSAGE_REPORT,
+                Const.CONTRACT_FOR_MESSAGE_REPORT_METHOD_GETFULLEVIDENCEBYHASH,
+                param
+        );
+
+        ObjectMapper mapper = new ObjectMapper();
+        ArrayList<?> data = (ArrayList<?>) result.get("data");
+        String dataStr = (String) data.get(2);
+        // 去掉首尾空格和中括号
+        dataStr = dataStr.trim();
+        if (dataStr.startsWith("[") && dataStr.endsWith("]")) {
+            dataStr = dataStr.substring(1, dataStr.length() - 1);
+        }else{
+
+            response.getWriter().write(RestBean.failure(401,"未查询到对应记录。").asJsonString());
+            return;
+        }
+        // 用 Jackson 解析成 List<String>
+        List<String> addressList = mapper.readValue("[" + dataStr + "]", new TypeReference<List<String>>() {});
+        // 提取 0x 地址
+        String[] address = addressList.toArray(new String[0]);
+
+        BlockChainResultVO vo = new BlockChainResultVO(
+            address[1],address[0],nftInfoDto,blockChainEvidenceDtoList.get(0).getTxHash()
+                ,blockChainEvidenceDtoList.get(2).getTxHash(),nftTransactionDto.getType()
+        );
+        response.getWriter().write(RestBean.success(vo).asJsonString());
+        return ;
+    }
+
+    @GetMapping("/nft/myTransaction")
+    public void getMyTransaction(
+            HttpServletRequest request, HttpServletResponse response,
+            @ModelAttribute PageParam pageParam
+    )throws Exception{
+        response.setContentType("application/json;charset=UTF-8");
+        Integer userId = this.jwtUtils.getRequesetId(request);
+        Page<NFTTransactionDto> page = this.nftTransactionMapper.selectMyTransaction(pageParam.toPage(),userId);
+        if (page.getTotal() == 0) {
+            response.getWriter().write(RestBean.failure(401,"未查询到您的NFT交易记录。").asJsonString());
+            return;
+        }
+        PageResult<NFTTransactionDto> pageResult = new PageResult<>(
+                page.getTotal(),
+                page.getRecords(),
+                (int) page.getCurrent(),
+                (int) page.getPages(),
+                (int) page.getSize()
+        );
+        response.getWriter().write(RestBean.success(pageResult).asJsonString());
+        return;
+    }
+
 }

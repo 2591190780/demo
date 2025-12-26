@@ -8,4 +8,5 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public interface CollectInfoDeleteService extends IService<CollectionInfoDto>  {
     <T> RestBean<T> CollectInfoDelete(HttpServletRequest request, CollectionInfoDto vo);
+    boolean CollectInfoDeleteAll(Integer userId);
 }

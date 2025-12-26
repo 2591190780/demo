@@ -1,9 +1,13 @@
 package com.example.service.impl.transaction;
 
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.example.entity.records.BestSellingProducts;
+import com.example.entity.records.SalesTrend;
 import com.example.entity.dto.TransactionAccountDto;
+import com.example.entity.vo.response.ProductVO;
 import com.example.mapper.transaction.TransactionProcessMapper;
 import com.example.service.product.ProductInfoSelectAccountService;
 import com.example.service.transaction.TransactionProcessService;
@@ -15,9 +19,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper, TransactionAccountDto>
@@ -35,6 +42,69 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     ProductInfoSelectAccountService productInfoSelectAccountService;
 
     @Override
+    public List<BestSellingProducts> getBestSellingProductsByDate(LocalDateTime startDay, LocalDateTime endDay) {
+        // 查询销售数据，按产品ID分组统计销量
+        QueryWrapper<TransactionAccountDto> qw = new QueryWrapper<>();
+        qw.select("product_id", "SUM(quantity) AS total_count")
+                .ge("order_time", startDay)
+                .lt("order_time", endDay)
+                .notIn("status", 1, 6)
+                .groupBy("product_id")
+                .orderByDesc("total_count")
+                .last("LIMIT 10"); // 取前10个畅销商品
+
+        List<Map<String, Object>> salesData = this.getBaseMapper().selectMaps(qw);
+
+        // 转换为 BestSellingProducts 列表
+        return convertToBestSellingProducts(salesData);
+    }
+
+    private List<BestSellingProducts> convertToBestSellingProducts(List<Map<String, Object>> salesData) {
+        List<BestSellingProducts> result = new ArrayList<>();
+
+        for (Map<String, Object> data : salesData) {
+            Long productId = ((Number) data.get("product_id")).longValue();
+            Integer count = ((Number) data.get("total_count")).intValue();
+
+            // 通过 productinfoAccountService 查询产品名称
+            String productName = getProductNameById(Math.toIntExact(productId));
+
+            result.add(new BestSellingProducts(productName, count));
+        }
+
+        return result;
+    }
+
+    private String getProductNameById(Integer productId) {
+        try {
+            ProductVO productInfo = productInfoSelectAccountService.getProductInfoAccountByProductId(productId);
+            return productInfo != null ? productInfo.getName() : "未知商品";
+        } catch (Exception e) {
+            log.warn("获取产品名称失败, productId: {%d,%s}".formatted(productId, e));
+            return "未知商品";
+        }
+    }
+
+    @Override
+    public List<SalesTrend> getTransactionMoneyByDate(LocalDateTime startDay, LocalDateTime endDay) {
+        QueryWrapper<TransactionAccountDto> qw = new QueryWrapper<>();
+        qw.select("DATE(order_time) AS date", "SUM(actual_payment) AS money")
+                .ge("order_time", startDay)
+                .lt("order_time", endDay)
+                .notIn("status", 1, 6)
+                .groupBy("DATE(order_time)")
+                .orderByAsc("DATE(order_time)");
+
+        // 查询并封装
+        return this.getBaseMapper().selectMaps(qw)
+                .stream()
+                .map(m -> new SalesTrend(
+                        new BigDecimal(m.get("money").toString()), LocalDate.parse(m.get("date").toString())
+                ))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public boolean updateStatusByAlipayOrder(String alipayOrder,Integer transactionId,Integer sellerId,String status){
         TransactionAccountDto dto = this.getOrderByAlipayOrderAndTrasactionId(alipayOrder,transactionId);
         if(!Objects.equals(dto.getSellerId(), sellerId)) {return false;}
@@ -49,7 +119,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         List<TransactionAccountDto> dtoList = this.query()
                 .eq("seller_id",FarmerID).eq("status",1).list();
         this.updateStatusListener(dtoList);
-        return this.query().eq("seller_id",FarmerID).list();
+        return this.query().eq("seller_id",FarmerID)
+                .orderByAsc("status")
+                .orderByDesc("order_time")
+                .ne("status",6)
+                .list();
     }
 
     private void updateStatusListener(List<TransactionAccountDto> dtoList){
@@ -68,8 +142,8 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
                 .eq("buyer_id",BuyerID).eq("status",1).list();
         this.updateStatusListener(dtoList);
         return this.query().eq("buyer_id",BuyerID)
-                .orderByDesc("order_time")
                 .orderByAsc("status")
+                .orderByDesc("order_time")
                 .list();
     }
 
@@ -84,8 +158,7 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         String order_id = generateOrderId();  //生成订单号
         dto.setOrderId(order_id);
         dto.setOrderTime(LocalDateTime.now());  //生成下单时间
-
-        if (!this.requestProductVerify(dto)){
+        if (this.requestProductVerify(dto)){  //认证通过
             return  null;
         }
         String hash = blockchainHashUtil.generateTransactionHash(dto);
@@ -103,17 +176,26 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
     }
     //添加多个交易信息
     @Override
-    public  List<TransactionAccountDto> TransactionInfoAddMulti(List<TransactionAccountDto> dtoList){
+    public  String TransactionInfoAddMulti(List<TransactionAccountDto> dtoList){
         boolean flag =true;
         for(TransactionAccountDto dto : dtoList){
+            //检查商家供货情况。
+            ProductVO productVO = this.productInfoSelectAccountService
+                    .getProductInfoAccountByProductId(dto.getProductId());
+            if(  productVO.getStockRemain().compareTo(dto.getQuantity())<0){
+                return "401:商家库存不足,ProductID:%d".formatted(dto.getProductId());
+            }
+            if (productVO.getIsActive() == 0 ){
+                return "401:商品未激活,ProductID:%d".formatted(dto.getProductId());
+            }
             //前端传入 买家id，卖家id，产品id，数量，总价，后端生成交易hash，订单号，以及下单时间。
             String order_id = generateOrderId();
             dto.setOrderId(order_id);
             dto.setOrderTime(LocalDateTime.now());
             String hash = blockchainHashUtil.generateTransactionHash(dto);
             dto.setCertificationHash(hash);
-            if (!this.requestProductVerify(dto)){
-                return  null;
+            if (this.requestProductVerify(dto)){  //认证通过
+                return  "401:参数验证失败,请检查参数信息,ProductID:%d".formatted(dto.getProductId());
             }
             if(TransactionMessageIntoRedis(dto)){
                 dto.setStatus("1");
@@ -124,11 +206,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
                  *      --->区块链返回上链成功的区块号--->更新数据库的上链信息。
                  */
             }
+            if(!flag){
+                return "401:保存交易信息失败，ProductID:%d。".formatted(dto.getProductId());
+            }
         }
-        if(!flag){
-            return null;
-        }
-        return  dtoList;
+        return  "200";
     }
 
     @Override
@@ -274,8 +356,11 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
 
 
     public  boolean requestProductVerify(TransactionAccountDto dto){
-         return productInfoSelectAccountService.getProductInfoAccountByProductId(dto.getProductId()) != null;
-
+       ProductVO productVO = productInfoSelectAccountService.getProductInfoAccountByProductId(dto.getProductId());
+       if(productVO == null) return true;
+       BigDecimal dtoPayDiscount = dto.getPayDiscount();
+       if (!Objects.equals(productVO.getDiscount(),dtoPayDiscount)){return true;}
+       return false;
     }
 
     private void cleanTransactionFromRedis(Integer buyerId, String hash) {
@@ -308,7 +393,6 @@ public class TransactionProcessImpl extends ServiceImpl<TransactionProcessMapper
         stringRedisTemplate.opsForSet().add(buyer_id,hash);
         stringRedisTemplate.expire(buyer_id,15,TimeUnit.MINUTES);
         stringRedisTemplate.opsForValue().set(hash,"",15,TimeUnit.MINUTES);
-
         return true;
     }
 

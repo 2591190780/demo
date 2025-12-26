@@ -10,13 +10,13 @@ public class Const {
     public static final  String CONTRACT_FOR_NFT_RULE_METHOD_DELETERULEGROUP = "deleteRulesByTokenId";
     public static final  String CONTRACT_FOR_NFT_RULE_METHOD_GETRULEBYTOKENID = "getRulesByTokenIdFormatted";
     public static final  String CONTRACT_FOR_NFT_RULE_METHOD_ADDORUODATERULE = "addOrUpdateRule";
-    public static final  String CONTRACT_FOR_NFT_RULE = "0x7319fcb2694c68632d93aedf3ac0d7547704cb46";
+    public static final  String CONTRACT_FOR_NFT_RULE = "0x59875722fa83b3b8b79c186dd1fdf5b07d452f3e";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_STORENFTINFO = "storeNFTInfo";
     public static final  String CONTRACT_FOR_NFT_INFO_METHOD_TRADENFT = "tradeNFT";
-    public static final  String CONTRACT_FOR_NFT_INFO = "0x8aab865d03de821b53f975b3eaaa36acfd2c3ef6";
-
+    public static final  String CONTRACT_FOR_NFT_INFO = "0xef5b8e9b5b64588492649ceccccbce6504effbd2";
+    public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_GETFULLEVIDENCEBYHASH = "getFullEvidenceByHash";
     public static final  String CONTRACT_FOR_MESSAGE_REPORT_METHOD_ADD_EVIDENCE = "addEvidence";
-    public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x1b4a3748ffc1f3d43d255a3c7eec0d9f4c7dec55";
+    public static final  String CONTRACT_FOR_MESSAGE_REPORT = "0x8331bc3d7d298ccb5c088f047344cab0a7ff9d7c";
     /**
      * NFT交易信息
      */
@@ -29,6 +29,9 @@ public class Const {
 
     public static final  String APLIPAY_RETURN_URL = "http://demotestccit.natapp1.cc/alipay/return";
     public static final  String APLIPAY_NOTIFY_URL = "http://demotestccit.natapp1.cc/alipay/notify";
+    public static final  String APLIPAY_RETURN_HTML_URL_SUCCESS ="redirect:http://demotestccit.natapp1.cc/demo/payment-success.html";
+    public static final  String APLIPAY_RETURN_HTML_URL_FAIL ="redirect:http://demotestccit.natapp1.cc/demo/payment-failed.html";
+    public static final  String APLIPAY_RETURN_HTML_URL_EXCEPTION ="redirect:http://demotestccit.natapp1.cc/demo/payment-error.html";
 
     /**
      * 产品  农户的相关操作  存入Redis队列等待管理员处理

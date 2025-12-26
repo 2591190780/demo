@@ -13,5 +13,6 @@ public interface DeliveryInfoService extends IService<DeliveryInfoDto> {
     DeliveryInfoDto selectDeliveryInfoByAlipayOrder(String alipayOrderId);
     boolean updateDeliveryInfo(HttpServletRequest request, String alipayOrderId
             , String newAddress,String time,Integer transactionId );
+    DeliveryInfoDto selectDeliveryInfoByRelateId(Integer relateId);
 
 }
